@@ -1,0 +1,1373 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: SuperFaktúra WooCommerce\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2024-03-26 09:39+0100\n"
+"PO-Revision-Date: 2024-03-26 09:41+0100\n"
+"Last-Translator: Smetana <m.smetana@hotmail.com>\n"
+"Language-Team: Czech\n"
+"Language: cs_CZ\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
+"X-Generator: Poedit 3.4.2\n"
+"X-Loco-Version: 2.2.0; wp-5.2.2\n"
+
+#: class-wc-superfaktura.php:210
+msgid ""
+"Please install WooCommerce before activating SuperFaktura WooCommerce plugin."
+msgstr ""
+"Před aktivací pluginu SuperFaktura WooCommerce si prosím nainstalujte "
+"WooCommerce."
+
+#: class-wc-superfaktura.php:371 includes/class-wc-settings-superfaktura.php:44
+msgid "SuperFaktúra"
+msgstr "SuperFaktúra"
+
+#: class-wc-superfaktura.php:372
+#: includes/class-wc-settings-superfaktura.php:1275
+msgid ""
+"You have exceeded the allowed number of API requests / day. If you issue a "
+"large number of invoices, you can increase this number."
+msgstr ""
+"Překročili jste povolený počet API requestů za den. Pokud vystavujete velké "
+"množství faktur, můžete tento počet zvýšit."
+
+#: class-wc-superfaktura.php:373
+#: includes/class-wc-settings-superfaktura.php:1276
+msgid "Increase the number of API requests"
+msgstr "Zvýšit počet API requestů"
+
+#: class-wc-superfaktura.php:394
+#, php-format
+msgid "See <a href=\"%s\">API log</a> for more information."
+msgstr "Více informací naleznete v <a href=\"%s\"> API logu </a>."
+
+#: class-wc-superfaktura.php:399
+msgid "Proforma invoice was created."
+msgstr "Zálohová faktura byla vytvořena."
+
+#: class-wc-superfaktura.php:403
+msgid "Invoice was created."
+msgstr "Faktura byla vytvořena."
+
+#: class-wc-superfaktura.php:407
+msgid "Credit note was created."
+msgstr "Dobropis byl vytvořen."
+
+#: class-wc-superfaktura.php:411
+msgid "Documents were regenerated."
+msgstr "Dokumenty byly přegenerovány."
+
+#: class-wc-superfaktura.php:415
+msgid "Proforma invoice was not created."
+msgstr "Zálohovou fakturu se nepodařilo vytvořit."
+
+#: class-wc-superfaktura.php:419
+msgid "Invoice was not created."
+msgstr "Fakturu se nepodařilo vytvořit."
+
+#: class-wc-superfaktura.php:423
+msgid "Credit note was not created."
+msgstr "Dobropis se nepodařilo vytvořit."
+
+#: class-wc-superfaktura.php:427
+msgid "Documents were not regenerated."
+msgstr "Dokumenty se nepodařilo přegenerovat."
+
+#: class-wc-superfaktura.php:431 class-wc-superfaktura.php:1200
+msgid "Document was not created, because it already exists."
+msgstr "Dokument nebyl vytvořen, protože již existuje."
+
+#: class-wc-superfaktura.php:524
+#, php-format
+msgid ""
+"You use variable %1$s in your invoice nr. or proforma invoice nr., but the "
+"plugin \"%2$s\" is not activated. This may cause that your invoice numbers "
+"will not be sequential."
+msgstr ""
+"V čísle faktur nebo zálohových faktur používáte proměnnou %1$s, ale plugin "
+"\"%2$s\" není aktivní. To může způsobit, že čísla faktur nebudou sekvenční."
+
+#: class-wc-superfaktura.php:525
+msgid "Hide notification forever"
+msgstr "Skrýt upozornění navždy"
+
+#: class-wc-superfaktura.php:853
+#, php-format
+msgid ""
+"API call to create proforma invoice failed. We will try again in %d minutes."
+msgstr ""
+"API volání k vytvoření zálohové faktury selhalo. Zkusíme to znovu za %d "
+"minut."
+
+#: class-wc-superfaktura.php:857
+#, php-format
+msgid "API call to create invoice failed. We will try again in %d minutes."
+msgstr "API volání k vytvoření faktury selhalo. Zkusíme to znovu za %d minut."
+
+#: class-wc-superfaktura.php:861
+#, php-format
+msgid "API call to create credit note failed. We will try again in %d minutes."
+msgstr ""
+"API volání k vytvoření dobropisu selhalo. Zkusíme to znovu za %d minut."
+
+#: class-wc-superfaktura.php:865
+#, php-format
+msgid "API call to create document failed. We will try again in %d minutes."
+msgstr ""
+"API volání k vytvoření dokumentu selhalo. Zkusíme to znovu za %d minut."
+
+#: class-wc-superfaktura.php:874
+#, php-format
+msgid ""
+"API call to create proforma invoice for <a href=\"%s\">order #%d</a> failed "
+"%d times. Try creating it manually."
+msgstr ""
+"API volání k vytvoření zálohové faktury pro <a href=“%s”>objednávku č. %d</"
+"a> se nezdařilo %dkrát. Zkuste ji vytvořit ručně."
+
+#: class-wc-superfaktura.php:875
+#, php-format
+msgid ""
+"API call to create proforma invoice failed %d times. Try creating it "
+"manually."
+msgstr ""
+"API volání k vytvoření proforma faktury %dkrát selhalo. Zkuste ji vytvořit "
+"ručně."
+
+#: class-wc-superfaktura.php:879
+#, php-format
+msgid ""
+"API call to create invoice for <a href=\"%s\">order #%d</a> failed %d times. "
+"Try creating it manually."
+msgstr ""
+"API volání k vytvoření faktury pro <a href=“%s”>objednávku č. %d</a> se "
+"nezdařilo %dkrát. Zkuste ji vytvořit ručně."
+
+#: class-wc-superfaktura.php:880
+#, php-format
+msgid "API call to create invoice failed %d times. Try creating it manually."
+msgstr ""
+"API volání k vytvoření faktury %dkrát selhalo. Zkuste ji vytvořit ručně."
+
+#: class-wc-superfaktura.php:884
+#, php-format
+msgid ""
+"API call to create credit note for <a href=\"%s\">order #%d</a> failed %d "
+"times. Try creating it manually."
+msgstr ""
+"API volání k vytvoření dobropisu pro <a href=“%s”>objednávku č. %d</a> "
+"%dkrát selhalo. Zkuste jej vytvořit ručně."
+
+#: class-wc-superfaktura.php:885
+#, php-format
+msgid ""
+"API call to create credit note failed %d times. Try creating it manually."
+msgstr ""
+"API volání k vytvoření dobropisu se nezdařilo %dkrát. Zkuste jej vytvořit "
+"ručně."
+
+#: class-wc-superfaktura.php:889
+#, php-format
+msgid ""
+"API call to create document for <a href=\"%s\">order #%d</a> failed %d "
+"times. Try creating it manually."
+msgstr ""
+"API volání k vytvoření dokumentu pro <a href=“%s”>objednávku č. %d</a> "
+"%dkrát selhalo. Zkuste jej vytvořit ručně."
+
+#: class-wc-superfaktura.php:890
+#, php-format
+msgid "API call to create document failed %d times. Try creating it manually."
+msgstr ""
+"API volání k vytvoření dokumentu se nezdařilo %dkrát. Zkuste jej vytvořit "
+"ručně."
+
+#: class-wc-superfaktura.php:1213
+msgid "Request failed because of concurrency check."
+msgstr "Požadavek selhal z důvodu souběžných API volání."
+
+#: class-wc-superfaktura.php:1437
+#, php-format
+msgid "Paid with proforma invoice %1$s on %2$s."
+msgstr "Uhrazeno zálohovou fakturou %1$s dne %2$s."
+
+#: class-wc-superfaktura.php:1654
+msgid "Refunded"
+msgstr "Refundováno"
+
+#: class-wc-superfaktura.php:1813
+msgid "Gift Card"
+msgstr "Dárková poukázka"
+
+#: class-wc-superfaktura.php:2132
+msgid "Proforma invoice created."
+msgstr "Zálohová faktura byla vytvořena."
+
+#: class-wc-superfaktura.php:2136
+msgid "Invoice created."
+msgstr "Faktura byla vytvořena."
+
+#: class-wc-superfaktura.php:2140
+msgid "Credit note created."
+msgstr "Dobropis byl vytvořen."
+
+#: class-wc-superfaktura.php:2144
+msgid "Document created."
+msgstr "Dokument byl vytvořen."
+
+#: class-wc-superfaktura.php:2272
+msgid "Coupons"
+msgstr "Kupony"
+
+#: class-wc-superfaktura.php:2420
+msgid "Buy as Business client"
+msgstr "Fakturovat na firmu"
+
+#: class-wc-superfaktura.php:2432 class-wc-superfaktura.php:2588
+#: class-wc-superfaktura.php:2651 class-wc-superfaktura.php:2709
+#: class-wc-superfaktura.php:3013
+msgid "ID #"
+msgstr "IČO"
+
+#: class-wc-superfaktura.php:2442 class-wc-superfaktura.php:2593
+#: class-wc-superfaktura.php:2599 class-wc-superfaktura.php:2602
+#: class-wc-superfaktura.php:2657 class-wc-superfaktura.php:2714
+#: class-wc-superfaktura.php:3017
+#: includes/class-wc-settings-superfaktura.php:1606
+#: includes/class-wc-settings-superfaktura.php:1638
+msgid "VAT #"
+msgstr "DIČ"
+
+#: class-wc-superfaktura.php:2452 class-wc-superfaktura.php:2608
+#: class-wc-superfaktura.php:2663 class-wc-superfaktura.php:2719
+#: class-wc-superfaktura.php:3021
+#: includes/class-wc-settings-superfaktura.php:1608
+#: includes/class-wc-settings-superfaktura.php:1640
+msgid "TAX ID #"
+msgstr "(SK) DIČ"
+
+#: class-wc-superfaktura.php:2583 class-wc-superfaktura.php:2588
+#: class-wc-superfaktura.php:2593 class-wc-superfaktura.php:2608
+#, php-format
+msgid "%s is a required field."
+msgstr "%s je povinné pole."
+
+#: class-wc-superfaktura.php:2583
+#: includes/class-wc-settings-superfaktura.php:769
+msgid "Company name"
+msgstr "Název společnosti"
+
+#: class-wc-superfaktura.php:2599
+#, php-format
+msgid "%s is not valid."
+msgstr "%s není platné."
+
+#: class-wc-superfaktura.php:2602
+#, php-format
+msgid "%s could not be validated."
+msgstr "%s nebylo možné ověřit."
+
+#: class-wc-superfaktura.php:2773
+msgid "Invoices"
+msgstr "Faktury"
+
+#: class-wc-superfaktura.php:2789 class-wc-superfaktura.php:2851
+#: class-wc-superfaktura.php:3335
+msgid "Proforma"
+msgstr "Zálohová faktura"
+
+#: class-wc-superfaktura.php:2796 class-wc-superfaktura.php:2858
+#: class-wc-superfaktura.php:2939 class-wc-superfaktura.php:3343
+#: includes/class-wc-settings-superfaktura.php:189
+msgid "Invoice"
+msgstr "Faktura"
+
+#: class-wc-superfaktura.php:2843
+msgid "View Generated Invoices"
+msgstr "Zobrazit vygenerované faktury"
+
+#: class-wc-superfaktura.php:2845
+msgid "No invoice was generated"
+msgstr "Nebyla vygenerována žádná faktura"
+
+#: class-wc-superfaktura.php:2850
+msgid "Proforma could not be found in SuperFaktura."
+msgstr "Zálohovou fakturu se nepodařilo najít v SuperFaktuře."
+
+#: class-wc-superfaktura.php:2850
+msgid "Create new proforma invoice"
+msgstr "Vytvořit novou zálohovou fakturu"
+
+#: class-wc-superfaktura.php:2853
+msgid "Create proforma invoice"
+msgstr "Vytvořit zálohovou fakturu"
+
+#: class-wc-superfaktura.php:2857
+msgid "Invoice could not be found in SuperFaktura."
+msgstr "Fakturu se nepodařilo najít v SuperFaktuře."
+
+#: class-wc-superfaktura.php:2857
+msgid "Create new invoice"
+msgstr "Vytvořit novou fakturu"
+
+#: class-wc-superfaktura.php:2860
+msgid "Create invoice"
+msgstr "Vytvořit fakturu"
+
+#: class-wc-superfaktura.php:2864
+msgid "Credit note could not be found in SuperFaktura."
+msgstr "Dobropis se nepodařilo najít v SuperFaktuře."
+
+#: class-wc-superfaktura.php:2864
+msgid "Create new credit note"
+msgstr "Vytvořit nový dobropis"
+
+#: class-wc-superfaktura.php:2865
+msgid "Credit note"
+msgstr "Dobropis"
+
+#: class-wc-superfaktura.php:2867
+msgid "Create credit note"
+msgstr "Vytvořit dobropis"
+
+#: class-wc-superfaktura.php:2871
+msgid "Regenerate existing invoices"
+msgstr "Přegenerovat vystavené faktury"
+
+#: class-wc-superfaktura.php:2939 class-wc-superfaktura.php:3096
+msgid "Download invoice"
+msgstr "Faktura ke stažení"
+
+#: class-wc-superfaktura.php:2945
+msgid "Proforma invoice"
+msgstr "Zálohová faktura"
+
+#: class-wc-superfaktura.php:2945 class-wc-superfaktura.php:3096
+msgid "Download proforma invoice"
+msgstr "Zálohová faktura ke stažení"
+
+#: class-wc-superfaktura.php:3049
+#: includes/class-wc-settings-superfaktura.php:861
+msgid "Online payment link"
+msgstr "Odkaz na online platbu"
+
+#: woocommerce-superfaktura.php:57
+msgid "Settings"
+msgstr "Nastavení"
+
+#: includes/class-wc-settings-superfaktura.php:93
+#: includes/class-wc-settings-superfaktura.php:114
+#: includes/class-wc-settings-superfaktura.php:149
+#: includes/class-wc-settings-superfaktura.php:168
+#: includes/class-wc-settings-superfaktura.php:1087
+msgid "Don't use"
+msgstr "Nepoužít"
+
+#: includes/class-wc-settings-superfaktura.php:109
+#: includes/class-wc-settings-superfaktura.php:130
+msgid "Other"
+msgstr "Jiné"
+
+#: includes/class-wc-settings-superfaktura.php:111
+msgid ""
+"Payment methods could not be loaded from SuperFaktura due to the following "
+"error:"
+msgstr ""
+"Platební metody se nepodařilo načíst ze SuperFaktury kvůli následující chybě:"
+
+#: includes/class-wc-settings-superfaktura.php:115
+msgid "Cash"
+msgstr "Hotovost"
+
+#: includes/class-wc-settings-superfaktura.php:116
+msgid "Cash on delivery"
+msgstr "Dobírka"
+
+#: includes/class-wc-settings-superfaktura.php:117
+msgid "Transfer"
+msgstr "Bankovní převod"
+
+#: includes/class-wc-settings-superfaktura.php:118
+msgid "Card"
+msgstr "Karta"
+
+#: includes/class-wc-settings-superfaktura.php:119
+msgid "Credit card"
+msgstr "Kreditní karta"
+
+#: includes/class-wc-settings-superfaktura.php:120
+msgid "Debit card"
+msgstr "Debetni karta"
+
+#: includes/class-wc-settings-superfaktura.php:121
+msgid "Barion"
+msgstr "Barion"
+
+#: includes/class-wc-settings-superfaktura.php:122
+msgid "Besteron"
+msgstr "Besteron"
+
+#: includes/class-wc-settings-superfaktura.php:123
+msgid "GoPay"
+msgstr "GoPay"
+
+#: includes/class-wc-settings-superfaktura.php:124
+msgid "Paypal"
+msgstr "Paypal"
+
+#: includes/class-wc-settings-superfaktura.php:125
+msgid "Trustpay"
+msgstr "Trustpay"
+
+#: includes/class-wc-settings-superfaktura.php:126
+msgid "Viamo"
+msgstr "Viamo"
+
+#: includes/class-wc-settings-superfaktura.php:127
+msgid "Encashment"
+msgstr "Inkaso"
+
+#: includes/class-wc-settings-superfaktura.php:128
+msgid "Postal money order"
+msgstr "Poštovní poukaz"
+
+#: includes/class-wc-settings-superfaktura.php:129
+msgid "Mutual credit"
+msgstr "Vzájemní zápočet"
+
+#: includes/class-wc-settings-superfaktura.php:165
+msgid ""
+"Shipping methods could not be loaded from SuperFaktura due to the following "
+"error:"
+msgstr ""
+"Způsoby dopravy se ze SuperFaktury nepodařilo načíst kvůli následující chybě:"
+
+#: includes/class-wc-settings-superfaktura.php:169
+msgid "By mail"
+msgstr "Poštou"
+
+#: includes/class-wc-settings-superfaktura.php:170
+msgid "By courier"
+msgstr "Kurýrem"
+
+#: includes/class-wc-settings-superfaktura.php:171
+msgid "Personal pickup"
+msgstr "Osobní odběr"
+
+#: includes/class-wc-settings-superfaktura.php:172
+msgid "Freight"
+msgstr "Nákladní doprava"
+
+#: includes/class-wc-settings-superfaktura.php:173
+msgid "Pickup point"
+msgstr "Odběrné místo"
+
+#: includes/class-wc-settings-superfaktura.php:188
+#: includes/class-wc-settings-superfaktura.php:1390
+msgid "Authorization"
+msgstr "Autorizace"
+
+#: includes/class-wc-settings-superfaktura.php:190
+#: includes/class-wc-settings-superfaktura.php:591
+msgid "Invoice Creation"
+msgstr "Vytvoření faktury"
+
+#: includes/class-wc-settings-superfaktura.php:191
+msgid "Integration"
+msgstr "Integrace"
+
+#: includes/class-wc-settings-superfaktura.php:192
+msgid "Payment"
+msgstr "Platby"
+
+#: includes/class-wc-settings-superfaktura.php:193
+#: includes/class-wc-settings-superfaktura.php:1174
+msgid "Shipping"
+msgstr "Doprava"
+
+#: includes/class-wc-settings-superfaktura.php:194
+msgid "Accounting"
+msgstr "Účetnictví"
+
+#: includes/class-wc-settings-superfaktura.php:195
+#: includes/class-wc-settings-superfaktura.php:1330
+msgid "API log"
+msgstr "API log"
+
+#: includes/class-wc-settings-superfaktura.php:196
+#: includes/class-wc-settings-superfaktura.php:1347
+msgid "Help"
+msgstr "Pomoc"
+
+#: includes/class-wc-settings-superfaktura.php:219
+msgid "Invoice Options"
+msgstr "Možnosti faktury"
+
+#: includes/class-wc-settings-superfaktura.php:225
+#: includes/class-wc-settings-superfaktura.php:1610
+#: includes/class-wc-settings-superfaktura.php:1642
+msgid "Proforma Invoice Sequence ID"
+msgstr "ID číselníku pro zálohové faktury"
+
+#: includes/class-wc-settings-superfaktura.php:231
+#: includes/class-wc-settings-superfaktura.php:1611
+#: includes/class-wc-settings-superfaktura.php:1643
+msgid "Invoice Sequence ID"
+msgstr "ID číselníku pro faktury"
+
+#: includes/class-wc-settings-superfaktura.php:237
+#: includes/class-wc-settings-superfaktura.php:1612
+#: includes/class-wc-settings-superfaktura.php:1644
+msgid "Credit Note Sequence ID"
+msgstr "ID číselníku pro dobropisy"
+
+#: includes/class-wc-settings-superfaktura.php:243
+msgid "Custom invoice numbering"
+msgstr "Vlastní číslování faktury"
+
+#: includes/class-wc-settings-superfaktura.php:244
+msgid ""
+"Use custom invoice numbering (this is a deprecated option, please use "
+"sequence IDs above instead)"
+msgstr ""
+"Použít vlastní číslování faktur (toto je zastaralá možnost, místo toho "
+"použijte ID číselníků výše)"
+
+#: includes/class-wc-settings-superfaktura.php:250
+msgid "Proforma Invoice Nr."
+msgstr "Číslo zálohové faktury"
+
+#: includes/class-wc-settings-superfaktura.php:252
+#: includes/class-wc-settings-superfaktura.php:261
+#: includes/class-wc-settings-superfaktura.php:270
+#: includes/class-wc-settings-superfaktura.php:501
+#, php-format
+msgid "Available Tags: %s"
+msgstr "Dostupné značky: %s"
+
+#: includes/class-wc-settings-superfaktura.php:259
+msgid "Invoice Nr."
+msgstr "Číslo faktury"
+
+#: includes/class-wc-settings-superfaktura.php:268
+msgid "Credit Note Nr."
+msgstr "Číslo dobropisu"
+
+#: includes/class-wc-settings-superfaktura.php:277
+msgid "Current Proforma Invoice Number for [COUNT]"
+msgstr "Aktuální číslo zálohové faktury pro [COUNT]"
+
+#: includes/class-wc-settings-superfaktura.php:289
+msgid "Current Invoice Number for [COUNT]"
+msgstr "Aktuální číslo faktury pro [COUNT]"
+
+#: includes/class-wc-settings-superfaktura.php:301
+msgid "Current Credit Note Number for [COUNT]"
+msgstr "Vytvořit dobropis pro [COUNT]"
+
+#: includes/class-wc-settings-superfaktura.php:313
+msgid "Number of digits for [COUNT]"
+msgstr "Počet číslic pro [COUNT]"
+
+#: includes/class-wc-settings-superfaktura.php:325
+msgid "Delivery name"
+msgstr "Jméno pro doručení"
+
+#: includes/class-wc-settings-superfaktura.php:329
+msgid "Use format <em>CompanyName - FirstName LastName</em>"
+msgstr "Použít formát <em> Společnost - Jméno Příjmení </em>"
+
+#: includes/class-wc-settings-superfaktura.php:332
+msgid "Invoice language"
+msgstr "Jazyk faktury"
+
+#: includes/class-wc-settings-superfaktura.php:338
+msgid "Default endpoint language"
+msgstr "Výchozí jazyk"
+
+#: includes/class-wc-settings-superfaktura.php:339
+msgid "Site locale (fallback to endpoint)"
+msgstr "Jazyk stránky"
+
+#: includes/class-wc-settings-superfaktura.php:340
+msgid "WPML"
+msgstr "WPML"
+
+#: includes/class-wc-settings-superfaktura.php:341
+msgid "Slovak"
+msgstr "Slovenština"
+
+#: includes/class-wc-settings-superfaktura.php:342
+msgid "Czech"
+msgstr "Čeština"
+
+#: includes/class-wc-settings-superfaktura.php:343
+msgid "Εnglish"
+msgstr "Angličtina"
+
+#: includes/class-wc-settings-superfaktura.php:344
+msgid "German"
+msgstr "Němčina"
+
+#: includes/class-wc-settings-superfaktura.php:345
+msgid "Dutch"
+msgstr "Holandština"
+
+#: includes/class-wc-settings-superfaktura.php:346
+msgid "Croatian"
+msgstr "Chorvatština"
+
+#: includes/class-wc-settings-superfaktura.php:347
+msgid "Hungarian"
+msgstr "Maďarština"
+
+#: includes/class-wc-settings-superfaktura.php:348
+msgid "Polish"
+msgstr "Polština"
+
+#: includes/class-wc-settings-superfaktura.php:349
+msgid "Romanian"
+msgstr "Rumunština"
+
+#: includes/class-wc-settings-superfaktura.php:350
+msgid "Russian"
+msgstr "Ruština"
+
+#: includes/class-wc-settings-superfaktura.php:351
+msgid "Slovenian"
+msgstr "Slovinština"
+
+#: includes/class-wc-settings-superfaktura.php:352
+msgid "Spanish"
+msgstr "Španělština"
+
+#: includes/class-wc-settings-superfaktura.php:353
+msgid "Italian"
+msgstr "Italština"
+
+#: includes/class-wc-settings-superfaktura.php:354
+msgid "Ukrainian"
+msgstr "Ukrajinština"
+
+#: includes/class-wc-settings-superfaktura.php:358
+msgid "VAT rounding"
+msgstr "Způsob zaokrouhlování DPH"
+
+#: includes/class-wc-settings-superfaktura.php:363
+msgid "Whole document"
+msgstr "Za celý dokument"
+
+#: includes/class-wc-settings-superfaktura.php:364
+msgid "Per item"
+msgstr "Po položkách"
+
+#: includes/class-wc-settings-superfaktura.php:365
+msgid "Retail (recommended for eshops)"
+msgstr "Maloobchod (doporučený typ pro eshopy)"
+
+#: includes/class-wc-settings-superfaktura.php:369
+msgid "Rounding for cash on delivery orders"
+msgstr "Zaokrouhlování u objednávek na dobírku"
+
+#: includes/class-wc-settings-superfaktura.php:373
+msgid ""
+"Add rounding to the document (to 5 cents for EUR and to the whole number for "
+"CZK)"
+msgstr "Přidat zaokrouhlení na doklad (na 5 centů u EUR a na celé číslo u CZK)"
+
+#: includes/class-wc-settings-superfaktura.php:376
+msgid "Free products"
+msgstr "Produkty zdarma"
+
+#: includes/class-wc-settings-superfaktura.php:380
+msgid "Do not add free products to the invoice"
+msgstr "Nepřidávat produkty zdarma na fakturu"
+
+#: includes/class-wc-settings-superfaktura.php:387
+msgid "Invoice Comments"
+msgstr "Poznámky na faktuře"
+
+#: includes/class-wc-settings-superfaktura.php:393
+msgid "Allow custom comments"
+msgstr "Povolit vlastní poznámky"
+
+#: includes/class-wc-settings-superfaktura.php:397
+msgid ""
+"Override default comments options in SuperFaktúra. Adds custom comment, "
+"order comment and tax liability if needed."
+msgstr ""
+"Přepsat výchozí poznámky v SuperFaktúre. Přidá poznámku, poznámku z "
+"objednávky a daňovou povinnost."
+
+#: includes/class-wc-settings-superfaktura.php:400
+msgid "Proforma invoice payment"
+msgstr "Úhrada zálohovou fakturou"
+
+#: includes/class-wc-settings-superfaktura.php:404
+msgid "Add information about proforma invoice payment to comment."
+msgstr "Přidat do poznámky informaci o úhradě zálohovou fakturou."
+
+#: includes/class-wc-settings-superfaktura.php:408
+msgid "Tax Liability"
+msgstr "Daňová povinnost"
+
+#: includes/class-wc-settings-superfaktura.php:415
+msgid "Comment"
+msgstr "Poznámka"
+
+#: includes/class-wc-settings-superfaktura.php:422
+msgid "Order note"
+msgstr "Poznámka k objednávce"
+
+#: includes/class-wc-settings-superfaktura.php:426
+msgid "Add order note from customer to comment."
+msgstr "Přidat poznámku od zákazníka do poznámky na faktuře."
+
+#: includes/class-wc-settings-superfaktura.php:434
+msgid "Additional Invoice Fields"
+msgstr "Další pole faktury"
+
+#: includes/class-wc-settings-superfaktura.php:440
+msgid "Variable symbol"
+msgstr "Variabilní symbol"
+
+#: includes/class-wc-settings-superfaktura.php:445
+msgid "Use invoice number"
+msgstr "Použít číslo faktury"
+
+#: includes/class-wc-settings-superfaktura.php:446
+msgid ""
+"Use invoice number (if there is a proforma invoice, use the variable symbol "
+"from the proforma invoice)"
+msgstr ""
+"Použít číslo faktury (pokud existuje zálohová faktura, použít variabilní "
+"symbol ze zálohové faktury)"
+
+#: includes/class-wc-settings-superfaktura.php:447
+msgid "Use order number"
+msgstr "Použít číslo objednávky"
+
+#: includes/class-wc-settings-superfaktura.php:451
+msgid "PAY by square"
+msgstr "QR kód na faktuře"
+
+#: includes/class-wc-settings-superfaktura.php:454
+msgid "Display a QR code"
+msgstr "Zobrazit QR kód"
+
+#: includes/class-wc-settings-superfaktura.php:458
+msgid "Issued by"
+msgstr "Vystavil"
+
+#: includes/class-wc-settings-superfaktura.php:463
+msgid "Issued by Phone"
+msgstr "Vystavil (telefon)"
+
+#: includes/class-wc-settings-superfaktura.php:468
+msgid "Issued by Web"
+msgstr "Vystavil (web)"
+
+#: includes/class-wc-settings-superfaktura.php:473
+msgid "Issued by Email"
+msgstr "Vystavil (e-mail)"
+
+#: includes/class-wc-settings-superfaktura.php:478
+msgid "Created Date"
+msgstr "Datum vystavení"
+
+#: includes/class-wc-settings-superfaktura.php:481
+msgid "Use order date instead of current date"
+msgstr "Použít datum objednávky namísto aktuálního data"
+
+#: includes/class-wc-settings-superfaktura.php:485
+msgid "Delivery Date"
+msgstr "Datum zdanitelného plnění"
+
+#: includes/class-wc-settings-superfaktura.php:488
+msgid "Select date to be used as delivery date"
+msgstr "Vybrat datum, které má být použito jako datum zdanitelného plnění"
+
+#: includes/class-wc-settings-superfaktura.php:491
+msgid "Invoice creation date"
+msgstr "Datum vytvoření faktury"
+
+#: includes/class-wc-settings-superfaktura.php:492
+msgid "Order payment date"
+msgstr "Datum platby objednávky"
+
+#: includes/class-wc-settings-superfaktura.php:493
+msgid "Order creation date"
+msgstr "Datum vytvoření objednávky"
+
+#: includes/class-wc-settings-superfaktura.php:494
+msgid "Do not display"
+msgstr "Nezobrazovat"
+
+#: includes/class-wc-settings-superfaktura.php:498
+msgid "Product Description"
+msgstr "Popis produktu"
+
+#: includes/class-wc-settings-superfaktura.php:502
+msgid ""
+"[ATTRIBUTE:name] tag outputs single product attribute. Use the name of the "
+"attribute, for example [ATTRIBUTE:Shirt size]"
+msgstr ""
+"Značka [ATTRIBUTE:name] vypíše jednu vlastnost produktu. Použijte název "
+"vlastnosti, například [ATTRIBUTE:Velikost trička]"
+
+#: includes/class-wc-settings-superfaktura.php:509
+#: includes/class-wc-settings-superfaktura.php:1214
+msgid "Discount"
+msgstr "Sleva"
+
+#: includes/class-wc-settings-superfaktura.php:512
+msgid "Show product discount in description"
+msgstr "Zobraziť slevu na produkt v popisu"
+
+#: includes/class-wc-settings-superfaktura.php:516
+msgid "Coupon Invoice Items"
+msgstr "Kupón v položkách na faktuře"
+
+#: includes/class-wc-settings-superfaktura.php:522
+msgid "Total"
+msgstr "Spolu"
+
+#: includes/class-wc-settings-superfaktura.php:523
+msgid "Per Item"
+msgstr "Po položkách"
+
+#: includes/class-wc-settings-superfaktura.php:527
+msgid "Coupon Description"
+msgstr "Popis kupónu"
+
+#: includes/class-wc-settings-superfaktura.php:530
+msgid "Show coupon code in description"
+msgstr "Zobrazit kód kupónu v popisu"
+
+#: includes/class-wc-settings-superfaktura.php:534
+msgid "Discount Name"
+msgstr "Název slevy"
+
+#: includes/class-wc-settings-superfaktura.php:541
+msgid "Shipping Item Name"
+msgstr "Název poštovného"
+
+#: includes/class-wc-settings-superfaktura.php:548
+msgid "Free Shipping Name"
+msgstr "Název poštovného zdarma"
+
+#: includes/class-wc-settings-superfaktura.php:551
+msgid ""
+"By default, in case of free shipping, the invoice does not contain shipping "
+"item; to force the item to appear, fill in its name in this field"
+msgstr ""
+"Standardně faktura s dopravou zdarma neobsahuje poštovné, pokud chcete aby "
+"se položka zobrazila, vyplňte její název v tomto poli."
+
+#: includes/class-wc-settings-superfaktura.php:555
+msgid "Refunded items"
+msgstr "Refundované položky"
+
+#: includes/class-wc-settings-superfaktura.php:558
+msgid "Subtract refunded items quantity on invoice"
+msgstr "Odečíst refundovaný počet položek na faktuře"
+
+#: includes/class-wc-settings-superfaktura.php:562
+msgid "Tag"
+msgstr "Tag"
+
+#: includes/class-wc-settings-superfaktura.php:569
+msgid "OSS"
+msgstr "OSS"
+
+#: includes/class-wc-settings-superfaktura.php:572
+msgid "Create invoices under the One Stop Shop scheme"
+msgstr "Zvláštní režim jednoho správního místa OSS"
+
+#: includes/class-wc-settings-superfaktura.php:587
+msgid "Don't generate"
+msgstr "Negenerovat"
+
+#: includes/class-wc-settings-superfaktura.php:593
+msgid ""
+"Select when you would like to create an invoice for each payment gateway."
+msgstr "Nastavte kdy chcete vytvořit fakturu pro každou platební bránu."
+
+#: includes/class-wc-settings-superfaktura.php:612
+msgid "Create as paid"
+msgstr "Vytvořit jako uhrazenou"
+
+#: includes/class-wc-settings-superfaktura.php:627
+msgid "Zero value invoices"
+msgstr "Faktury s nulovou hodnotou"
+
+#: includes/class-wc-settings-superfaktura.php:634
+msgid ""
+"Allow zero value invoices to be generated when order changes to the selected "
+"status."
+msgstr ""
+"Povolit generování faktur s nulovou hodnotou při změně stavu objednávky do "
+"zvoleného stavu."
+
+#: includes/class-wc-settings-superfaktura.php:638
+msgid "Invoice for orders without processing"
+msgstr "Faktura pro objednávky bez zpracování"
+
+#: includes/class-wc-settings-superfaktura.php:644
+#, php-format
+msgid ""
+"Allow invoice creation in the \"%1$s\" state for orders that do not need "
+"processing. Only applies if the invoice was supposed to be created in "
+"\"%2$s\" state."
+msgstr ""
+"Povolit vytvoření faktury ve stavu %1$s pro objednávky, které nepotřebují "
+"zpracování. Platí pouze v případě, že faktura měla být vytvořena ve stavu "
+"%2$s."
+
+#: includes/class-wc-settings-superfaktura.php:651
+msgid "Manual Invoice Creation"
+msgstr "Ruční vytvoření faktury"
+
+#: includes/class-wc-settings-superfaktura.php:655
+msgid "Allow manual invoice creation"
+msgstr "Povolit ruční vytvoření faktury"
+
+#: includes/class-wc-settings-superfaktura.php:659
+msgid "Client Data"
+msgstr "Údaje klienta"
+
+#: includes/class-wc-settings-superfaktura.php:663
+msgid "Update client data in SuperFaktura"
+msgstr "Aktualizovat údaje klienta v SuperFaktuře"
+
+#: includes/class-wc-settings-superfaktura.php:678
+msgid "Set invoice as paid in these order statuses"
+msgstr "Označit fakturu jako uhrazenou v těchto stavech objednávky"
+
+#: includes/class-wc-settings-superfaktura.php:692
+msgid "Proforma Invoice Creation"
+msgstr "Vytvoření zálohové faktury"
+
+#: includes/class-wc-settings-superfaktura.php:694
+msgid ""
+"Select when you would like to create a proforma invoice for each payment "
+"gateway."
+msgstr ""
+"Nastavte kdy chcete vytvořit zálohovou fakturu pro každou platební bránu."
+
+#: includes/class-wc-settings-superfaktura.php:710
+msgid "Manual Proforma Invoice Creation"
+msgstr "Ruční vytvoření zálohové faktury"
+
+#: includes/class-wc-settings-superfaktura.php:714
+msgid "Allow manual proforma invoice creation"
+msgstr "Povolit ruční vytvoření zálohové faktury"
+
+#: includes/class-wc-settings-superfaktura.php:723
+msgid "Experimental functions"
+msgstr "Experimentální funkce"
+
+#: includes/class-wc-settings-superfaktura.php:725
+msgid ""
+"These features are either experimental or incomplete, enable them at your "
+"own risk!"
+msgstr ""
+"Tyto funkce jsou buď experimentální, nebo neúplné, aktivujte je na vlastní "
+"nebezpečí!"
+
+#: includes/class-wc-settings-superfaktura.php:730
+msgid "Prevent document duplicity"
+msgstr "Zabránit duplicitě dokumentů"
+
+#: includes/class-wc-settings-superfaktura.php:734
+msgid ""
+"Prevent document duplicity caused by concurrent callbacks and/or return URLs "
+"from some payment plugins (such as GoPay)"
+msgstr ""
+"Zabránit duplicitě dokumentů způsobené souběžnými zpětnými voláními a/nebo "
+"návratovými URL z některých platebních pluginů (například GoPay)"
+
+#: includes/class-wc-settings-superfaktura.php:738
+msgid "Retry failed API calls to create a document"
+msgstr "Zopakovat neúspěšné API volání k vytvoření dokumentu"
+
+#: includes/class-wc-settings-superfaktura.php:742
+msgid ""
+"If the API call to create a document fails due to a SuperFaktura server "
+"error or timeout, try again in 5 minutes, 30 minutes and 1 hour. If all "
+"attempts fail, the plugin will display an admin notification and add the "
+"information to the order notes."
+msgstr ""
+"Pokud API volání k vytvoření dokumentu selže pro chybu SuperFaktura serveru "
+"nebo časový limit, zkusit znovu o 5 minut, 30 minut a 1 hodinu. Pokud "
+"všechny pokusy selžou, plugin zobrazí upozornění administrátorovi a doplní "
+"informace do poznámek k objednávce."
+
+#: includes/class-wc-settings-superfaktura.php:756
+msgid "Checkout"
+msgstr "Pokladna"
+
+#: includes/class-wc-settings-superfaktura.php:762
+msgid "Billing fields"
+msgstr "Fakturační údaje"
+
+#: includes/class-wc-settings-superfaktura.php:766
+msgid "Add company billing fields to checkout"
+msgstr "Přidat možnost fakturace na firmu"
+
+#: includes/class-wc-settings-superfaktura.php:773
+#: includes/class-wc-settings-superfaktura.php:785
+#: includes/class-wc-settings-superfaktura.php:798
+#: includes/class-wc-settings-superfaktura.php:818
+msgid "Optional"
+msgstr "Povinné"
+
+#: includes/class-wc-settings-superfaktura.php:774
+#: includes/class-wc-settings-superfaktura.php:786
+#: includes/class-wc-settings-superfaktura.php:799
+#: includes/class-wc-settings-superfaktura.php:819
+msgid "Required"
+msgstr "Nepovinné"
+
+#: includes/class-wc-settings-superfaktura.php:781
+msgid "Add field ID #"
+msgstr "Přidat pole IČO"
+
+#: includes/class-wc-settings-superfaktura.php:787
+#: includes/class-wc-settings-superfaktura.php:800
+#: includes/class-wc-settings-superfaktura.php:820
+msgid "No"
+msgstr "Ne"
+
+#: includes/class-wc-settings-superfaktura.php:794
+msgid "Add field VAT #"
+msgstr "Přidat pole DIČ"
+
+#: includes/class-wc-settings-superfaktura.php:807
+msgid "Validate VAT #"
+msgstr "Ověřit platnost DIČ"
+
+#: includes/class-wc-settings-superfaktura.php:811
+msgid "Validate VAT # in EU countries"
+msgstr "Ověřit platnost DIČ v zemích EU (VIES)"
+
+#: includes/class-wc-settings-superfaktura.php:814
+msgid "Add field TAX ID #"
+msgstr ""
+"Přidat pole (SK) \n"
+"DIČ"
+
+#: includes/class-wc-settings-superfaktura.php:831
+msgid "Order received"
+msgstr "Objednávka přijata"
+
+#: includes/class-wc-settings-superfaktura.php:837
+#: includes/class-wc-settings-superfaktura.php:868
+msgid "Invoice link"
+msgstr "Odkaz na fakturu"
+
+#: includes/class-wc-settings-superfaktura.php:841
+msgid "Add invoice link to order received screen"
+msgstr "Přidat odkaz na fakturu na stránku Objednávka přijata"
+
+#: includes/class-wc-settings-superfaktura.php:848
+msgid "Emails"
+msgstr "Emaily"
+
+#: includes/class-wc-settings-superfaktura.php:854
+msgid "Billing details"
+msgstr "Údaje odběratele"
+
+#: includes/class-wc-settings-superfaktura.php:858
+msgid ""
+"Add customer billing details (ID #, VAT #, TAX ID #) to WooCommerce emails"
+msgstr "Přidat údaje odběratele (IČO, (SK) DIČ, DIČ) do WooCommerce emailů"
+
+#: includes/class-wc-settings-superfaktura.php:865
+msgid "Add online payment link to WooCommerce emails"
+msgstr "Přidat odkaz na online platbu do WooCommerce emailů"
+
+#: includes/class-wc-settings-superfaktura.php:872
+msgid "Add invoice link to WooCommerce emails"
+msgstr "Přidat odkaz na fakturu do WooCommerce emailů"
+
+#: includes/class-wc-settings-superfaktura.php:875
+msgid "Invoice PDF attachment"
+msgstr "PDF faktury v příloze"
+
+#: includes/class-wc-settings-superfaktura.php:879
+msgid "Attach invoice PDF to WooCommerce emails"
+msgstr "Přidat PDF fakturu do WooCommerce emailů"
+
+#: includes/class-wc-settings-superfaktura.php:882
+msgid "Completed orders"
+msgstr "Vybavené objednávky"
+
+#: includes/class-wc-settings-superfaktura.php:886
+msgid "Don't add invoice to WooCommerce emails for completed orders"
+msgstr "Nedávat fakturu do WooCommerce emailů pro vybavené objednávky"
+
+#: includes/class-wc-settings-superfaktura.php:889
+msgid "Cash on delivery orders"
+msgstr "Objednávky na dobírku"
+
+#: includes/class-wc-settings-superfaktura.php:893
+msgid "Don't add invoice to WooCommerce emails for cash on delivery orders"
+msgstr "Nedávat fakturu do WooCommerce emailů pro objednávky na dobírku"
+
+#: includes/class-wc-settings-superfaktura.php:900
+msgid "Admin"
+msgstr "Administrace"
+
+#: includes/class-wc-settings-superfaktura.php:906
+msgid "Order list"
+msgstr "Seznam objednávek"
+
+#: includes/class-wc-settings-superfaktura.php:909
+msgid "Show invoice action button in order list"
+msgstr "Přidat tlačítko stažení faktur v seznamu objednávek"
+
+#: includes/class-wc-settings-superfaktura.php:917
+msgid "Automatic pairing"
+msgstr "Automatické párování"
+
+#: includes/class-wc-settings-superfaktura.php:920
+#: includes/class-wc-settings-superfaktura.php:938
+msgid "Default"
+msgstr "Standardní způsob"
+
+#: includes/class-wc-settings-superfaktura.php:923
+#, php-format
+msgid ""
+"To automatically update order status when payment is paired to an invoice in "
+"SuperFaktura, fill in callback URL and Secret Key in <a target=\"_blank\" "
+"href=\"%1$s\">SuperFaktura settings</a>.<br>Callback URL: <strong>%2$s</"
+"strong>"
+msgstr ""
+"Chcete-li automaticky aktualizovat stav objednávky, když je platba spárována "
+"s fakturou v SuperFaktuře, vyplňte Callback URL a Secret Key v <a "
+"target=\"_blank\" href=“%1$s”> nastaveních SuperFaktúry </a>. <br>Callback "
+"URL: <strong>%2$s</strong>"
+
+#: includes/class-wc-settings-superfaktura.php:927
+#: includes/class-wc-settings-superfaktura.php:939
+msgid "Multiple eshops per single company"
+msgstr "Více eshopů na jednu firmu"
+
+#: includes/class-wc-settings-superfaktura.php:928
+msgid ""
+"Plugin will send Callback URL to SuperFaktura automatically for each "
+"document issued."
+msgstr ""
+"Plugin pošle Callback URL do SuperFaktúry automaticky pro každý vystavený "
+"dokument zvlášť."
+
+#: includes/class-wc-settings-superfaktura.php:933
+msgid "Automatic pairing type"
+msgstr "Způsob automatického párování"
+
+#: includes/class-wc-settings-superfaktura.php:943
+msgid "Secret Key"
+msgstr "Secret Key"
+
+#: includes/class-wc-settings-superfaktura.php:945
+msgid "Regenerate"
+msgstr "Přegenerovat"
+
+#: includes/class-wc-settings-superfaktura.php:961
+msgid "Payment Methods"
+msgstr "Platební brány"
+
+#: includes/class-wc-settings-superfaktura.php:963
+msgid "Map Woocommerce payment methods to ones in SuperFaktura"
+msgstr "Spárujte způsoby plateb Woocommerce se způsoby plateb v SuperFaktuře"
+
+#: includes/class-wc-settings-superfaktura.php:986
+msgid "Cash Registers"
+msgstr "Pokladny"
+
+#: includes/class-wc-settings-superfaktura.php:988
+msgid "Map Woocommerce payment methods to cash registers in SuperFaktura"
+msgstr "Spárujte způsoby plateb Woocommerce s pokladnami v SuperFaktuře"
+
+#: includes/class-wc-settings-superfaktura.php:1023
+#: includes/class-wc-settings-superfaktura.php:1054
+msgid "Shipping Methods"
+msgstr "Možnosti doručení"
+
+#: includes/class-wc-settings-superfaktura.php:1088
+msgid "Item"
+msgstr "Zboží"
+
+#: includes/class-wc-settings-superfaktura.php:1089
+msgid "Service"
+msgstr "Služba"
+
+#: includes/class-wc-settings-superfaktura.php:1094
+msgid "Product"
+msgstr "Produkt"
+
+#: includes/class-wc-settings-superfaktura.php:1100
+#: includes/class-wc-settings-superfaktura.php:1140
+#: includes/class-wc-settings-superfaktura.php:1180
+#: includes/class-wc-settings-superfaktura.php:1220
+msgid "Item Type"
+msgstr "Typ položky"
+
+#: includes/class-wc-settings-superfaktura.php:1108
+#: includes/class-wc-settings-superfaktura.php:1148
+#: includes/class-wc-settings-superfaktura.php:1188
+#: includes/class-wc-settings-superfaktura.php:1228
+msgid "Analytics Account"
+msgstr "Analytický účet"
+
+#: includes/class-wc-settings-superfaktura.php:1115
+#: includes/class-wc-settings-superfaktura.php:1155
+#: includes/class-wc-settings-superfaktura.php:1195
+#: includes/class-wc-settings-superfaktura.php:1235
+msgid "Synthetic Account"
+msgstr "Syntetický účet"
+
+#: includes/class-wc-settings-superfaktura.php:1122
+#: includes/class-wc-settings-superfaktura.php:1162
+#: includes/class-wc-settings-superfaktura.php:1202
+#: includes/class-wc-settings-superfaktura.php:1242
+msgid "Preconfidence"
+msgstr "Předkontace"
+
+#: includes/class-wc-settings-superfaktura.php:1134
+msgid "Fees"
+msgstr "Poplatky"
+
+#: includes/class-wc-settings-superfaktura.php:1267
+#, php-format
+msgid "%d remaining"
+msgstr "zbývá %d"
+
+#: includes/class-wc-settings-superfaktura.php:1268
+#: includes/class-wc-settings-superfaktura.php:1284
+msgid "Daily API usage"
+msgstr "Dnešné používání API"
+
+#: includes/class-wc-settings-superfaktura.php:1350
+msgid ""
+"For more information about the plugin and its settings check the articles on "
+"SuperFaktura blog."
+msgstr ""
+"Další informace o pluginu a jeho nastaveních naleznete v článcích na blogu "
+"SuperFaktury."
+
+#: includes/class-wc-settings-superfaktura.php:1373
+msgid ""
+"Do you have a technical issue with the plugin? Contact us at <a "
+"href=\"mailto:superfaktura@2day.sk\">superfaktura@2day.sk</a>"
+msgstr ""
+"Máte technický problém s pluginem? Kontaktujte nás na <a href=\"mailto:"
+"superfaktura@2day.sk\">superfaktura@2day.sk</a>"
+
+#: includes/class-wc-settings-superfaktura.php:1392
+msgid ""
+"You can find your API access credentials in your SuperFaktura account at <a "
+"href=\"https://moja.superfaktura.sk/api_access\">Tools &gt; API</a>"
+msgstr ""
+"Vaše přístupové údaje k API najdete v SuperFaktuře na stránce <a "
+"href=\"https://moje.superfaktura.cz/api_access\">Nástroje &gt; API</a>"
+
+#: includes/class-wc-settings-superfaktura.php:1396
+msgid "Version"
+msgstr "Verze"
+
+#: includes/class-wc-settings-superfaktura.php:1408
+msgid "Sandbox"
+msgstr "Sandbox"
+
+#: includes/class-wc-settings-superfaktura.php:1409
+msgid "Use sandbox"
+msgstr "Použít sandbox - testovací prostředí"
+
+#: includes/class-wc-settings-superfaktura.php:1409
+msgid ""
+"Note: To use sandbox create a test account at sandbox.superfaktura.sk or "
+"sandbox.superfaktura.cz"
+msgstr ""
+"Poznámka: Pokud chcete použít sandbox, vytvořte si testovací účet na sandbox."
+"superfaktura.sk nebo sandbox.superfaktura.cz"
+
+#: includes/class-wc-settings-superfaktura.php:1415
+msgid "API Email"
+msgstr "API email"
+
+#: includes/class-wc-settings-superfaktura.php:1422
+msgid "API Key"
+msgstr "API klíč"
+
+#: includes/class-wc-settings-superfaktura.php:1429
+msgid "Company ID"
+msgstr "Company ID"
+
+#: includes/class-wc-settings-superfaktura.php:1432
+msgid "Test API connection"
+msgstr "Otestovat API připojení"
+
+#: includes/class-wc-settings-superfaktura.php:1441
+msgid "Logo ID"
+msgstr "Logo ID"
+
+#: includes/class-wc-settings-superfaktura.php:1447
+#: includes/class-wc-settings-superfaktura.php:1609
+#: includes/class-wc-settings-superfaktura.php:1641
+msgid "Bank Account ID"
+msgstr "ID bankovního účtu"
+
+#: includes/class-wc-settings-superfaktura.php:1525
+msgid "Plugin SuperFaktura WooCommerce is in sandbox mode."
+msgstr "Plugin SuperFaktura WooCommerce používá sandbox - testovací prostředí."
+
+#: includes/class-wc-settings-superfaktura.php:1587
+msgid "ALL"
+msgstr "VŠECHNY"
+
+#: includes/class-wc-settings-superfaktura.php:1597
+msgid "Countries"
+msgstr "Země"
+
+#: includes/class-wc-settings-superfaktura.php:1598
+msgid ""
+"Override invoice settings for specific countries based on customer billing "
+"address."
+msgstr ""
+"Nastavení faktury pro konkrétní země na základě fakturační adresy zákazníka."
+
+#: includes/class-wc-settings-superfaktura.php:1605
+msgid "Country"
+msgstr "Země"
+
+#: includes/class-wc-settings-superfaktura.php:1607
+msgid "Use VAT # only for final consumer"
+msgstr "Použít DIČ pouze pro konečného spotřebitele"
+
+#: includes/class-wc-settings-superfaktura.php:1620
+msgid "Add country"
+msgstr "Přidat zemi"
+
+#: includes/class-wc-settings-superfaktura.php:1645
+msgid "Delete"
+msgstr "Smazat"
+
+#~ msgid "Checkout fields required"
+#~ msgstr "Povinné IČO a (SK) DIČ u objednávky (podle aktivovaných výše)"
+
+#~ msgid "Checkout field VAT # required"
+#~ msgstr "Povinné DIČ u objednávky (podle aktivovaných výše)"
+
+#~ msgid "Display a delivery date"
+#~ msgstr "Zobrazit datum zdanitelného plnění"
+
+#~ msgid "Invoice Paid Status (\"Completed\")"
+#~ msgstr "Stav úhrady faktury (objednávka “Vybavená”)"
+
+#~ msgid "Do not set invoice as paid for order status \"Completed\""
+#~ msgstr "Neoznačovat fakturu jako uhrazenou pro stav objednávky “Vybavená”"
