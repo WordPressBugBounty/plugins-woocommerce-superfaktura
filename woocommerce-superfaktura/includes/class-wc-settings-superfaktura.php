@@ -498,7 +498,7 @@ class WC_Settings_SuperFaktura extends WC_Settings_Page {
 						'title'   => __( 'Product Description', 'woocommerce-superfaktura' ),
 						'desc'    =>
 							// Translators: %s Available tags.
-							sprintf( __( 'Available Tags: %s', 'woocommerce-superfaktura' ), '[SKU], [SHORT_DESCR], [VARIATION], [ATTRIBUTES], [NON_VARIATIONS_ATTRIBUTES], [ATTRIBUTE:name], [WEIGHT]' )
+							sprintf( __( 'Available Tags: %s', 'woocommerce-superfaktura' ), '[SKU], [SHORT_DESCR], [VARIATION], [ATTRIBUTES], [NON_VARIATIONS_ATTRIBUTES], [ATTRIBUTE:name], [CATEGORY], [WEIGHT]' )
 							. '<br><em><small>' . __( '[ATTRIBUTE:name] tag outputs single product attribute. Use the name of the attribute, for example [ATTRIBUTE:Shirt size]', 'woocommerce-superfaktura' ) . '</small></em>',
 						'id'      => 'woocommerce_sf_product_description',
 						'css'     => 'width:50%; height: 75px;',

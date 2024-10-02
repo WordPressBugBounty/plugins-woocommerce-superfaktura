@@ -3,7 +3,7 @@ Contributors: webikon, johnnypea, savione, kravco, superfaktura, martinkrcho
 Tags: superfaktura, invoice, faktura, proforma, woocommerce
 Requires at least: 4.4
 Tested up to: 6.6.1
-Stable tag: 1.41.8
+Stable tag: 1.42.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -65,6 +65,9 @@ This usually happens when you change your login email address. The email address
 You can read more about SuperFaktura API integration at [superfaktura.sk/api](http://www.superfaktura.sk/api/)
 
 == Changelog ==
+
+= 1.42.0 =
+* Pridaný tag [CATEGORY] v popise produktu
 
 = 1.41.8 =
 * Odstránené prázdne viacriadkové popisy položiek na faktúre

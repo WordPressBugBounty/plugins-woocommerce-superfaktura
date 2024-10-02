@@ -29,7 +29,7 @@ class WC_SuperFaktura {
 	 *
 	 * @var string
 	 */
-	protected $version = '1.41.8';
+	protected $version = '1.42.0';
 
 	/**
 	 * Database version.
@@ -1768,6 +1768,7 @@ class WC_SuperFaktura {
 								'[SHORT_DESCR]'               => $short_descr,
 								'[SKU]'                       => $product->get_sku(),
 								'[WEIGHT]'                    => $product->get_weight(),
+								'[CATEGORY]'                  => implode( ', ', wc_get_product_terms( $item['product_id'], 'product_cat', array( 'fields' => 'names', 'exclude' => get_option( 'default_product_cat', 0 ) ) ) ),
 							)
 						);
 						$item_data['description'] = trim( $this->replace_single_attribute_tags( $item['product_id'], $item_data['description'] ) );
