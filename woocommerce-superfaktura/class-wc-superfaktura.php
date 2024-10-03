@@ -29,7 +29,7 @@ class WC_SuperFaktura {
 	 *
 	 * @var string
 	 */
-	protected $version = '1.42.0';
+	protected $version = '1.42.1';
 
 	/**
 	 * Database version.
@@ -1768,7 +1768,7 @@ class WC_SuperFaktura {
 								'[SHORT_DESCR]'               => $short_descr,
 								'[SKU]'                       => $product->get_sku(),
 								'[WEIGHT]'                    => $product->get_weight(),
-								'[CATEGORY]'                  => implode( ', ', wc_get_product_terms( $item['product_id'], 'product_cat', array( 'fields' => 'names', 'exclude' => get_option( 'default_product_cat', 0 ) ) ) ),
+								'[CATEGORY]'                  => $this->get_product_category_names( $item['product_id'] ),
 							)
 						);
 						$item_data['description'] = trim( $this->replace_single_attribute_tags( $item['product_id'], $item_data['description'] ) );
@@ -2419,6 +2419,41 @@ class WC_SuperFaktura {
 		}
 
 		return $description;
+	}
+
+
+
+	/**
+	 * Get product category names.
+	 * If Yoast SEO is active and a primary category is set, return only the name of the primary category.
+	 *
+	 * @param int    $product_id Product ID.
+	 */
+	private function get_product_category_names( $product_id ) {
+		$categories = array();
+
+		// Check if Yoast SEO plugin is active.
+		if ( is_plugin_active( 'wordpress-seo/wp-seo.php' ) || is_plugin_active( 'wordpress-seo-premium/wp-seo-premium.php' ) ) {
+			// Get the primary category set by Yoast SEO.
+			$primary_term_id = get_post_meta( $product_id, '_yoast_wpseo_primary_product_cat', true );
+			if ( $primary_term_id ) {
+				$primary_category_term = get_term( $primary_term_id, 'product_cat' );
+				if ( ! is_wp_error( $primary_category_term ) && $primary_category_term ) {
+					$categories[] = $primary_category_term->name;
+				}
+			}
+		}
+
+		// If Yoast SEO is not active or no primary category is set, get all category names
+		if ( empty( $categories ) ) {
+			$categories = wc_get_product_terms( $produt_id, 'product_cat', array( 'fields' => 'names', 'exclude' => get_option( 'default_product_cat', 0 ) ) );
+		}
+
+		if (empty($categories) || is_wp_error($categories)) {
+			return false;
+		}
+
+		return implode(', ', $categories);
 	}
 
 
