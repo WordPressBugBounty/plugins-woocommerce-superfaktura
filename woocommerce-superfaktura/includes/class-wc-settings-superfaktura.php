@@ -704,7 +704,25 @@ class WC_Settings_SuperFaktura extends WC_Settings_Page {
 						'class'   => 'wc-enhanced-select',
 						'options' => $shop_order_status,
 					);
+
+					$settings[] = array(
+						'title'   => '',
+						'id'      => 'woocommerce_sf_invoice_proforma_' . $gateway->id . '_set_as_paid',
+						'default' => 'no',
+						'type'    => 'checkbox',
+						'desc'    => __( 'Create as paid', 'woocommerce-superfaktura' ),
+					);
 				}
+
+				$settings[] = array(
+					'type' => 'sectionend',
+					'id'   => 'woocommerce_wi_invoice_creation3',
+				);
+
+				$settings[] = array(
+					'type' => 'title',
+					'id'   => 'woocommerce_wi_invoice_creation4',
+				);
 
 				$settings[] = array(
 					'title'   => __( 'Manual Proforma Invoice Creation', 'woocommerce-superfaktura' ),
@@ -716,14 +734,14 @@ class WC_Settings_SuperFaktura extends WC_Settings_Page {
 
 				$settings[] = array(
 					'type' => 'sectionend',
-					'id'   => 'woocommerce_wi_invoice_creation3',
+					'id'   => 'woocommerce_wi_invoice_creation4',
 				);
 
 				$settings[] = array(
 					'title' => __( 'Experimental functions', 'woocommerce-superfaktura' ),
 					'type'  => 'title',
 					'desc'  => __( 'These features are either experimental or incomplete, enable them at your own risk!', 'woocommerce-superfaktura' ),
-					'id'    => 'woocommerce_wi_invoice_creation4',
+					'id'    => 'woocommerce_wi_invoice_creation5',
 				);
 
 				$settings[] = array(
@@ -744,7 +762,7 @@ class WC_Settings_SuperFaktura extends WC_Settings_Page {
 
 				$settings[] = array(
 					'type' => 'sectionend',
-					'id'   => 'woocommerce_wi_invoice_creation4',
+					'id'   => 'woocommerce_wi_invoice_creation5',
 				);
 
 				$settings = apply_filters( 'superfaktura_invoice_creation_settings', $settings );

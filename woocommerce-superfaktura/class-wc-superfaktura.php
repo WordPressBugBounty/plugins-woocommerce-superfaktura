@@ -29,7 +29,7 @@ class WC_SuperFaktura {
 	 *
 	 * @var string
 	 */
-	protected $version = '1.42.1';
+	protected $version = '1.42.2';
 
 	/**
 	 * Database version.
@@ -3443,11 +3443,15 @@ class WC_SuperFaktura {
 				}
 
 				#woocommerce_wi_invoice_creation1-description + .form-table tr:nth-child(odd) th,
-				#woocommerce_wi_invoice_creation1-description + .form-table tr:nth-child(odd) td {
+				#woocommerce_wi_invoice_creation1-description + .form-table tr:nth-child(odd) td,
+				#woocommerce_wi_invoice_creation3-description + .form-table tr:nth-child(odd) th,
+				#woocommerce_wi_invoice_creation3-description + .form-table tr:nth-child(odd) td {
 					padding-bottom: 0;
 				}
 				#woocommerce_wi_invoice_creation1-description + .form-table tr:nth-child(even) th,
-				#woocommerce_wi_invoice_creation1-description + .form-table tr:nth-child(even) td {
+				#woocommerce_wi_invoice_creation1-description + .form-table tr:nth-child(even) td,
+				#woocommerce_wi_invoice_creation3-description + .form-table tr:nth-child(even) th,
+				#woocommerce_wi_invoice_creation3-description + .form-table tr:nth-child(even) td {
 					padding-top: 0;
 				}
 
