@@ -1,10 +1,10 @@
 === SuperFaktura WooCommerce ===
-Contributors: webikon, johnnypea, savione, kravco, superfaktura, martinkrcho
+Contributors: superfaktura, webikon, johnnypea, savione, kravco, martinkrcho
 Tags: superfaktura, invoice, faktura, proforma, woocommerce
 Requires at least: 4.4
 Tested up to: 6.6.1
 Requires PHP: 7.4
-Stable tag: 1.42.2
+Stable tag: 1.42.3
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -33,9 +33,7 @@ Main features of SuperFaktura WooCommerce include:
 
 This plugin is not directly associated with superfaktura.sk, s.r.o. or with superfaktura cz, s.r.o. or oficially supported by their developers.
 
-Created by [Ján Bočínec](http://bocinec.sk/) with the support of [Slovak WordPress community](http://wp.sk/) and [WordPress agency Webikon](http://www.webikon.sk/).
-
-For priority support and more Woocommerce extensions (payment gateways, invoicing…) check [PlatobneBrany.sk](http://platobnebrany.sk/)
+Created by [Ján Bočínec](http://bocinec.sk/) with the support of [Slovak WordPress community](http://wp.sk/) and [WordPress agency Webikon](http://www.webikon.sk/). Since 2017 maintained by [2day.sk](https://www.2day.sk/).
 
 == Installation ==
 
@@ -66,6 +64,9 @@ This usually happens when you change your login email address. The email address
 You can read more about SuperFaktura API integration at [superfaktura.sk/api](http://www.superfaktura.sk/api/)
 
 == Changelog ==
+
+= 1.42.3 =
+* Opravená chyba v zozname kategórií pre tag [CATEGORY]
 
 = 1.42.2 =
 * Pridaná možnosť vystaviť zálohovú faktúru ako uhradenú.
