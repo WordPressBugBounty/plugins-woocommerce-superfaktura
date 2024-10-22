@@ -6,7 +6,7 @@
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
-    exit; // Exit if accessed directly.
+	exit; // Exit if accessed directly.
 }
 
 /**
@@ -38,14 +38,14 @@ class WC_SF_Invoice {
 
 
 	/**
-     * Generate or update an invoice.
-     *
-     * @param WC_Order $order Order.
-     * @param string   $type Invoice type.
-     * @param bool     $force_create Force creation of new invoice.
-     * @return bool|WP_Error True on success, WP_Error on failure.
-     */
-    public function generate_invoice( $order, $type, $force_create = false ) {
+	 * Generate or update an invoice.
+	 *
+	 * @param WC_Order $order Order.
+	 * @param string   $type Invoice type.
+	 * @param bool     $force_create Force creation of new invoice.
+	 * @return bool|WP_Error True on success, WP_Error on failure.
+	 */
+	public function generate_invoice( $order, $type, $force_create = false ) {
 
 		// Filter to allow skipping invoice creation.
 		$skip_invoice = apply_filters( 'sf_skip_invoice', false, $order );
@@ -505,9 +505,6 @@ class WC_SF_Invoice {
 						$possible_discount_tax_rates[ $tax_item->get_rate_id() ] = $tax_item->get_rate_percent();
 					}
 				}
-			}
-			if ( empty( $possible_discount_tax_rates ) ) {
-				$possible_discount_tax_rates = $tax_rates;
 			}
 
 			$refunds = $order->get_refunds();
@@ -1050,6 +1047,6 @@ class WC_SF_Invoice {
 
 		return true;
 
-    }
+	}
 
 }
