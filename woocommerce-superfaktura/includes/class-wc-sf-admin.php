@@ -22,17 +22,21 @@ if ( ! defined( 'ABSPATH' ) ) {
 class WC_SF_Admin {
 
     /**
-     * Instance of this class.
+     * Instance of WC_SuperFaktura.
      *
-     * @var object
+     * @var WC_SuperFaktura
      */
-    protected static $instance = null;
+    private $wc_sf;
 
     /**
-     * Initialize the class and set its properties.
+     * Constructor.
+     *
+     * @param WC_SuperFaktura $wc_sf Instance of WC_SuperFaktura.
      */
-    public function __construct() {
-        add_action( 'admin_init', array( $this, 'admin_init' ) );
+    public function __construct( $wc_sf ) {
+        $this->wc_sf = $wc_sf;
+
+		add_action( 'admin_init', array( $this, 'admin_init' ) );
         add_action( 'admin_notices', array( $this, 'admin_notices' ) );
         add_action( 'admin_notices', array( __CLASS__, 'order_number_notice_all' ) );
         add_action( 'woocommerce_settings_wc_superfaktura', array( __CLASS__, 'order_number_notice' ) );
@@ -41,21 +45,12 @@ class WC_SF_Admin {
     }
 
     /**
-     * Return an instance of this class.
+     * Initialize hooks.
      */
-    public static function get_instance() {
-        if ( null == self::$instance ) {
-            self::$instance = new self();
-        }
-        return self::$instance;
-    }
-
-	/**
-	 * Initialize the class and set its properties.
-	 */
 	public function init() {
-        add_filter( 'woocommerce_admin_order_actions', array( $this, 'add_custom_order_status_actions_button' ), 100, 2 );
         add_action( 'admin_head', array( $this, 'add_admin_css' ) );
+		add_action( 'woocommerce_get_settings_pages', array( $this, 'woocommerce_settings' ) );
+        add_filter( 'woocommerce_admin_order_actions', array( $this, 'add_custom_order_status_actions_button' ), 100, 2 );
 	}
 
 	/**
@@ -72,19 +67,19 @@ class WC_SF_Admin {
 			$result     = true;
 			$result_msg = '';
 			if ( isset( $_GET['sf_regen'] ) ) {
-				$result      = WC_SuperFaktura::get_instance()->sf_regen_invoice( $order_id );
+				$result      = $this->wc_sf->sf_regen_invoice( $order_id );
 				$result_msg .= 'regen';
 			} elseif ( isset( $_GET['sf_invoice_proforma_create'] ) ) {
 				$order       = wc_get_order( $order_id );
-				$result      = WC_SuperFaktura::get_instance()->invoice_generator->generate_invoice( $order, 'proforma', isset( $_GET['force_create'] ) );
+				$result      = $this->wc_sf->invoice_generator->generate_invoice( $order, 'proforma', isset( $_GET['force_create'] ) );
 				$result_msg .= 'proforma';
 			} elseif ( isset( $_GET['sf_invoice_regular_create'] ) ) {
 				$order       = wc_get_order( $order_id );
-				$result      = WC_SuperFaktura::get_instance()->invoice_generator->generate_invoice( $order, 'regular', isset( $_GET['force_create'] ) );
+				$result      = $this->wc_sf->invoice_generator->generate_invoice( $order, 'regular', isset( $_GET['force_create'] ) );
 				$result_msg .= 'regular';
 			} elseif ( isset( $_GET['sf_invoice_cancel_create'] ) ) {
 				$order       = wc_get_order( $order_id );
-				$result      = WC_SuperFaktura::get_instance()->invoice_generator->generate_invoice( $order, 'cancel', isset( $_GET['force_create'] ) );
+				$result      = $this->wc_sf->invoice_generator->generate_invoice( $order, 'cancel', isset( $_GET['force_create'] ) );
 				$result_msg .= 'cancel';
 			}
 
@@ -117,14 +112,14 @@ class WC_SF_Admin {
 				<a class="button button-primary" href="https://moja.superfaktura.sk/shoppings/index/api_limit_increase/recommended_increase:' . ( ceil ( ( abs( $api_usage['dailyremaining'] ) + 100 ) / 1000 ) * 1000 ) . '/recommended_duration:8">' . __( 'Increase the number of API requests', 'woocommerce-superfaktura' ) . '</a>
 			';
 
-			echo sprintf( wp_kses( '<div class="notice notice-error"><p>%s</p></div>', WC_SuperFaktura::get_instance()->allowed_tags ), $api_usage_notice );
+			echo sprintf( wp_kses( '<div class="notice notice-error"><p>%s</p></div>', $this->wc_sf->allowed_tags ), $api_usage_notice );
 		}
 
 		// Show notices saved in database.
 		$admin_notices = get_option( 'woocommerce_sf_admin_notices', array() );
 		if ( ! empty( $admin_notices ) ) {
 			foreach ( $admin_notices as $admin_notice ) {
-				echo sprintf( wp_kses( '<div class="notice notice-%s is-dismissible"><p>%s</p></div>', WC_SuperFaktura::get_instance()->allowed_tags ), $admin_notice['type'], $admin_notice['text'] );
+				echo sprintf( wp_kses( '<div class="notice notice-%s is-dismissible"><p>%s</p></div>', $this->wc_sf->allowed_tags ), $admin_notice['type'], $admin_notice['text'] );
 			}
 			delete_option( 'woocommerce_sf_admin_notices' );
 		}
@@ -140,43 +135,43 @@ class WC_SF_Admin {
 		switch ( $_GET['sf_msg'] ) {
 
 			case 'proforma_ok':
-				echo wp_kses( '<div class="notice notice-success is-dismissible"><p>' . __( 'Proforma invoice was created.', 'woocommerce-superfaktura' ) . '</p></div>', WC_SuperFaktura::get_instance()->allowed_tags );
+				echo wp_kses( '<div class="notice notice-success is-dismissible"><p>' . __( 'Proforma invoice was created.', 'woocommerce-superfaktura' ) . '</p></div>', $this->wc_sf->allowed_tags );
 				break;
 
 			case 'regular_ok':
-				echo wp_kses( '<div class="notice notice-success is-dismissible"><p>' . __( 'Invoice was created.', 'woocommerce-superfaktura' ) . '</p></div>', WC_SuperFaktura::get_instance()->allowed_tags );
+				echo wp_kses( '<div class="notice notice-success is-dismissible"><p>' . __( 'Invoice was created.', 'woocommerce-superfaktura' ) . '</p></div>', $this->wc_sf->allowed_tags );
 				break;
 
 			case 'cancel_ok':
-				echo wp_kses( '<div class="notice notice-success is-dismissible"><p>' . __( 'Credit note was created.', 'woocommerce-superfaktura' ) . '</p></div>', WC_SuperFaktura::get_instance()->allowed_tags );
+				echo wp_kses( '<div class="notice notice-success is-dismissible"><p>' . __( 'Credit note was created.', 'woocommerce-superfaktura' ) . '</p></div>', $this->wc_sf->allowed_tags );
 				break;
 
 			case 'regen_ok':
-				echo wp_kses( '<div class="notice notice-success is-dismissible"><p>' . __( 'Documents were regenerated.', 'woocommerce-superfaktura' ) . '</p></div>', WC_SuperFaktura::get_instance()->allowed_tags );
+				echo wp_kses( '<div class="notice notice-success is-dismissible"><p>' . __( 'Documents were regenerated.', 'woocommerce-superfaktura' ) . '</p></div>', $this->wc_sf->allowed_tags );
 				break;
 
 			case 'proforma_failed':
-				echo wp_kses( '<div class="notice notice-error is-dismissible"><p>' . __( 'Proforma invoice was not created.', 'woocommerce-superfaktura' ) . ' ' . $see_api_log . '</p></div>', WC_SuperFaktura::get_instance()->allowed_tags );
+				echo wp_kses( '<div class="notice notice-error is-dismissible"><p>' . __( 'Proforma invoice was not created.', 'woocommerce-superfaktura' ) . ' ' . $see_api_log . '</p></div>', $this->wc_sf->allowed_tags );
 				break;
 
 			case 'regular_failed':
-				echo wp_kses( '<div class="notice notice-error is-dismissible"><p>' . __( 'Invoice was not created.', 'woocommerce-superfaktura' ) . ' ' . $see_api_log . '</p></div>', WC_SuperFaktura::get_instance()->allowed_tags );
+				echo wp_kses( '<div class="notice notice-error is-dismissible"><p>' . __( 'Invoice was not created.', 'woocommerce-superfaktura' ) . ' ' . $see_api_log . '</p></div>', $this->wc_sf->allowed_tags );
 				break;
 
 			case 'cancel_failed':
-				echo wp_kses( '<div class="notice notice-error is-dismissible"><p>' . __( 'Credit note was not created.', 'woocommerce-superfaktura' ) . ' ' . $see_api_log . '</p></div>', WC_SuperFaktura::get_instance()->allowed_tags );
+				echo wp_kses( '<div class="notice notice-error is-dismissible"><p>' . __( 'Credit note was not created.', 'woocommerce-superfaktura' ) . ' ' . $see_api_log . '</p></div>', $this->wc_sf->allowed_tags );
 				break;
 
 			case 'regen_failed':
-				echo wp_kses( '<div class="notice notice-error is-dismissible"><p>' . __( 'Documents were not regenerated.', 'woocommerce-superfaktura' ) . ' ' . $see_api_log . '</p></div>', WC_SuperFaktura::get_instance()->allowed_tags );
+				echo wp_kses( '<div class="notice notice-error is-dismissible"><p>' . __( 'Documents were not regenerated.', 'woocommerce-superfaktura' ) . ' ' . $see_api_log . '</p></div>', $this->wc_sf->allowed_tags );
 				break;
 
 			case 'duplicate_document':
-				echo wp_kses( '<div class="notice notice-error is-dismissible"><p>' . __( 'Document was not created, because it already exists.', 'woocommerce-superfaktura' ) . '</p></div>', WC_SuperFaktura::get_instance()->allowed_tags );
+				echo wp_kses( '<div class="notice notice-error is-dismissible"><p>' . __( 'Document was not created, because it already exists.', 'woocommerce-superfaktura' ) . '</p></div>', $this->wc_sf->allowed_tags );
 				break;
 
 			default:
-				echo wp_kses( '<div class="notice notice-warning is-dismissible"><p>' . wp_unslash( $_GET['sf_msg'] ) . '</p></div>', WC_SuperFaktura::get_instance()->allowed_tags );
+				echo wp_kses( '<div class="notice notice-warning is-dismissible"><p>' . wp_unslash( $_GET['sf_msg'] ) . '</p></div>', $this->wc_sf->allowed_tags );
 				break;
 		}
     }
@@ -231,7 +226,7 @@ class WC_SF_Admin {
      * Register scripts for admin pages.
      */
     public function admin_enqueue_scripts() {
-		wp_enqueue_script( 'wc-sf-admin-js', plugins_url( 'assets/js/admin.js', WC_SF_FILE_PATH ), array( 'jquery' ), WC_SuperFaktura::get_instance()->version, true );
+		wp_enqueue_script( 'wc-sf-admin-js', plugins_url( 'assets/js/admin.js', WC_SF_FILE_PATH ), array( 'jquery' ), $this->wc_sf->version, true );
 		wp_localize_script( 'wc-sf-admin-js', 'wc_sf', array( 'ajaxnonce'   => wp_create_nonce( 'ajax_validation' ) ) );
     }
 
@@ -240,7 +235,7 @@ class WC_SF_Admin {
      */
     public function add_meta_boxes() {
 		try {
-			$screen = WC_SuperFaktura::get_instance()->hpos_enabled() ? wc_get_page_screen_id( 'shop-order' ) : 'shop_order';
+			$screen = $this->wc_sf->hpos_enabled() ? wc_get_page_screen_id( 'shop-order' ) : 'shop_order';
 		} catch ( Exception $e ) {
 			$screen = 'shop_order';
 		}
@@ -265,35 +260,35 @@ class WC_SF_Admin {
 		$invoice  = $order->get_meta( 'wc_sf_invoice_regular', true );
 		$cancel   = $order->get_meta( 'wc_sf_invoice_cancel', true );
 
-		echo wp_kses( '<p><strong>' . __( 'View Generated Invoices', 'woocommerce-superfaktura' ) . '</strong>:', WC_SuperFaktura::get_instance()->allowed_tags );
+		echo wp_kses( '<p><strong>' . __( 'View Generated Invoices', 'woocommerce-superfaktura' ) . '</strong>:', $this->wc_sf->allowed_tags );
 		if ( empty( $proforma ) && empty( $invoice ) ) {
-			echo wp_kses( '<br>' . __( 'No invoice was generated', 'woocommerce-superfaktura' ), WC_SuperFaktura::get_instance()->allowed_tags );
+			echo wp_kses( '<br>' . __( 'No invoice was generated', 'woocommerce-superfaktura' ), $this->wc_sf->allowed_tags );
 		}
-		echo wp_kses( '</p>', WC_SuperFaktura::get_instance()->allowed_tags );
+		echo wp_kses( '</p>', $this->wc_sf->allowed_tags );
 
 		if ( ! empty( $proforma ) ) {
 			$error_html = sprintf( '%s<br><a href="%s">%s</a>', __( 'Proforma could not be found in SuperFaktura.', 'woocommerce-superfaktura' ), admin_url( 'admin.php?sf_invoice_proforma_create=1&force_create=1&sf_order=' . $order->get_id() ), __( 'Create new proforma invoice', 'woocommerce-superfaktura' ) );
-			echo wp_kses( '<p><a href="' . $proforma . '" class="button sf-url-check" data-error="' . htmlentities( $error_html ) . '" target="_blank">' . __( 'Proforma', 'woocommerce-superfaktura' ) . '</a></p>', WC_SuperFaktura::get_instance()->allowed_tags );
+			echo wp_kses( '<p><a href="' . $proforma . '" class="button sf-url-check" data-error="' . htmlentities( $error_html ) . '" target="_blank">' . __( 'Proforma', 'woocommerce-superfaktura' ) . '</a></p>', $this->wc_sf->allowed_tags );
 		} elseif ( 'yes' === get_option( 'woocommerce_sf_invoice_proforma_manual', 'no' ) ) {
-			echo wp_kses( '<p><a href="' . admin_url( 'admin.php?sf_invoice_proforma_create=1&sf_order=' . $order->get_id() ) . '">' . __( 'Create proforma invoice', 'woocommerce-superfaktura' ) . '</a></p>', WC_SuperFaktura::get_instance()->allowed_tags );
+			echo wp_kses( '<p><a href="' . admin_url( 'admin.php?sf_invoice_proforma_create=1&sf_order=' . $order->get_id() ) . '" class="sf-prevent-duplicity">' . __( 'Create proforma invoice', 'woocommerce-superfaktura' ) . '</a></p>', $this->wc_sf->allowed_tags );
 		}
 
 		if ( ! empty( $invoice ) ) {
 			$error_html = sprintf( '%s<br><a href="%s">%s</a>', __( 'Invoice could not be found in SuperFaktura.', 'woocommerce-superfaktura' ), admin_url( 'admin.php?sf_invoice_regular_create=1&force_create=1&sf_order=' . $order->get_id() ), __( 'Create new invoice', 'woocommerce-superfaktura' ) );
-			echo wp_kses( '<p><a href="' . $invoice . '" class="button sf-url-check" data-error="' . htmlentities( $error_html ) . '" target="_blank">' . __( 'Invoice', 'woocommerce-superfaktura' ) . '</a></p>', WC_SuperFaktura::get_instance()->allowed_tags );
+			echo wp_kses( '<p><a href="' . $invoice . '" class="button sf-url-check" data-error="' . htmlentities( $error_html ) . '" target="_blank">' . __( 'Invoice', 'woocommerce-superfaktura' ) . '</a></p>', $this->wc_sf->allowed_tags );
 		} elseif ( 'yes' === get_option( 'woocommerce_sf_invoice_regular_manual', 'no' ) ) {
-			echo wp_kses( '<p><a href="' . admin_url( 'admin.php?sf_invoice_regular_create=1&sf_order=' . $order->get_id() ) . '">' . __( 'Create invoice', 'woocommerce-superfaktura' ) . '</a></p>', WC_SuperFaktura::get_instance()->allowed_tags );
+			echo wp_kses( '<p><a href="' . admin_url( 'admin.php?sf_invoice_regular_create=1&sf_order=' . $order->get_id() ) . '" class="sf-prevent-duplicity">' . __( 'Create invoice', 'woocommerce-superfaktura' ) . '</a></p>', $this->wc_sf->allowed_tags );
 		}
 
 		if ( ! empty( $cancel ) ) {
 			$error_html = sprintf( '%s<br><a href="%s">%s</a>', __( 'Credit note could not be found in SuperFaktura.', 'woocommerce-superfaktura' ), admin_url( 'admin.php?sf_invoice_cancel_create=1&force_create=1&sf_order=' . $order->get_id() ), __( 'Create new credit note', 'woocommerce-superfaktura' ) );
-			echo wp_kses( '<p><a href="' . $cancel . '" class="button sf-url-check" data-error="' . htmlentities( $error_html ) . '" target="_blank">' . __( 'Credit note', 'woocommerce-superfaktura' ) . '</a></p>', WC_SuperFaktura::get_instance()->allowed_tags );
+			echo wp_kses( '<p><a href="' . $cancel . '" class="button sf-url-check" data-error="' . htmlentities( $error_html ) . '" target="_blank">' . __( 'Credit note', 'woocommerce-superfaktura' ) . '</a></p>', $this->wc_sf->allowed_tags );
 		} elseif ( ! empty( $invoice ) && ( $order->get_refunds() || in_array( $order->get_status(), array( 'cancelled', 'refunded', 'failed' ), true ) ) ) {
-			echo wp_kses( '<p><a href="' . admin_url( 'admin.php?sf_invoice_cancel_create=1&sf_order=' . $order->get_id() ) . '">' . __( 'Create credit note', 'woocommerce-superfaktura' ) . '</a></p>', WC_SuperFaktura::get_instance()->allowed_tags );
+			echo wp_kses( '<p><a href="' . admin_url( 'admin.php?sf_invoice_cancel_create=1&sf_order=' . $order->get_id() ) . '" class="sf-prevent-duplicity">' . __( 'Create credit note', 'woocommerce-superfaktura' ) . '</a></p>', $this->wc_sf->allowed_tags );
 		}
 
-		if ( ( ! empty( $proforma ) || ! empty( $invoice ) ) && WC_SuperFaktura::get_instance()->invoice_generator->sf_can_regenerate( $order ) ) {
-			echo wp_kses( '<p><a href="' . esc_url( admin_url( 'admin.php?sf_regen=1&sf_order=' . $order->get_id() ) ) . '">' . __( 'Regenerate existing invoices', 'woocommerce-superfaktura' ) . '</a></p>', WC_SuperFaktura::get_instance()->allowed_tags );
+		if ( ( ! empty( $proforma ) || ! empty( $invoice ) ) && $this->wc_sf->invoice_generator->sf_can_regenerate( $order ) ) {
+			echo wp_kses( '<p><a href="' . esc_url( admin_url( 'admin.php?sf_regen=1&sf_order=' . $order->get_id() ) ) . '" class="sf-prevent-duplicity">' . __( 'Regenerate existing invoices', 'woocommerce-superfaktura' ) . '</a></p>', $this->wc_sf->allowed_tags );
 		}
 
 		// 2020/07/01 webikon: Added an action that allows to add content after the invoice button
@@ -399,7 +394,18 @@ class WC_SF_Admin {
 				}
 				</style>
 			',
-			WC_SuperFaktura::get_instance()->allowed_tags
+			$this->wc_sf->allowed_tags
 		);
     }
+
+	/**
+	 * Create tab in WooCommerce settings.
+	 *
+	 * @param array $settings WooCommerce settings.
+	 */
+	public function woocommerce_settings( $settings ) {
+		require_once plugin_dir_path( WC_SF_FILE_PATH ) . 'includes/class-wc-sf-settings.php';
+		$settings[] = new WC_SF_Settings( $this->wc_sf );
+		return $settings;
+	}
 }

@@ -17,6 +17,12 @@
  */
 class WC_SF_Settings extends WC_Settings_Page {
 
+    /**
+     * Instance of WC_SuperFaktura.
+     *
+     * @var WC_SuperFaktura
+     */
+    private $wc_sf;
 
 	/**
 	 * A notice to show on the settings screen
@@ -25,8 +31,6 @@ class WC_SF_Settings extends WC_Settings_Page {
 	 */
 	protected $notice;
 
-
-
 	/**
 	 * Allowed tags in HTML output.
 	 *
@@ -34,12 +38,12 @@ class WC_SF_Settings extends WC_Settings_Page {
 	 */
 	protected $allowed_tags;
 
-
-
 	/**
 	 * Initialize the class and set its properties.
 	 */
-	public function __construct() {
+	public function __construct( $wc_sf ) {
+		$this->wc_sf = $wc_sf;
+
 		$this->id    = 'superfaktura';
 		$this->label = __( 'SuperFaktúra', 'woocommerce-superfaktura' );
 
@@ -80,38 +84,53 @@ class WC_SF_Settings extends WC_Settings_Page {
 
 
 	/**
-	 * Get list of payment methods from SuperFaktura.
+	 * Get data from SuperFaktura.
+	 *
+	 * @param string $error_message Custom error message to use if the API call fails.
+	 * @return mixed|null Response data or null on failure.
 	 */
-	private function get_sf_payment_methods() {
-
+	private function get_sf_data($error_message = null) {
 		try {
-			$wcsf     = WC_SuperFaktura::get_instance();
-			$api      = $wcsf->sf_api();
+			$api = $this->wc_sf->sf_api();
 			$response = $api->get( '/dashboard/full_data' );
-
-			$payment_methods = array(
-				'0' => __( 'Don\'t use', 'woocommerce-superfaktura' ),
-			);
 
 			if ( empty( $response ) ) {
 				$error = $api->getLastError();
 				throw new Exception( __( $error['message'] ) );
 			}
 
+			return $response;
+		} catch ( Exception $e ) {
+			if ($error_message === null) {
+				$error_message = __( 'Data could not be loaded from SuperFaktura due to the following error:', 'woocommerce-superfaktura' );
+			}
+			$this->notice = sprintf( '%s<br><em>%s</em>', $error_message, $e->getMessage() );
+			return null;
+		}
+	}
+
+
+	/**
+	 * Get list of payment methods from SuperFaktura.
+	 */
+	private function get_sf_payment_methods() {
+		$payment_methods = array(
+			'0' => __( 'Don\'t use', 'woocommerce-superfaktura' ),
+		);
+
+		$error_message = __( 'Payment methods could not be loaded from SuperFaktura due to the following error:', 'woocommerce-superfaktura' );
+		$response = $this->get_sf_data($error_message);
+
+		if ( $response ) {
 			foreach ( $response->company->custom_options->invoice->payment as $payment ) {
 				if ( 1 != $payment->active || 'custom' === $payment->key ) {
 					continue;
 				}
-
-				$payment_methods[ $payment->key ] = $payment->name;
+				$payment_methods[$payment->key] = $payment->name;
 			}
-
-			$payment_methods['other'] = __( 'Other', 'woocommerce-superfaktura' );
-		} catch ( Exception $e ) {
-			$this->notice = sprintf( '%s<br><em>%s</em>', __( 'Payment methods could not be loaded from SuperFaktura due to the following error:', 'woocommerce-superfaktura' ), $e->getMessage() );
-
-			$payment_methods = array(
-				'0'             => __( 'Don\'t use', 'woocommerce-superfaktura' ),
+		} else {
+			// Fallback to default payment methods.
+			$payment_methods = array_merge( $payment_methods, array(
 				'cash'          => __( 'Cash', 'woocommerce-superfaktura' ),
 				'cod'           => __( 'Cash on delivery', 'woocommerce-superfaktura' ),
 				'transfer'      => __( 'Transfer', 'woocommerce-superfaktura' ),
@@ -127,51 +146,41 @@ class WC_SF_Settings extends WC_Settings_Page {
 				'inkaso'        => __( 'Encashment', 'woocommerce-superfaktura' ),
 				'postal_order'  => __( 'Postal money order', 'woocommerce-superfaktura' ),
 				'accreditation' => __( 'Mutual credit', 'woocommerce-superfaktura' ),
-				'other'         => __( 'Other', 'woocommerce-superfaktura' ),
-			);
+			) );
 		}
+
+		$payment_methods['other'] = __( 'Other', 'woocommerce-superfaktura' );
 
 		return $payment_methods;
 	}
-
-
 
 	/**
 	 * Get list of shipping methods from SuperFaktura.
 	 */
 	private function get_sf_shipping_methods() {
-		try {
-			$wcsf     = WC_SuperFaktura::get_instance();
-			$api      = $wcsf->sf_api();
-			$response = $api->get( '/dashboard/full_data' );
+		$shipping_methods = array(
+			'0' => __( 'Don\'t use', 'woocommerce-superfaktura' ),
+		);
 
-			$shipping_methods = array(
-				'0' => __( 'Don\'t use', 'woocommerce-superfaktura' ),
-			);
+		$error_message = __( 'Shipping methods could not be loaded from SuperFaktura due to the following error:', 'woocommerce-superfaktura' );
+		$response = $this->get_sf_data($error_message);
 
-			if ( empty( $response ) ) {
-				$error = $api->getLastError();
-				throw new Exception( __( $error['message'] ) );
-			}
-
+		if ( $response ) {
 			foreach ( $response->company->custom_options->invoice->delivery as $delivery ) {
 				if ( 1 != $delivery->active || 'custom' === $delivery->key ) {
 					continue;
 				}
-
-				$shipping_methods[ $delivery->key ] = $delivery->name;
+				$shipping_methods[$delivery->key] = $delivery->name;
 			}
-		} catch ( Exception $e ) {
-			$this->notice = sprintf( '%s<br><em>%s</em>', __( 'Shipping methods could not be loaded from SuperFaktura due to the following error:', 'woocommerce-superfaktura' ), $e->getMessage() );
-
-			$shipping_methods = array(
-				'0'            => __( 'Don\'t use', 'woocommerce-superfaktura' ),
+		} else {
+			// Fallback to default shipping methods.
+			$shipping_methods = array_merge( $shipping_methods, array(
 				'mail'         => __( 'By mail', 'woocommerce-superfaktura' ),
 				'courier'      => __( 'By courier', 'woocommerce-superfaktura' ),
 				'personal'     => __( 'Personal pickup', 'woocommerce-superfaktura' ),
 				'haulage'      => __( 'Freight', 'woocommerce-superfaktura' ),
 				'pickup_point' => __( 'Pickup point', 'woocommerce-superfaktura' ),
-			);
+			) );
 		}
 
 		return $shipping_methods;

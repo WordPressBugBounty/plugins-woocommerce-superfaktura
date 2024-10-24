@@ -145,4 +145,12 @@ jQuery(document).ready(function($) {
 			}
 		});
 	});
+
+
+
+	// prevent double-clicking on links
+	$('a.sf-prevent-duplicity').on('click', function(e) {
+		$(this).css('pointer-events', 'none');
+	});
+
 });

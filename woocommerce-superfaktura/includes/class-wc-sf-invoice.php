@@ -14,7 +14,21 @@ if ( ! defined( 'ABSPATH' ) ) {
  */
 class WC_SF_Invoice {
 
+    /**
+     * Instance of WC_SuperFaktura.
+     *
+     * @var WC_SuperFaktura
+     */
+    private $wc_sf;
 
+    /**
+     * Constructor.
+     *
+     * @param WC_SuperFaktura $wc_sf Instance of WC_SuperFaktura.
+     */
+    public function __construct( $wc_sf ) {
+        $this->wc_sf = $wc_sf;
+    }
 
 	/**
 	 * Check if invoices can be regenerated.
@@ -56,7 +70,7 @@ class WC_SF_Invoice {
 		try {
 
 			$credentials = apply_filters( 'sf_order_api_credentials', array(), $order );
-			$api         = WC_SuperFaktura::get_instance()->sf_api( $credentials );
+			$api         = $this->wc_sf->sf_api( $credentials );
 
 			if ( $force_create ) {
 				$sf_id = null;
@@ -81,7 +95,7 @@ class WC_SF_Invoice {
 							return new WP_Error( 'duplicate_document', __( 'Document was not created, because it already exists.', 'woocommerce-superfaktura' ) );
 						}
 
-						WC_SuperFaktura::get_instance()->sf_clean_invoice_items( $sf_id, $api );
+						$this->wc_sf->sf_clean_invoice_items( $sf_id, $api );
 						$edit = true;
 					}
 				}
@@ -97,7 +111,7 @@ class WC_SF_Invoice {
 
 			/* CLIENT DATA */
 
-			if ( WC_SuperFaktura::get_instance()->wc_nastavenia_skcz_activated ) {
+			if ( $this->wc_sf->wc_nastavenia_skcz_activated ) {
 				$plugin  = Webikon\Woocommerce_Plugin\WC_Nastavenia_SKCZ\Plugin::get_instance();
 				$details = $plugin->get_customer_details( $order->get_id() );
 				$ico     = $details->get_company_id();
@@ -331,7 +345,7 @@ class WC_SF_Invoice {
 					);
 				}
 
-				if ( ( $client_data['ic_dph'] && WC()->countries->get_base_country() !== $order->get_billing_country() ) || ( in_array( WC()->countries->get_base_country(), array( 'SK', 'CZ' ), true ) && $order->get_billing_country() && ! in_array( $order->get_billing_country(), WC_SuperFaktura::get_instance()->eu_countries, true ) ) ) {
+				if ( ( $client_data['ic_dph'] && WC()->countries->get_base_country() !== $order->get_billing_country() ) || ( in_array( WC()->countries->get_base_country(), array( 'SK', 'CZ' ), true ) && $order->get_billing_country() && ! in_array( $order->get_billing_country(), $this->wc_sf->eu_countries, true ) ) ) {
 					$set_invoice_data['vat_transfer'] = 1;
 
 					$sf_tax_liability = get_option( 'woocommerce_sf_tax_liability' );
@@ -435,7 +449,7 @@ class WC_SF_Invoice {
 			/* INVOICE SETTINGS */
 
 			$settings = array(
-				'language'     => WC_SuperFaktura::get_instance()->get_language( $order->get_id(), get_option( 'woocommerce_sf_invoice_language' ), true ),
+				'language'     => $this->wc_sf->get_language( $order->get_id(), get_option( 'woocommerce_sf_invoice_language' ), true ),
 				'signature'    => true,
 				'payment_info' => true,
 				'bysquare'     => 'yes' === get_option( 'woocommerce_sf_bysquare', 'yes' ),
@@ -452,7 +466,7 @@ class WC_SF_Invoice {
 			if ( 'yes' === get_option( 'woocommerce_sf_oss', 'no' ) ) {
 
 				// Pri vystavení faktúry s odberateľom z inej krajiny EÚ, ktorý je súkromná osoba (nepodnikateľ) alebo firma bez IČ DPH.
-				if ( empty( $client_data['ic_dph'] ) && WC()->countries->get_base_country() !== $order->get_billing_country() && in_array( $order->get_billing_country(), WC_SuperFaktura::get_instance()->eu_countries, true ) ) {
+				if ( empty( $client_data['ic_dph'] ) && WC()->countries->get_base_country() !== $order->get_billing_country() && in_array( $order->get_billing_country(), $this->wc_sf->eu_countries, true ) ) {
 					$extras['oss'] = true;
 				}
 			}
@@ -475,7 +489,7 @@ class WC_SF_Invoice {
 
 			/* PAYMENT STATUS */
 
-			if ( WC_SuperFaktura::get_instance()->order_is_paid( $order ) || 'yes' === get_option( 'woocommerce_sf_invoice_' . $type . '_' . $order->get_payment_method() . '_set_as_paid', 'no' ) ) {
+			if ( $this->wc_sf->order_is_paid( $order ) || 'yes' === get_option( 'woocommerce_sf_invoice_' . $type . '_' . $order->get_payment_method() . '_set_as_paid', 'no' ) ) {
 
 				// Check if proforma was already paid.
 				$proforma_already_paid = false;
@@ -612,7 +626,7 @@ class WC_SF_Invoice {
 							$item_data['discount']             = $item_discount_percent;
 							$item_data['discount_description'] = __( get_option( 'woocommerce_sf_discount_name', 'Zľava' ), 'woocommerce-superfaktura' );
 
-							$discount_description = WC_SuperFaktura::get_instance()->get_discount_description( $order );
+							$discount_description = $this->wc_sf->get_discount_description( $order );
 							if ( $discount_description ) {
 								$item_data['discount_description'] .= ', ' . $discount_description;
 							}
@@ -623,19 +637,19 @@ class WC_SF_Invoice {
 					$product    = wc_get_product( $product_id );
 
 					if ($product) {
-						$attributes                = WC_SuperFaktura::get_instance()->format_item_meta( $item, $product );
-						$non_variations_attributes = WC_SuperFaktura::get_instance()->get_non_variations_attributes( $item['product_id'] );
+						$attributes                = $this->wc_sf->format_item_meta( $item, $product );
+						$non_variations_attributes = $this->wc_sf->get_non_variations_attributes( $item['product_id'] );
 						if ( $product->is_type( 'variation' ) ) {
-							$variation = WC_SuperFaktura::get_instance()->convert_to_plaintext( $product->get_description() );
+							$variation = $this->wc_sf->convert_to_plaintext( $product->get_description() );
 
 							$parent_product = wc_get_product( $item['product_id'] );
-							$short_descr    = WC_SuperFaktura::get_instance()->convert_to_plaintext( $parent_product->get_short_description() );
+							$short_descr    = $this->wc_sf->convert_to_plaintext( $parent_product->get_short_description() );
 						} else {
 							$variation   = '';
-							$short_descr = WC_SuperFaktura::get_instance()->convert_to_plaintext( $product->get_short_description() );
+							$short_descr = $this->wc_sf->convert_to_plaintext( $product->get_short_description() );
 						}
 
-						$template = get_option( 'woocommerce_sf_product_description', WC_SuperFaktura::get_instance()->product_description_template_default );
+						$template = get_option( 'woocommerce_sf_product_description', $this->wc_sf->product_description_template_default );
 
 						$item_data['description'] = strtr(
 							$template,
@@ -646,10 +660,10 @@ class WC_SF_Invoice {
 								'[SHORT_DESCR]'               => $short_descr,
 								'[SKU]'                       => $product->get_sku(),
 								'[WEIGHT]'                    => $product->get_weight(),
-								'[CATEGORY]'                  => WC_SuperFaktura::get_instance()->get_product_category_names( $item['product_id'] ),
+								'[CATEGORY]'                  => $this->wc_sf->get_product_category_names( $item['product_id'] ),
 							)
 						);
-						$item_data['description'] = trim( WC_SuperFaktura::get_instance()->replace_single_attribute_tags( $item['product_id'], $item_data['description'] ) );
+						$item_data['description'] = trim( $this->wc_sf->replace_single_attribute_tags( $item['product_id'], $item_data['description'] ) );
 
 						// Compatibility with WooCommerce Wholesale Pricing plugin.
 						$wprice = get_post_meta( $product->get_id(), 'wholesale_price', true );
@@ -826,7 +840,7 @@ class WC_SF_Invoice {
 						// We use highest tax rate (in case there are several different tax rates in the order).
 						$discount_tax = ( $possible_discount_tax_rates ) ? max( $possible_discount_tax_rates ) : 0;
 
-						$discount_description = WC_SuperFaktura::get_instance()->get_discount_description( $order );
+						$discount_description = $this->wc_sf->get_discount_description( $order );
 
 						$discount_data = array(
 							'name'        => __( get_option( 'woocommerce_sf_discount_name', 'Zľava' ), 'woocommerce-superfaktura' ),
@@ -894,7 +908,7 @@ class WC_SF_Invoice {
 		} catch ( Throwable $e ) {
 
 			// Add log entry.
-			WC_SuperFaktura::get_instance()->wc_sf_log(
+			$this->wc_sf->wc_sf_log(
 				array(
 					'order_id'         => $order->get_id(),
 					'document_type'    => $type,
@@ -933,7 +947,7 @@ class WC_SF_Invoice {
 				$invoice_id = apply_filters( 'wc_sf_invoice_id', false, $type, $order );
 
 				if ( ! $invoice_id ) {
-					$invoice_id = 'yes' === get_option( 'woocommerce_sf_invoice_custom_num' ) ? WC_SuperFaktura::get_instance()->generate_invoice_id( $order, $type ) : '';
+					$invoice_id = 'yes' === get_option( 'woocommerce_sf_invoice_custom_num' ) ? $this->wc_sf->generate_invoice_id( $order, $type ) : '';
 				}
 
 				$args['invoice_no_formatted'] = $invoice_id;
@@ -972,7 +986,7 @@ class WC_SF_Invoice {
 				'yes' === get_option( 'woocommerce_sf_retry_failed_api_calls', 'no' ) && // only if "Retry failed API calls" is enabled in plugin settings
 				isset( $error['code'] ) && 'http_request_failed' == $error['code']       // only if the API call failed with "http_request_failed"
 			) {
-				WC_SuperFaktura::get_instance()->retry_generate_invoice_schedule( $order, $type );
+				$this->wc_sf->retry_generate_invoice_schedule( $order, $type );
 			}
 
 		} elseif ( isset( $response->error ) && $response->error ) {
@@ -998,7 +1012,7 @@ class WC_SF_Invoice {
 			}
 		}
 
-		WC_SuperFaktura::get_instance()->wc_sf_log( $log_data );
+		$this->wc_sf->wc_sf_log( $log_data );
 
 		if ( empty( $response ) || ( isset( $response->error ) && 0 !== $response->error ) ) {
 			return false;
@@ -1021,7 +1035,7 @@ class WC_SF_Invoice {
 		$order->update_meta_data( 'wc_sf_' . $type . '_invoice_number', $invoice_number );
 
 		// Save pdf url.
-		$language = WC_SuperFaktura::get_instance()->get_language( $order->get_id(), get_option( 'woocommerce_sf_invoice_language' ), true );
+		$language = $this->wc_sf->get_language( $order->get_id(), get_option( 'woocommerce_sf_invoice_language' ), true );
 		$pdf      = ( ( 'yes' === get_option( 'woocommerce_sf_sandbox', 'no' ) ) ? $api::SANDBOX_URL : $api::SFAPI_URL ) . '/' . $language . '/invoices/pdf/' . $internal_id . '/token:' . $response->data->Invoice->token;
 		$order->update_meta_data( 'wc_sf_invoice_' . $type, $pdf );
 
