@@ -607,7 +607,7 @@ class WC_SF_Invoice {
 					}
 
 					$item_data = array(
-						'name'       => html_entity_decode( $item['name'] ),
+						'name'       => wp_strip_all_tags( html_entity_decode( $item['name'] ) ),
 						'quantity'   => $quantity,
 						'sku'        => $product->get_sku(),
 						'unit'       => 'ks',

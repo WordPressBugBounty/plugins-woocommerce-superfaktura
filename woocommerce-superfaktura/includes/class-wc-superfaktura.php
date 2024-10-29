@@ -29,7 +29,7 @@ class WC_SuperFaktura {
 	 *
 	 * @var string
 	 */
-	public $version = '1.42.5';
+	public $version = '1.42.6';
 
 	/**
 	 * Database version.
@@ -962,6 +962,20 @@ class WC_SuperFaktura {
 				}
 
 				$processed_item_meta[ $meta_key ] = $meta_value;
+			}
+		}
+
+		// Compatibility with Cost Calculator Builder plugin.
+		foreach ( $processed_item_meta as $meta_key => $meta_value ) {
+			if ( 'ccb_calculator' == $meta_key && isset( $meta_value['calc_data'] )) {
+				foreach ( $meta_value['calc_data'] as $calc_data_item ) {
+					if ( ! isset( $calc_data_item['label'] ) || ! isset( $calc_data_item['value'] ) ) {
+						continue;
+					}
+					$processed_item_meta[ trim( $calc_data_item['label'] ) ] = trim( $calc_data_item['value'] );
+				}
+
+				unset( $processed_item_meta['ccb_calculator'] );
 			}
 		}
 
