@@ -2,7 +2,7 @@
 Contributors: superfaktura, webikon, johnnypea, savione, kravco, martinkrcho
 Tags: superfaktura, invoice, faktura, proforma, woocommerce
 Requires at least: 4.4
-Tested up to: 6.6.1
+Tested up to: 6.7.1
 Requires PHP: 7.4
 Stable tag: 1.42.6
 License: GPLv2 or later

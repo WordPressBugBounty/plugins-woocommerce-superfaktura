@@ -17,7 +17,7 @@
  * Author URI:  https://www.superfaktura.sk/integracia/
  * Requires Plugins: woocommerce
  * WC requires at least: 3.7.0
- * WC tested up to: 9.3.3
+ * WC tested up to: 9.4.2
  * Text Domain: woocommerce-superfaktura
  * Domain Path: /languages
  * License:     GPL-2.0+
