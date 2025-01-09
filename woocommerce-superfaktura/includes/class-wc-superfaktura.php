@@ -29,7 +29,7 @@ class WC_SuperFaktura {
 	 *
 	 * @var string
 	 */
-	public $version = '1.42.6';
+	public $version = '1.43.0';
 
 	/**
 	 * Database version.
@@ -340,8 +340,9 @@ class WC_SuperFaktura {
 
 		add_filter( 'woocommerce_my_account_my_orders_actions', array( $this, 'my_orders_actions' ), 10, 2 );
 
-		// Custom order filter by wc_sf_internal_regular_id (see https://github.com/woocommerce/woocommerce/wiki/wc_get_orders-and-WC_Order_Query#adding-custom-parameter-support).
-		add_filter( 'woocommerce_order_data_store_cpt_get_orders_query', array( $this, 'filter_order_by_internal_regular_id' ), 10, 2 );
+		// Custom order filter by 'wc_sf_internal_proforma_id', 'wc_sf_internal_regular_id' and 'wc_sf_internal_cancel_id'
+		// (see https://github.com/woocommerce/woocommerce/wiki/wc_get_orders-and-WC_Order_Query#adding-custom-parameter-support).
+		add_filter( 'woocommerce_order_data_store_cpt_get_orders_query', array( $this, 'filter_order_by_internal_invoice_id' ), 10, 2 );
 
 		$wc_get_order_statuses = $this->get_order_statuses();
 		foreach ( $wc_get_order_statuses as $key => $status ) {
@@ -389,21 +390,37 @@ class WC_SuperFaktura {
 	 * Get orders by metadata.
 	 */
 	public function get_orders_by_meta( $meta_key, $meta_value ) {
+		if ( ! is_array( $meta_key ) ) {
+			$meta_key = array( $meta_key );
+		}
+
+		$meta_query_array = array( 'relation' => 'OR' );
+		foreach ( $meta_key as $_meta_key ) {
+			$meta_query_array[] = array(
+				'key'   => $_meta_key,
+				'value' => $meta_value
+			);
+		}
+
+		// Get orders by metadata if HPOS is enabled.
 		if ( $this->hpos_enabled() ) {
 			return wc_get_orders(
 				array(
-					'meta_query' => array(
-						array(
-							'key'   => $meta_key,
-							'value' => $meta_value
-						)
-					),
+					'meta_query' => $meta_query_array
 				)
 			);
 		}
 
-		// Support for custom metadata in query is added via woocommerce_order_data_store_cpt_get_orders_query filter.
-		return wc_get_orders( array( $meta_key => $meta_value ) );
+		// Get orders by metadata if HPOS is disabled.
+		$query = new WP_Query(
+			array(
+				'post_type'   => 'shop_order',
+				'post_status' => array_keys( wc_get_order_statuses() ),
+				'meta_query'  => $meta_query_array
+			)
+		);
+		$orders = array_map('wc_get_order', $query->posts);
+		return $orders;
 	}
 
 
@@ -417,6 +434,13 @@ class WC_SuperFaktura {
 		}
 
 		if ( ! isset( $_GET['invoice_id'] ) || ! isset( $_GET['secret_key'] ) ) {
+			$this->wc_sf_log(
+				array(
+					'request_type'     => 'callback_paid',
+					'response_status'  => 908,
+					'response_message' => 'Missing parameters',
+				)
+			);
 			exit();
 		}
 	
@@ -424,92 +448,7 @@ class WC_SuperFaktura {
 		$secret_key      = sanitize_text_field( wp_unslash( $_GET['secret_key'] ) );
 		$user_secret_key = get_option( 'woocommerce_sf_sync_secret_key', false );
 
-		if ( is_numeric( $invoice_id ) && ( false === $user_secret_key || $secret_key === $user_secret_key ) ) {
-
-			// Query order by custom field.
-			$orders = $this->get_orders_by_meta( 'wc_sf_internal_proforma_id', $invoice_id );
-			if ( count( $orders ) === 0 ) {
-				$orders = $this->get_orders_by_meta( 'wc_sf_internal_regular_id', $invoice_id );
-			}
-
-			// Check invoice status.
-			$api      = $this->sf_api();
-			$response = $api->getInvoiceDetails( $invoice_id );
-
-			// Invoice not found.
-			if ( ! $response || ! isset( $response->{$invoice_id} ) ) {
-				$this->wc_sf_log(
-					array(
-						'request_type'     => 'callback_paid',
-						'response_status'  => 902,
-						'response_message' => sprintf( 'Invoice ID %d not found', $invoice_id ),
-					)
-				);
-				exit();
-			}
-
-			// 1 = not paid, 2 = paid partially, 3 = paid
-			if ( 3 != $response->{$invoice_id}->Invoice->status ) {
-				$this->wc_sf_log(
-					array(
-						'request_type'     => 'callback_paid',
-						'response_status'  => 903,
-						'response_message' => sprintf( 'Invoice ID %d not paid', $invoice_id ),
-					)
-				);
-				exit();
-			}
-
-			if ( count( $orders ) === 1 ) {
-				$order = $orders[0];
-
-				// Get order status (see https://docs.woocommerce.com/document/managing-orders/).
-				$order_status = $order->get_status();
-				if ( 'on-hold' === $order_status ) {
-					// Mark order as paid (see https://woocommerce.wp-a2z.org/oik_api/wc_orderpayment_complete/).
-					$order->payment_complete();
-
-					$this->wc_sf_log(
-						array(
-							'order_id'     => $order->get_id(),
-							'request_type' => 'callback_paid',
-						)
-					);
-
-					// Check if related regular invoice was created automatically in SuperFaktura.
-					if ( 'proforma' == $response->{$invoice_id}->Invoice->type ) {
-
-						// Only if regular invoice does not already exist in WooCommerce.
-						$regular_id = $order->get_meta( 'wc_sf_internal_regular_id', true );
-						if ( empty( $regular_id ) ) {
-
-							// Schedule an action (because SuperFaktura calls the callback BEFORE it creates the regular invoice automatically).
-							as_schedule_single_action( time() + 300, 'sf_fetch_related_invoice', array( 'proforma_id' => $invoice_id ), 'woocommerce-superfaktura' );
-						}
-					}
-				}
-				else {
-					$this->wc_sf_log(
-						array(
-							'order_id'         => $order->get_id(),
-							'request_type'     => 'callback_paid',
-							'response_status'  => 905,
-							'response_message' => 'Order is not on hold',
-						)
-					);
-				}
-			}
-			else {
-				$this->wc_sf_log(
-					array(
-						'request_type'     => 'callback_paid',
-						'response_status'  => 904,
-						'response_message' => sprintf( 'Order with invoice ID %d not found', $invoice_id ),
-					)
-				);
-			}
-		}
-		else {
+		if ( ! is_numeric( $invoice_id ) || ( false !== $user_secret_key && $secret_key !== $user_secret_key ) ) {
 			$this->wc_sf_log(
 				array(
 					'request_type'     => 'callback_paid',
@@ -517,6 +456,116 @@ class WC_SuperFaktura {
 					'response_message' => 'Incorrect parameters',
 				)
 			);
+			exit();
+		}
+
+		// Query order by custom field.
+		$orders = $this->get_orders_by_meta( array( 'wc_sf_internal_proforma_id', 'wc_sf_internal_regular_id', 'wc_sf_internal_cancel_id' ), $invoice_id );
+		if ( count( $orders ) !== 1 ) {
+			$this->wc_sf_log(
+				array(
+					'request_type'     => 'callback_paid',
+					'response_status'  => 904,
+					'response_message' => sprintf( 'Order with invoice ID %d not found', $invoice_id ),
+				)
+			);
+			exit();
+		}
+
+		$order    = $orders[0];
+		$api      = $this->sf_api();
+		$response = $api->getInvoiceDetails( $invoice_id );
+
+		// Invoice not found.
+		if ( ! $response || ! isset( $response->{$invoice_id} ) ) {
+			$this->wc_sf_log(
+				array(
+					'request_type'     => 'callback_paid',
+					'response_status'  => 902,
+					'response_message' => sprintf( 'Invoice ID %d not found', $invoice_id ),
+				)
+			);
+			exit();
+		}
+
+		// Check invoice type.
+		if ( ! in_array( $response->{$invoice_id}->Invoice->type, array( 'proforma', 'regular' ) ) ) {
+			$this->wc_sf_log(
+				array(
+					'order_id'         => $order->get_id(),
+					'document_type'    => $response->{$invoice_id}->Invoice->type,
+					'request_type'     => 'callback_paid',
+					'response_status'  => 906,
+					'response_message' => sprintf( 'Invoice ID %d type is not proforma or regular', $invoice_id ),
+				)
+			);
+			exit();
+		}
+
+		// Check invoice status (1 = not paid, 2 = paid partially, 3 = paid).
+		if ( 3 != $response->{$invoice_id}->Invoice->status ) {
+			$this->wc_sf_log(
+				array(
+					'order_id'         => $order->get_id(),
+					'document_type'    => $response->{$invoice_id}->Invoice->type,
+					'request_type'     => 'callback_paid',
+					'response_status'  => 903,
+					'response_message' => sprintf( 'Invoice ID %d not paid', $invoice_id ),
+				)
+			);
+			exit();
+		}
+
+		// Check the latest InvoicePayment.payment type and ignore 'accreditation', which means the invoice was paid by creating a credit note.
+		if ( 'accreditation' === end( $response->{$invoice_id}->InvoicePayment )->payment_type ) {
+			$this->wc_sf_log(
+				array(
+					'order_id'         => $order->get_id(),
+					'document_type'    => $response->{$invoice_id}->Invoice->type,
+					'request_type'     => 'callback_paid',
+					'response_status'  => 907,
+					'response_message' => sprintf( 'Invoice ID %d was paid by accreditation', $invoice_id ),
+				)
+			);
+			exit();
+		}
+
+		// Get order status (see https://docs.woocommerce.com/document/managing-orders/).
+		$order_status = $order->get_status();
+		if ( 'on-hold' !== $order_status ) {
+			$this->wc_sf_log(
+				array(
+					'order_id'         => $order->get_id(),
+					'document_type'    => $response->{$invoice_id}->Invoice->type,
+					'request_type'     => 'callback_paid',
+					'response_status'  => 905,
+					'response_message' => 'Order is not on hold',
+				)
+			);
+			exit();
+		}
+
+		// Mark order as paid (see https://woocommerce.wp-a2z.org/oik_api/wc_orderpayment_complete/).
+		$order->payment_complete();
+
+		$this->wc_sf_log(
+			array(
+				'order_id'     => $order->get_id(),
+				'document_type'    => $response->{$invoice_id}->Invoice->type,
+				'request_type' => 'callback_paid',
+			)
+		);
+
+		// Check if related regular invoice was created automatically in SuperFaktura.
+		if ( 'proforma' == $response->{$invoice_id}->Invoice->type ) {
+
+			// Only if regular invoice does not already exist in WooCommerce.
+			$regular_id = $order->get_meta( 'wc_sf_internal_regular_id', true );
+			if ( empty( $regular_id ) ) {
+
+				// Schedule an action (because SuperFaktura calls the callback BEFORE it creates the regular invoice automatically).
+				as_schedule_single_action( time() + 300, 'sf_fetch_related_invoice', array( 'proforma_id' => $invoice_id ), 'woocommerce-superfaktura' );
+			}
 		}
 
 		exit();
@@ -729,25 +778,21 @@ class WC_SuperFaktura {
 
 
 	/**
-	 * Handle a custom 'wc_sf_internal_proforma_id' and 'wc_sf_internal_regular_id' query var to get orders with the 'wc_sf_internal_proforma_id' or 'wc_sf_internal_regular_id' meta respectively.
+	 * Handle a custom 'wc_sf_internal_proforma_id', 'wc_sf_internal_regular_id' and 'wc_sf_internal_cancel_id' query var to get orders with the 'wc_sf_internal_proforma_id', 'wc_sf_internal_regular_id' or 'wc_sf_internal_cancel_id' meta respectively.
 	 *
 	 * @param array $query Args for WP_Query.
 	 * @param array $query_vars Query vars from WC_Order_Query.
 	 */
-	public function filter_order_by_internal_regular_id( $query, $query_vars ) {
+	public function filter_order_by_internal_invoice_id( $query, $query_vars ) {
+		$keys = array( 'wc_sf_internal_proforma_id', 'wc_sf_internal_regular_id', 'wc_sf_internal_cancel_id' );
 
-		if ( ! empty( $query_vars['wc_sf_internal_proforma_id'] ) ) {
-			$query['meta_query'][] = array(
-				'key'   => 'wc_sf_internal_proforma_id',
-				'value' => esc_attr( $query_vars['wc_sf_internal_proforma_id'] ),
-			);
-		}
-
-		if ( ! empty( $query_vars['wc_sf_internal_regular_id'] ) ) {
-			$query['meta_query'][] = array(
-				'key'   => 'wc_sf_internal_regular_id',
-				'value' => esc_attr( $query_vars['wc_sf_internal_regular_id'] ),
-			);
+		foreach ( $keys as $key ) {
+			if ( ! empty( $query_vars[ $key ] ) ) {
+				$query['meta_query'][] = array(
+					'key'   =>  $key ,
+					'value' => esc_attr( $query_vars[ $key ] ),
+				);
+			}
 		}
 
 		return $query;
