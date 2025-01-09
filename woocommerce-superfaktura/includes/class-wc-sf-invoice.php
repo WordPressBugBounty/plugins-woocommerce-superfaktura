@@ -705,6 +705,11 @@ class WC_SF_Invoice {
 							continue;
 						}
 
+						// Add tax to $possible_discount_tax_rates if the item has a quantity and a unit price, even if get_tax_total() previously returned 0 because the price was fully discounted
+						if ( $item_data['quantity'] && $item_data['unit_price'] && $item_data['tax'] ) {
+							$possible_discount_tax_rates['item_' . $item_id] = $item_data['tax'];
+						}
+
 						if ( $item_data ) {
 							$api->addItem( $item_data );
 						}
