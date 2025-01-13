@@ -29,7 +29,7 @@ class WC_SuperFaktura {
 	 *
 	 * @var string
 	 */
-	public $version = '1.43.1';
+	public $version = '1.43.2';
 
 	/**
 	 * Database version.
@@ -1367,38 +1367,46 @@ class WC_SuperFaktura {
 		}
 
 		try {
-			$response = wp_remote_get(
-				"https://ec.europa.eu/taxation_customs/vies/rest-api/ms/{$country}/vat/{$vatno}",
-				array(
-					'timeout' => 10
-				)
-			);
+			$ch = curl_init();
+			curl_setopt_array($ch, array(
+			    CURLOPT_URL => "https://ec.europa.eu/taxation_customs/vies/rest-api/ms/{$country}/vat/{$vatno}",
+			    CURLOPT_RETURNTRANSFER => true,
+			    CURLOPT_SSL_VERIFYPEER => true,
+			    CURLOPT_SSL_VERIFYHOST => 2,
+			    CURLOPT_TIMEOUT => 10,
+			    CURLOPT_USERAGENT => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+			    CURLOPT_VERBOSE => true
+			));
+			$response = curl_exec($ch);
 
-			if (is_wp_error($response)) {
+			if (curl_errno($ch)) {
 				$this->wc_sf_log(
 					array(
 						'request_type'     => 'eu_vat_number',
-						'response_status'  => ( (int)$response->get_error_code() ) ? $response->get_error_code() : 912,
-						'response_message' => $response->get_error_message(),
+						'response_status'  => curl_errno($ch),
+						'response_message' => curl_error($ch),
 					)
 				);
 
 				return null;
 			}
 
-			if (substr($response['response']['code'], 0, 1) != 2) {
+			$http_response_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+			if (substr($http_response_code, 0, 1) != 2) {
 				$this->wc_sf_log(
 					array(
 						'request_type'     => 'eu_vat_number',
-						'response_status'  => $response['response']['code'],
-						'response_message' => $response['response']['message'],
+						'response_status'  => $http_response_code,
+						'response_message' => get_status_header_desc($http_response_code),
 					)
 				);
 
 				return null;
 			}
 
-			$result = json_decode($response['body']);
+			curl_close($ch);
+
+			$result = json_decode($response);
 
 		} catch (Exception $e) {
 			$this->wc_sf_log(
