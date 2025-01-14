@@ -29,7 +29,7 @@ class WC_SuperFaktura {
 	 *
 	 * @var string
 	 */
-	public $version = '1.43.3';
+	public $version = '1.43.4';
 
 	/**
 	 * Database version.
@@ -390,33 +390,45 @@ class WC_SuperFaktura {
 			$meta_key = array( $meta_key );
 		}
 
-		$meta_query_array = array( 'relation' => 'OR' );
 		foreach ( $meta_key as $_meta_key ) {
-			$meta_query_array[] = array(
-				'key'   => $_meta_key,
-				'value' => $meta_value
-			);
+
+			// Get orders by metadata if HPOS is enabled.
+			if ( $this->hpos_enabled() ) {
+				$orders = wc_get_orders(
+					array(
+						'meta_query' => array(
+							array(
+								'key'   => $_meta_key,
+								'value' => $meta_value
+							)
+						),
+					)
+				);
+			}
+
+			// Get orders by metadata if HPOS is disabled.
+			else {
+				$query = new WP_Query(
+					array(
+						'post_type'   => 'shop_order',
+						'post_status' => array_keys( wc_get_order_statuses() ),
+						'meta_query'  => array(
+							array(
+								'key'   => $_meta_key,
+								'value' => $meta_value
+							)
+						)
+					)
+				);
+				$orders = array_map('wc_get_order', $query->posts);
+			}
+
+			if ( count( $orders ) > 0 ) {
+				return $orders;
+			}
 		}
 
-		// Get orders by metadata if HPOS is enabled.
-		if ( $this->hpos_enabled() ) {
-			return wc_get_orders(
-				array(
-					'meta_query' => $meta_query_array
-				)
-			);
-		}
-
-		// Get orders by metadata if HPOS is disabled.
-		$query = new WP_Query(
-			array(
-				'post_type'   => 'shop_order',
-				'post_status' => array_keys( wc_get_order_statuses() ),
-				'meta_query'  => $meta_query_array
-			)
-		);
-		$orders = array_map('wc_get_order', $query->posts);
-		return $orders;
+		return [];
 	}
 
 
@@ -456,7 +468,7 @@ class WC_SuperFaktura {
 		}
 
 		// Query order by custom field.
-		$orders = $this->get_orders_by_meta( array( 'wc_sf_internal_proforma_id', 'wc_sf_internal_regular_id', 'wc_sf_internal_cancel_id' ), $invoice_id );
+		$orders = $this->get_orders_by_meta( array( 'wc_sf_internal_regular_id', 'wc_sf_internal_proforma_id', 'wc_sf_internal_cancel_id' ), $invoice_id );
 		if ( count( $orders ) !== 1 ) {
 			$this->wc_sf_log(
 				array(
