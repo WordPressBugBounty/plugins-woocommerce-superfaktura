@@ -29,7 +29,7 @@ class WC_SuperFaktura {
 	 *
 	 * @var string
 	 */
-	public $version = '1.43.2';
+	public $version = '1.43.3';
 
 	/**
 	 * Database version.
@@ -339,10 +339,6 @@ class WC_SuperFaktura {
 		add_action( 'woocommerce_checkout_update_order_meta', array( $this, 'checkout_order_meta' ) );
 
 		add_filter( 'woocommerce_my_account_my_orders_actions', array( $this, 'my_orders_actions' ), 10, 2 );
-
-		// Custom order filter by 'wc_sf_internal_proforma_id', 'wc_sf_internal_regular_id' and 'wc_sf_internal_cancel_id'
-		// (see https://github.com/woocommerce/woocommerce/wiki/wc_get_orders-and-WC_Order_Query#adding-custom-parameter-support).
-		add_filter( 'woocommerce_order_data_store_cpt_get_orders_query', array( $this, 'filter_order_by_internal_invoice_id' ), 10, 2 );
 
 		$wc_get_order_statuses = $this->get_order_statuses();
 		foreach ( $wc_get_order_statuses as $key => $status ) {
@@ -773,29 +769,6 @@ class WC_SuperFaktura {
 		$admin_notices = get_option( 'woocommerce_sf_admin_notices', array() );
 		$admin_notices[] = array( 'text' => $notice_text, 'type' => $notice_type );
 		update_option( 'woocommerce_sf_admin_notices', $admin_notices );
-	}
-
-
-
-	/**
-	 * Handle a custom 'wc_sf_internal_proforma_id', 'wc_sf_internal_regular_id' and 'wc_sf_internal_cancel_id' query var to get orders with the 'wc_sf_internal_proforma_id', 'wc_sf_internal_regular_id' or 'wc_sf_internal_cancel_id' meta respectively.
-	 *
-	 * @param array $query Args for WP_Query.
-	 * @param array $query_vars Query vars from WC_Order_Query.
-	 */
-	public function filter_order_by_internal_invoice_id( $query, $query_vars ) {
-		$keys = array( 'wc_sf_internal_proforma_id', 'wc_sf_internal_regular_id', 'wc_sf_internal_cancel_id' );
-
-		foreach ( $keys as $key ) {
-			if ( ! empty( $query_vars[ $key ] ) ) {
-				$query['meta_query'][] = array(
-					'key'   =>  $key ,
-					'value' => esc_attr( $query_vars[ $key ] ),
-				);
-			}
-		}
-
-		return $query;
 	}
 
 
