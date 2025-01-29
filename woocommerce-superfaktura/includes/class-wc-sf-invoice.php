@@ -643,7 +643,7 @@ class WC_SF_Invoice {
 							$variation = $this->wc_sf->convert_to_plaintext( $product->get_description() );
 
 							$parent_product = wc_get_product( $item['product_id'] );
-							$short_descr    = $this->wc_sf->convert_to_plaintext( $parent_product->get_short_description() );
+							$short_descr = $parent_product ? $this->wc_sf->convert_to_plaintext( $parent_product->get_short_description() ) : '';
 						} else {
 							$variation   = '';
 							$short_descr = $this->wc_sf->convert_to_plaintext( $product->get_short_description() );
@@ -783,7 +783,8 @@ class WC_SF_Invoice {
 
 				/* SHIPPING */
 
-				$shipping_price = $order->get_shipping_total() + $order->get_shipping_tax();
+				// Ensure consistency with WooCommerce rounding settings.
+				$shipping_price = round($order->get_shipping_total() + $order->get_shipping_tax(), wc_get_price_decimals());
 
 				$shipping_tax = 0;
 				foreach ( $order->get_items( 'tax' ) as $tax_item ) {
