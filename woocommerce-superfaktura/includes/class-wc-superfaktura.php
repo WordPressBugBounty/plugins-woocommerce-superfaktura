@@ -29,7 +29,7 @@ class WC_SuperFaktura {
 	 *
 	 * @var string
 	 */
-	public $version = '1.43.5';
+	public $version = '1.43.6';
 
 	/**
 	 * Database version.
@@ -1900,8 +1900,8 @@ class WC_SuperFaktura {
 			wp_die();
 		}
 
-		$result = wp_safe_remote_get( $_POST['url'] );
-		if ( is_wp_error( $result ) ) {
+		$result = wp_safe_remote_get( $_POST['url'], [ 'redirection' => 0 ] );
+		if ( is_wp_error( $result ) || 'application/pdf' != $result['headers']['content-type'] ?? '' ) {
 			echo 'ERROR';
 		}
 		else {
