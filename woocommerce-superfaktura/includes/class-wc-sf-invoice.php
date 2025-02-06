@@ -790,7 +790,7 @@ class WC_SF_Invoice {
 				foreach ( $order->get_items( 'tax' ) as $tax_item ) {
 					$tax_rate = WC_Tax::_get_tax_rate($tax_item->get_rate_id());
 
-					if ( ! empty( $tax_item->get_shipping_tax_total() ) || '1' === $tax_rate['tax_rate_shipping'] ) {
+					if ( ! empty( $tax_item->get_shipping_tax_total() ) || ( '1' === $tax_rate['tax_rate_shipping'] && empty( $shipping_tax ) ) ) {
 						$shipping_tax = $tax_item->get_rate_percent();
 					}
 				}
