@@ -29,7 +29,7 @@ class WC_SuperFaktura {
 	 *
 	 * @var string
 	 */
-	public $version = '1.43.7';
+	public $version = '1.43.8';
 
 	/**
 	 * Database version.
@@ -1029,6 +1029,10 @@ class WC_SuperFaktura {
 				}
 			} else {
 				$value = apply_filters( 'woocommerce_variation_option_name', $slug, null, $attribute, $product );
+			}
+
+			if ( false === is_string( $value ) ) {
+				continue;
 			}
 
 			$result[] = sprintf( '%s: %s', wc_attribute_label( $attribute, $product ), $value );
