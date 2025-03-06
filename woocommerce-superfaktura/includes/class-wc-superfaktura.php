@@ -29,7 +29,7 @@ class WC_SuperFaktura {
 	 *
 	 * @var string
 	 */
-	public $version = '1.43.8';
+	public $version = '1.43.9';
 
 	/**
 	 * Database version.
@@ -226,7 +226,7 @@ class WC_SuperFaktura {
 	 */
 	public static function activate( $network_wide ) {
 		// Check if WooCommerce is active.
-		if ( ! in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) ) ) {
+		if ( ! class_exists( 'WooCommerce' ) ) {
 			deactivate_plugins( plugin_basename( WC_SF_FILE_PATH ) );
 			wp_die( __( 'Please install WooCommerce before activating SuperFaktura WooCommerce plugin.', 'woocommerce-superfaktura' ), 'Plugin dependency check', array( 'back_link' => true ) );
 		}
