@@ -199,7 +199,8 @@ class WC_SF_Email {
             }
         }
 
-        if ('yes' === get_option('woocommerce_sf_invoice_pdf_attachment', 'no')) {
+        $invoice_pdf_attachment = get_option('woocommerce_sf_invoice_pdf_attachment', 'no');
+        if ('yes' === $invoice_pdf_attachment || ('customer' === $invoice_pdf_attachment && 0 === strpos($email_id, 'customer_'))) {
             $pdf_resource = wp_safe_remote_get($invoice_data['pdf']);
             if (is_wp_error($pdf_resource) || 200 != $pdf_resource['response']['code'] || 'application/pdf' != $pdf_resource['headers']['content-type']) {
                 return $attachments;

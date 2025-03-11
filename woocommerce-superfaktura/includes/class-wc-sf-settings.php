@@ -901,8 +901,13 @@ class WC_SF_Settings extends WC_Settings_Page {
 					array(
 						'title'   => __( 'Invoice PDF attachment', 'woocommerce-superfaktura' ),
 						'id'      => 'woocommerce_sf_invoice_pdf_attachment',
+						'type'    => 'select',
+						'options' => array(
+							'customer' => __( 'Customer only', 'woocommerce-superfaktura' ),
+							'yes'      => __( 'Yes', 'woocommerce-superfaktura' ),
+							'no'       => __( 'No', 'woocommerce-superfaktura' ),
+						),
 						'default' => 'no',
-						'type'    => 'checkbox',
 						'desc'    => __( 'Attach invoice PDF to WooCommerce emails', 'woocommerce-superfaktura' ),
 					),
 					array(
