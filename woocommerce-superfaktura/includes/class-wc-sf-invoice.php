@@ -722,12 +722,35 @@ class WC_SF_Invoice {
 					$giftcards = $order->get_items( 'gift_card' );
 					if ( $giftcards ) {
 						foreach ( $giftcards as $giftcard ) {
+
+							// Retrieve the tax rate for the gift card from the order it was purchased with.
+							$giftcard_data = $giftcard->get_giftcard();
+							$gc_order = wc_get_order( $giftcard_data->get_order_id() );
+							$gc_item = $gc_order->get_item( $giftcard_data->get_order_item_id() );
+
+							$gc_tax_rates = array();
+							foreach ( $gc_order->get_items( 'tax' ) as $tax_item ) {
+								if ( 'WC_Order_Item_Tax' === get_class( $tax_item ) ) {
+									$gc_tax_rates[ $tax_item->get_rate_id() ] = $tax_item->get_rate_percent();
+								}
+							}
+
+							$gc_item_tax = 0;
+							$gc_taxes = $gc_item->get_taxes();
+							foreach ( $gc_taxes['subtotal'] as $rate_id => $tax ) {
+								if ( empty( $tax ) ) {
+									continue;
+								}
+								$gc_item_tax = $gc_tax_rates[ $rate_id ];
+							}
+
+							// Add gift card to the invoice.
 							$item_data = array(
 								'name'        => __( 'Gift Card', 'woocommerce-superfaktura' ),
 								'quantity'    => '',
 								'unit'        => '',
-								'unit_price'  => $giftcard->get_amount() * -1,
-								'tax'         => 0,
+								'unit_price'  => $giftcard->get_amount() / ( 1 + $gc_item_tax / 100 ) * -1,
+								'tax'         => $gc_item_tax,
 								'description' => $giftcard->get_code(),
 							);
 
