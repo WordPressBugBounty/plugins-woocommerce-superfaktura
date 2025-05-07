@@ -763,16 +763,24 @@ class WC_SF_Invoice {
 
 				if ( $order->get_fees() ) {
 					foreach ( $order->get_fees() as $fee ) {
-						$fee_total     = $fee->get_total();
-						$fee_taxes     = $fee->get_taxes();
-						$fee_tax_total = array_sum( $fee_taxes['total'] );
+						$fee_total    = $fee->get_total();
+						$fee_tax_rate = 0;
+						$tax_class    = $fee->get_tax_class();
+						$tax_status   = $fee->get_tax_status();
+
+						if ($tax_status === 'taxable' && !empty($tax_class)) {
+							$tax_rates = WC_Tax::get_rates($tax_class);
+							if (!empty($tax_rates)) {
+								$fee_tax_rate = reset($tax_rates)['rate'];
+							}
+						}
 
 						$item_data = array(
 							'name'       => $fee['name'],
 							'quantity'   => '',
 							'unit'       => '',
 							'unit_price' => $fee_total,
-							'tax'        => ( 0 == $fee_total ) ? 0 : round( ( $fee_tax_total / $fee_total ) * 100 ),
+							'tax'        => $fee_tax_rate,
 						);
 
 						if ( 'cancel' === $type ) {
