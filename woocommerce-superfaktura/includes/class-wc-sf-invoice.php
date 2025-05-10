@@ -774,6 +774,11 @@ class WC_SF_Invoice {
 								$fee_tax_rate = reset($tax_rates)['rate'];
 							}
 						}
+						else {
+							$fee_taxes     = $fee->get_taxes();
+							$fee_tax_total = array_sum( $fee_taxes['total'] );
+							$fee_tax_rate  = ( 0 == $fee_total ) ? 0 : round( ( $fee_tax_total / $fee_total ) * 100 );
+						}
 
 						$item_data = array(
 							'name'       => $fee['name'],
