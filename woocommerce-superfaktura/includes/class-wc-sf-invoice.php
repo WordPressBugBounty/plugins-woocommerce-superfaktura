@@ -528,45 +528,79 @@ class WC_SF_Invoice {
 
 				foreach ( $refunds as $refund ) {
 
-					// Get refunded amount for items by quantity.
-					$refund_items_price             = 0;
-					$refund_items_price_without_tax = 0;
+					$refund_left = $refund->get_total();
+					$refund_tax_left = $refund->get_total_tax();
 
-					// Subtract refunded amount for items by quantity, because quantity was already subtracted by get_qty_refunded_for_item() above.
-					// :TODO: verify why this is here, probebly not necessary at all
-					if ( 'yes' === get_option( 'woocommerce_sf_product_subtract_refunded_qty', 'no' ) ) {
-						$refunded_items = $refund->get_items();
-						if ( $refunded_items ) {
-							foreach ( $refunded_items as $item ) {
-								$refund_items_price             += abs( $item['qty'] ) * $refund->get_item_subtotal( $item, true );
-								$refund_items_price_without_tax += abs( $item['qty'] ) * $refund->get_item_subtotal( $item, false );
+					$refunded_items = $refund->get_items();
+					if ($refunded_items) {
+
+						foreach ( $refunded_items as $item_id => $item ) {
+
+							$product = $item->get_product();
+							if ( empty( $product ) ) {
+								continue;
 							}
+
+							$quantity = $item['qty'];
+							if ( empty( $quantity ) ) {
+								continue;
+							}
+
+							$item_tax = 0;
+							$taxes    = $item->get_taxes();
+							foreach ( $taxes['subtotal'] as $rate_id => $tax ) {
+								if ( empty( $tax ) ) {
+									continue;
+								}
+								$item_tax = $tax_rates[ $rate_id ];
+							}
+
+							$refund_data = array(
+								'name'       => wp_strip_all_tags( html_entity_decode( $item['name'] ) ),
+								'quantity'   => abs( $quantity ),
+								'sku'        => $product->get_sku(),
+								'unit'       => 'ks',
+								'unit_price' => $order->get_item_subtotal( $item, false, false ) * -1,
+								'tax'        => $item_tax,
+							);
+
+							$refund_data = apply_filters( 'sf_refund_data', $refund_data, $order );
+
+							if ( $refund_data ) {
+								$api->addItem( $refund_data );
+							}
+
+							$refund_left -= ($item->get_total() + $item->get_total_tax());
+							$refund_tax_left -= $item->get_total_tax();
 						}
 					}
 
-					$refund_price = abs( $refund->get_total() ) - $refund_items_price;
+					$refund_left = round($refund_left, 4);
+					if ($refund_left) {
+						$refund_description = $refund->get_reason();
 
-					// Skip refund if whole amount was refunded with items by quantity.
-					if ( $refund_price <= 0 ) {
-						continue;
-					}
+						$item_unit_price = ($refund_left - $refund_tax_left);
+						$item_tax = abs( round( ( $refund_tax_left ) / ($refund_left - $refund_tax_left) * 100 ) );
 
-					$refund_price_without_tax = abs( $refund->get_total() ) - abs( $refund->get_total_tax() ) - $refund_items_price_without_tax;
-					$refund_tax               = round( ( $refund_price - $refund_price_without_tax ) / $refund_price_without_tax * 100 );
-					$refund_description       = $refund->get_reason();
+						if (0 == $item_tax && $tax_rates ) {
+							$item_tax = $tax_rates[ array_key_first( $tax_rates ) ];
+							$item_unit_price = $item_unit_price / (1 + ( $item_tax / 100 ) );
+						}
 
-					$refund_data = array(
-						'name'        => __( 'Refunded', 'woocommerce-superfaktura' ),
-						'description' => $refund_description ? $refund_description : '',
-						'quantity'    => '',
-						'unit'        => '',
-						'unit_price'  => $refund_price_without_tax * -1,
-						'tax'         => $refund_tax,
-					);
-					$refund_data = apply_filters( 'sf_refund_data', $refund_data, $order );
+						$refund_data = array(
+							'name'        => __( 'Refunded', 'woocommerce-superfaktura' ),
+							'description' => $refund_description ? $refund_description : '',
+							'quantity'    => '',
+							'unit'        => '',
+							'unit_price'  => $item_unit_price,
+							'tax'         => $item_tax,
+						);
 
-					if ( $refund_data ) {
-						$api->addItem( $refund_data );
+						$refund_data = apply_filters( 'sf_refund_data', $refund_data, $order );
+
+						if ( $refund_data ) {
+							$api->addItem( $refund_data );
+						}
 					}
 				}
 
