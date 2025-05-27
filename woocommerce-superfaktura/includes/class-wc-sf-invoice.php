@@ -788,6 +788,8 @@ class WC_SF_Invoice {
 								'description' => $giftcard->get_code(),
 							);
 
+							$item_data = apply_filters( 'sf_giftcard_data', $item_data, $order, $gc_item );
+
 							$api->addItem( $item_data );
 						}
 					}
