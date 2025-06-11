@@ -29,7 +29,7 @@ class WC_SuperFaktura {
 	 *
 	 * @var string
 	 */
-	public $version = '1.45.4';
+	public $version = '1.45.5';
 
 	/**
 	 * Database version.
@@ -1479,6 +1479,11 @@ class WC_SuperFaktura {
 			// Delete the private custom fields prefixed with "_" which are automatically saved even if "Buy as Business client" checkbox is not checked.
 			foreach ( array( '_billing_company_wi_id', '_billing_company_wi_vat', '_billing_company_wi_tax' ) as $key ) {
 				$order->delete_meta_data( $key );
+			}
+
+			// If the company billing fields are enabled, yet the 'Buy as Business client' checkbox has not been checked.
+			if ( 'yes' === get_option( 'woocommerce_sf_add_company_billing_fields', 'yes' ) ) {
+				$order->set_billing_company('');
 			}
 		}
 
