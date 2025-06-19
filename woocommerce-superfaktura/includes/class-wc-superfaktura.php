@@ -29,7 +29,7 @@ class WC_SuperFaktura {
 	 *
 	 * @var string
 	 */
-	public $version = '1.45.5';
+	public $version = '1.45.6';
 
 	/**
 	 * Database version.
@@ -1484,6 +1484,10 @@ class WC_SuperFaktura {
 			// If the company billing fields are enabled, yet the 'Buy as Business client' checkbox has not been checked.
 			if ( 'yes' === get_option( 'woocommerce_sf_add_company_billing_fields', 'yes' ) ) {
 				$order->set_billing_company('');
+
+				if ( 0 == $_POST['ship_to_different_address'] ?? 0 ) {
+					$order->set_shipping_company('');
+				}
 			}
 		}
 
