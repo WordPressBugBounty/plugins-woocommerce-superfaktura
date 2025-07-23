@@ -211,6 +211,34 @@ class WC_SF_Settings extends WC_Settings_Page {
 
 
 	/**
+	 * Get gateway title, handling WooPayments and other gateways.
+	 *
+	 * @param object $gateway Payment gateway object.
+	 * @return string Gateway title.
+	 */
+	private function get_gateway_title( $gateway ) {
+		// WooPayments gateways
+		if ( ! empty( $gateway->method_title ) && $gateway->method_title === 'WooPayments' ) {
+			if ( $gateway->id === 'woocommerce_payments' ) {
+				// Main WooPayments gateway is for credit cards
+				return 'WooPayments - Credit Card';
+			} else {
+				return 'WooPayments - ' . ucfirst( str_replace( array( 'woocommerce_payments_', '_' ), array( '', ' ' ), $gateway->id ) );
+			}
+		}
+
+		// Use title if available for non-WooPayments gateways
+		if ( ! empty( $gateway->title ) ) {
+			return $gateway->title;
+		}
+
+		// Fallback to method_title
+		return $gateway->method_title;
+	}
+
+
+
+	/**
 	 * Create settings.
 	 *
 	 * @param string $current_section Optional. Defaults to empty string.
@@ -605,7 +633,7 @@ class WC_SF_Settings extends WC_Settings_Page {
 
 				foreach ( $gateways as $gateway ) {
 					$settings[] = array(
-						'title'   => $gateway->title,
+						'title'   => $this->get_gateway_title( $gateway ),
 						'id'      => 'woocommerce_sf_invoice_regular_' . $gateway->id,
 						'default' => 0,
 						'type'    => 'select',
@@ -706,7 +734,7 @@ class WC_SF_Settings extends WC_Settings_Page {
 
 				foreach ( $gateways as $gateway ) {
 					$settings[] = array(
-						'title'   => $gateway->title,
+						'title'   => $this->get_gateway_title( $gateway ),
 						'id'      => 'woocommerce_sf_invoice_proforma_' . $gateway->id,
 						'default' => 0,
 						'type'    => 'select',
@@ -1000,7 +1028,7 @@ class WC_SF_Settings extends WC_Settings_Page {
 
 				foreach ( $gateways as $gateway ) {
 					$settings[] = array(
-						'title'   => $gateway->title,
+						'title'   => $this->get_gateway_title( $gateway ),
 						'id'      => 'woocommerce_sf_gateway_' . $gateway->id,
 						'default' => 0,
 						'type'    => 'select',
@@ -1023,7 +1051,7 @@ class WC_SF_Settings extends WC_Settings_Page {
 
 				foreach ( $gateways as $gateway ) {
 					$settings[] = array(
-						'title' => $gateway->title,
+						'title' => $this->get_gateway_title( $gateway ),
 						'id'    => 'woocommerce_sf_cash_register_' . $gateway->id,
 						'desc'  => 'Cash register ID',
 						'type'  => 'text',
