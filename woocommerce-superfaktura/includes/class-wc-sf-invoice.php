@@ -392,6 +392,7 @@ class WC_SF_Invoice {
 					if ( $override_settings['vat_id'] ) {
 						if ( empty( $override_settings['vat_id_only_final_consumer'] ) || ( ! empty( $override_settings['vat_id_only_final_consumer'] ) && empty( $client_data['ic_dph'] ) ) ) {
 							$client_country_data['ic_dph'] = $override_settings['vat_id'];
+							$client_country_data['tax_payer'] = 1;
 						}
 					}
 
