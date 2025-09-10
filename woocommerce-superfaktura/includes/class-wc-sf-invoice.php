@@ -1079,7 +1079,13 @@ class WC_SF_Invoice {
 						' ',
 						array_map(
 							function( $a ) {
-								return ( is_array( $a ) ) ? implode( ' ', $a ) : $a;
+								if ( is_array( $a ) ) {
+									return implode( ' ', $a );
+								} elseif ( is_object( $a ) ) {
+									return json_encode( $a );
+								} else {
+									return (string) $a;
+								}
 							},
 							get_object_vars( $response->error_message )
 						)
