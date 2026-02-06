@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: SuperFaktúra WooCommerce\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2025-03-11 13:33+0100\n"
-"PO-Revision-Date: 2025-03-11 13:37+0100\n"
+"PO-Revision-Date: 2026-01-27 18:07+0100\n"
 "Last-Translator: Smetana <m.smetana@hotmail.com>\n"
 "Language-Team: Czech\n"
 "Language: cs_CZ\n"
@@ -11,7 +11,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
-"X-Generator: Poedit 3.5\n"
+"X-Generator: Poedit 3.8\n"
 "X-Loco-Version: 2.2.0; wp-5.2.2\n"
 
 #: woocommerce-superfaktura.php:62
@@ -886,12 +886,17 @@ msgstr "Název společnosti"
 #: includes/class-wc-sf-settings.php:800 includes/class-wc-sf-settings.php:812
 #: includes/class-wc-sf-settings.php:825 includes/class-wc-sf-settings.php:845
 msgid "Optional"
-msgstr "Povinné"
+msgstr "Volitelné"
+
+#: includes/class-wc-sf-checkout-block.php
+#, php-format
+msgid "%s (optional)"
+msgstr "%s (volitelné)"
 
 #: includes/class-wc-sf-settings.php:801 includes/class-wc-sf-settings.php:813
 #: includes/class-wc-sf-settings.php:826 includes/class-wc-sf-settings.php:846
 msgid "Required"
-msgstr "Nepovinné"
+msgstr "Povinné"
 
 #: includes/class-wc-sf-settings.php:808
 msgid "Add field ID #"
@@ -1130,8 +1135,8 @@ msgid ""
 "Do you have a technical issue with the plugin? Contact us at <a "
 "href=\"mailto:superfaktura@2day.sk\">superfaktura@2day.sk</a>"
 msgstr ""
-"Máte technický problém s pluginem? Kontaktujte nás na <a href=\"mailto:"
-"superfaktura@2day.sk\">superfaktura@2day.sk</a>"
+"Máte technický problém s pluginem? Kontaktujte nás na <a "
+"href=\"mailto:superfaktura@2day.sk\">superfaktura@2day.sk</a>"
 
 #: includes/class-wc-sf-settings.php:1424
 msgid ""
@@ -1158,8 +1163,8 @@ msgid ""
 "Note: To use sandbox create a test account at sandbox.superfaktura.sk or "
 "sandbox.superfaktura.cz"
 msgstr ""
-"Poznámka: Pokud chcete použít sandbox, vytvořte si testovací účet na sandbox."
-"superfaktura.sk nebo sandbox.superfaktura.cz"
+"Poznámka: Pokud chcete použít sandbox, vytvořte si testovací účet na "
+"sandbox.superfaktura.sk nebo sandbox.superfaktura.cz"
 
 #: includes/class-wc-sf-settings.php:1447
 msgid "API Email"

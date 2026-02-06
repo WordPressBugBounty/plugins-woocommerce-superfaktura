@@ -12,12 +12,12 @@
  * Plugin Name: SuperFaktúra WooCommerce
  * Plugin URI:  https://www.superfaktura.sk/integracia/
  * Description: Integrácia služby <a href="http://www.superfaktura.sk/api/">SuperFaktúra.sk</a> pre WooCommerce. Máte s modulom technický problém? Napíšte nám na <a href="mailto:superfaktura@2day.sk">superfaktura@2day.sk</a>
- * Version:     1.46.2
+ * Version:     1.50.2
  * Author:      2day.sk
  * Author URI:  https://www.superfaktura.sk/integracia/
  * Requires Plugins: woocommerce
  * WC requires at least: 3.7.0
- * WC tested up to: 10.1.1
+ * WC tested up to: 10.4.3
  * Text Domain: woocommerce-superfaktura
  * Domain Path: /languages
  * License:     GPL-2.0+
@@ -32,6 +32,7 @@ define( 'WC_SF_FILE_PATH', __FILE__ );
 
 require_once plugin_dir_path( WC_SF_FILE_PATH ) . 'includes/class-wc-sf-admin.php';
 require_once plugin_dir_path( WC_SF_FILE_PATH ) . 'includes/class-wc-sf-api.php';
+require_once plugin_dir_path( WC_SF_FILE_PATH ) . 'includes/class-wc-sf-checkout-block.php';
 require_once plugin_dir_path( WC_SF_FILE_PATH ) . 'includes/class-wc-sf-email.php';
 require_once plugin_dir_path( WC_SF_FILE_PATH ) . 'includes/class-wc-sf-helper.php';
 require_once plugin_dir_path( WC_SF_FILE_PATH ) . 'includes/class-wc-sf-invoice.php';
@@ -45,6 +46,7 @@ register_deactivation_hook( WC_SF_FILE_PATH, array( 'WC_SuperFaktura', 'deactiva
 add_action( 'before_woocommerce_init', function() {
 	if ( class_exists( \Automattic\WooCommerce\Utilities\FeaturesUtil::class ) ) {
 		\Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'custom_order_tables', WC_SF_FILE_PATH, true );
+		\Automattic\WooCommerce\Utilities\FeaturesUtil::declare_compatibility( 'cart_checkout_blocks', WC_SF_FILE_PATH, true );
 	}
 } );
 

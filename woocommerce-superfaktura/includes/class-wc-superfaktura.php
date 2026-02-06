@@ -29,7 +29,7 @@ class WC_SuperFaktura {
 	 *
 	 * @var string
 	 */
-	public $version = '1.46.2';
+	public $version = '1.50.2';
 
 	/**
 	 * Database version.
@@ -117,6 +117,13 @@ class WC_SuperFaktura {
 	 */
 	public $invoice_generator;
 
+	/**
+	 * Instance of WC_SF_Checkout_Block.
+	 *
+	 * @var WC_SF_Checkout_Block
+	 */
+	public $checkout_block;
+
 
 
 	/**
@@ -200,6 +207,7 @@ class WC_SuperFaktura {
         }
 		$this->email = new WC_SF_Email($this);
 		$this->invoice_generator = new WC_SF_Invoice($this);
+		$this->checkout_block = new WC_SF_Checkout_Block($this);
 	}
 
 
@@ -358,6 +366,7 @@ class WC_SuperFaktura {
         }
 
 		$this->email->init();
+		$this->checkout_block->init();
 	}
 
 

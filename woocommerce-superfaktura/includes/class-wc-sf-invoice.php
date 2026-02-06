@@ -197,6 +197,11 @@ class WC_SF_Invoice {
 				$client_data['delivery_phone'] = $shipping_phone;
 			}
 
+			$client_id = $order->get_meta( 'wc_sf_client_id', true );
+			if ( $client_id ) {
+				$client_data['id'] = $client_id;
+			}
+
 			$client_data = apply_filters( 'sf_client_data', $client_data, $order );
 
 			$api->setClient( $client_data );
@@ -850,6 +855,8 @@ class WC_SF_Invoice {
 							$item_data['AccountingDetail']['preconfidence'] = $preconfidence_fees;
 						}
 
+						$item_data = apply_filters( 'sf_fee_data', $item_data, $order, $fee );
+
 						$api->addItem( $item_data );
 					}
 				}
@@ -1141,6 +1148,10 @@ class WC_SF_Invoice {
 				$order->add_order_note( __( 'Document created.', 'woocommerce-superfaktura' ) );
 				break;
 		}
+
+		// Save client ID.
+		$client_id = $response->data->Client->id;
+		$order->update_meta_data( 'wc_sf_client_id', $client_id );
 
 		$order->save();
 
