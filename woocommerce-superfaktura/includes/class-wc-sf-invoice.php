@@ -174,6 +174,11 @@ class WC_SF_Invoice {
 				'update_addressbook' => ( 'yes' === get_option( 'woocommerce_sf_invoice_update_addressbook', 'no' ) ),
 			);
 
+			$state = $order->get_billing_state();
+			if ( $state ) {
+				$client_data['state'] = $state;
+			}
+
 			if ( $order->get_formatted_billing_address() !== $order->get_formatted_shipping_address() ) {
 				if ( $order->get_shipping_company() ) {
 					if ( 'yes' === get_option( 'woocommerce_sf_invoice_delivery_name' ) ) {
@@ -190,6 +195,11 @@ class WC_SF_Invoice {
 				$client_data['delivery_country_iso_id'] = $order->get_shipping_country();
 				$client_data['delivery_name']           = $shipping_name;
 				$client_data['delivery_zip']            = $order->get_shipping_postcode();
+
+				$state = $order->get_shipping_state();
+				if ( $state ) {
+					$client_data['delivery_state'] = $state;
+				}
 			}
 
 			$shipping_phone = $order->get_shipping_phone();
