@@ -137,11 +137,6 @@ class WC_SF_Checkout_Block {
 			return;
 		}
 
-		// Log when registration happens for debugging.
-		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-			error_log( 'SuperFaktura: Registering checkout block fields' );
-		}
-
 		// Translators: Use the same labels as in the classic checkout.
 		$label_buy_as_company = __( 'Buy as Business client', 'woocommerce-superfaktura' );
 		$label_company_name   = __( 'Company name', 'woocommerce-superfaktura' );

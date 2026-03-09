@@ -29,7 +29,7 @@ class WC_SuperFaktura {
 	 *
 	 * @var string
 	 */
-	public $version = '1.50.3';
+	public $version = '1.50.4';
 
 	/**
 	 * Database version.
@@ -1494,7 +1494,7 @@ class WC_SuperFaktura {
 			if ( 'yes' === get_option( 'woocommerce_sf_add_company_billing_fields', 'yes' ) ) {
 				$order->set_billing_company('');
 
-				if ( 0 == $_POST['ship_to_different_address'] ?? 0 ) {
+				if ( 0 == ( $_POST['ship_to_different_address'] ?? 0 ) ) {
 					$order->set_shipping_company('');
 				}
 			}
