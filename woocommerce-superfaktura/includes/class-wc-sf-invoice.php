@@ -501,6 +501,8 @@ class WC_SF_Invoice {
 				$extras['weight'] = $weight;
 			}
 
+			$extras = apply_filters( 'sf_invoice_extras', $extras, $order, $type );
+
 			$api->setInvoiceExtras( $extras );
 
 			/* PAYMENT STATUS */
@@ -1017,6 +1019,17 @@ class WC_SF_Invoice {
 			return false;
 		}
 
+		/**
+		 * Fires after all invoice data is assembled on the API object, right before the API call.
+		 *
+		 * @since 1.51.0
+		 *
+		 * @param WC_SF_Api $api   The API client with all data (Client, Invoice, InvoiceItem, InvoiceExtra, etc.) assembled.
+		 * @param WC_Order  $order The WooCommerce order.
+		 * @param string    $type  Document type: 'proforma', 'regular', or 'cancel'.
+		 */
+		do_action( 'sf_before_invoice_create', $api, $order, $type );
+
 		if ( $edit ) {
 			$api->setInvoice(
 				array(
@@ -1164,6 +1177,17 @@ class WC_SF_Invoice {
 		$order->update_meta_data( 'wc_sf_client_id', $client_id );
 
 		$order->save();
+
+		/**
+		 * Fires after an invoice is successfully created or edited via the SuperFaktura API.
+		 *
+		 * @since 1.51.0
+		 *
+		 * @param object   $response The full SuperFaktura API response (contains ->data->Invoice, ->data->Client, ->data->PaymentLink, etc.).
+		 * @param WC_Order $order    The WooCommerce order (already saved with updated meta).
+		 * @param string   $type     Document type: 'proforma', 'regular', or 'cancel'.
+		 */
+		do_action( 'sf_after_invoice_create', $response, $order, $type );
 
 		return true;
 

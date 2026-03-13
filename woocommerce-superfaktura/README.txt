@@ -2,9 +2,9 @@
 Contributors: superfaktura, webikon, johnnypea, savione, kravco, martinkrcho
 Tags: superfaktura, invoice, faktura, proforma, woocommerce
 Requires at least: 4.4
-Tested up to: 6.9
+Tested up to: 6.9.4
 Requires PHP: 7.4
-Stable tag: 1.50.4
+Stable tag: 1.51.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -64,6 +64,11 @@ This usually happens when you change your login email address. The email address
 You can read more about SuperFaktura API integration at [superfaktura.sk/api](http://www.superfaktura.sk/api/)
 
 == Changelog ==
+
+= 1.51.0 =
+* Pridaný filter sf_invoice_extras
+* Pridaný action hook sf_before_invoice_create (spustí sa pred odoslaním faktúry cez API)
+* Pridaný action hook sf_after_invoice_create (spustí sa po úspešnom vytvorení faktúry cez API)
 
 = 1.50.4 =
 * Opravená kontrola odlišnej dodacej adresy zákazníka
