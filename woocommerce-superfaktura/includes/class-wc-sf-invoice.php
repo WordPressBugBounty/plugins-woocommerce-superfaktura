@@ -555,9 +555,6 @@ class WC_SF_Invoice {
 						foreach ( $refunded_items as $item_id => $item ) {
 
 							$product = $item->get_product();
-							if ( empty( $product ) ) {
-								continue;
-							}
 
 							$quantity = $item['qty'];
 							if ( empty( $quantity ) ) {
@@ -576,7 +573,8 @@ class WC_SF_Invoice {
 							$refund_data = array(
 								'name'       => wp_strip_all_tags( html_entity_decode( $item['name'] ) ),
 								'quantity'   => abs( $quantity ),
-								'sku'        => $product->get_sku(),
+								// SKU requires the product to exist in the database (not deleted).
+								'sku'        => $product ? $product->get_sku() : '',
 								'unit'       => 'ks',
 								'unit_price' => $order->get_item_subtotal( $item, false, false ) * -1,
 								'tax'        => $item_tax,
@@ -632,11 +630,6 @@ class WC_SF_Invoice {
 				foreach ( $items as $item_id => $item ) {
 					$product = $item->get_product();
 
-					// Skip invalid product.
-					if ( empty( $product ) ) {
-						continue;
-					}
-
 					$item_tax = 0;
 					$taxes    = $item->get_taxes();
 					foreach ( $taxes['subtotal'] as $rate_id => $tax ) {
@@ -661,7 +654,8 @@ class WC_SF_Invoice {
 					$item_data = array(
 						'name'       => wp_strip_all_tags( html_entity_decode( $item['name'] ) ),
 						'quantity'   => $quantity,
-						'sku'        => $product->get_sku(),
+						// SKU requires the product to exist in the database (not deleted).
+						'sku'        => $product ? $product->get_sku() : '',
 						'unit'       => 'ks',
 						'unit_price' => $order->get_item_subtotal( $item, false, false ),
 						'tax'        => $item_tax,
@@ -688,7 +682,8 @@ class WC_SF_Invoice {
 					$product_id = ( isset( $item['variation_id'] ) && $item['variation_id'] > 0 ) ? $item['variation_id'] : $item['product_id'];
 					$product    = wc_get_product( $product_id );
 
-					if ($product) {
+					// Description requires the product to exist in the database (not deleted).
+					if ( $product ) {
 						$attributes                = $this->wc_sf->format_item_meta( $item, $product );
 						$non_variations_attributes = $this->wc_sf->get_non_variations_attributes( $item['product_id'] );
 						if ( $product->is_type( 'variation' ) ) {
@@ -728,43 +723,43 @@ class WC_SF_Invoice {
 								$item_data['description'] = trim( $item_data['description'] . PHP_EOL . __( get_option( 'woocommerce_sf_discount_name', 'Zľava' ), 'woocommerce-superfaktura' ) . ' -' . $discount . ' ' . html_entity_decode( get_woocommerce_currency_symbol() ) );
 							}
 						}
+					}
 
-						/* accounting */
-						$item_type_product = get_option( 'woocommerce_sf_item_type_product' );
-						if ( $item_type_product ) {
-							$item_data['AccountingDetail']['type'] = $item_type_product;
-						}
+					/* accounting */
+					$item_type_product = get_option( 'woocommerce_sf_item_type_product' );
+					if ( $item_type_product ) {
+						$item_data['AccountingDetail']['type'] = $item_type_product;
+					}
 
-						$analytics_account_product = get_option( 'woocommerce_sf_analytics_account_product' );
-						if ( $analytics_account_product ) {
-							$item_data['AccountingDetail']['analytics_account'] = $analytics_account_product;
-						}
+					$analytics_account_product = get_option( 'woocommerce_sf_analytics_account_product' );
+					if ( $analytics_account_product ) {
+						$item_data['AccountingDetail']['analytics_account'] = $analytics_account_product;
+					}
 
-						$synthetic_account_product = get_option( 'woocommerce_sf_synthetic_account_product' );
-						if ( $synthetic_account_product ) {
-							$item_data['AccountingDetail']['synthetic_account'] = $synthetic_account_product;
-						}
+					$synthetic_account_product = get_option( 'woocommerce_sf_synthetic_account_product' );
+					if ( $synthetic_account_product ) {
+						$item_data['AccountingDetail']['synthetic_account'] = $synthetic_account_product;
+					}
 
-						$preconfidence_product = get_option( 'woocommerce_sf_preconfidence_product' );
-						if ( $preconfidence_product ) {
-							$item_data['AccountingDetail']['preconfidence'] = $preconfidence_product;
-						}
+					$preconfidence_product = get_option( 'woocommerce_sf_preconfidence_product' );
+					if ( $preconfidence_product ) {
+						$item_data['AccountingDetail']['preconfidence'] = $preconfidence_product;
+					}
 
-						$item_data = apply_filters( 'sf_item_data', $item_data, $order, $product );
+					$item_data = apply_filters( 'sf_item_data', $item_data, $order, $product );
 
-						// skip free products
-						if ( empty( $item_data['unit_price'] ) && 'yes' === get_option( 'woocommerce_sf_skip_free_products', 'no' ) ) {
-							continue;
-						}
+					// skip free products
+					if ( empty( $item_data['unit_price'] ) && 'yes' === get_option( 'woocommerce_sf_skip_free_products', 'no' ) ) {
+						continue;
+					}
 
-						// Add tax to $possible_discount_tax_rates if the item has a quantity and a unit price, even if get_tax_total() previously returned 0 because the price was fully discounted
-						if ( $item_data['quantity'] && $item_data['unit_price'] && $item_data['tax'] ) {
-							$possible_discount_tax_rates['item_' . $item_id] = $item_data['tax'];
-						}
+					// Add tax to $possible_discount_tax_rates if the item has a quantity and a unit price, even if get_tax_total() previously returned 0 because the price was fully discounted
+					if ( $item_data['quantity'] && $item_data['unit_price'] && $item_data['tax'] ) {
+						$possible_discount_tax_rates['item_' . $item_id] = $item_data['tax'];
+					}
 
-						if ( $item_data ) {
-							$api->addItem( $item_data );
-						}
+					if ( $item_data ) {
+						$api->addItem( $item_data );
 					}
 				}
 

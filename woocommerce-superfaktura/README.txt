@@ -4,7 +4,7 @@ Tags: superfaktura, invoice, faktura, proforma, woocommerce
 Requires at least: 4.4
 Tested up to: 6.9.4
 Requires PHP: 7.4
-Stable tag: 1.51.0
+Stable tag: 1.52.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -64,6 +64,9 @@ This usually happens when you change your login email address. The email address
 You can read more about SuperFaktura API integration at [superfaktura.sk/api](http://www.superfaktura.sk/api/)
 
 == Changelog ==
+
+= 1.52.0 =
+* Opravené generovanie položiek faktúry pre zmazané produkty (bez SKU a popisu produktu, ktoré nie je možné zrekonštruovať z údajov objednávky)
 
 = 1.51.0 =
 * Pridaný filter sf_invoice_extras
