@@ -29,7 +29,7 @@ class WC_SuperFaktura {
 	 *
 	 * @var string
 	 */
-	public $version = '1.52.0';
+	public $version = '1.52.1';
 
 	/**
 	 * Database version.
@@ -1365,48 +1365,43 @@ class WC_SuperFaktura {
 		}
 
 		try {
-			$ch = curl_init();
-			curl_setopt_array($ch, array(
-			    CURLOPT_URL => "https://ec.europa.eu/taxation_customs/vies/rest-api/ms/{$country}/vat/{$vatno}",
-			    CURLOPT_RETURNTRANSFER => true,
-			    CURLOPT_SSL_VERIFYPEER => true,
-			    CURLOPT_SSL_VERIFYHOST => 2,
-			    CURLOPT_TIMEOUT => 10,
-			    CURLOPT_USERAGENT => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-			    CURLOPT_VERBOSE => true
-			));
-			$response = curl_exec($ch);
+			$response = wp_safe_remote_get(
+				"https://ec.europa.eu/taxation_customs/vies/rest-api/ms/{$country}/vat/{$vatno}",
+				array(
+					'timeout'    => 10,
+					'user-agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+					'sslverify'  => true,
+				)
+			);
 
-			if (curl_errno($ch)) {
+			if ( is_wp_error( $response ) ) {
 				$this->wc_sf_log(
 					array(
 						'request_type'     => 'eu_vat_number',
-						'response_status'  => curl_errno($ch),
-						'response_message' => curl_error($ch),
+						'response_status'  => $response->get_error_code(),
+						'response_message' => $response->get_error_message(),
 					)
 				);
 
 				return null;
 			}
 
-			$http_response_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-			if (substr($http_response_code, 0, 1) != 2) {
+			$http_response_code = wp_remote_retrieve_response_code( $response );
+			if ( substr( (string) $http_response_code, 0, 1 ) !== '2' ) {
 				$this->wc_sf_log(
 					array(
 						'request_type'     => 'eu_vat_number',
 						'response_status'  => $http_response_code,
-						'response_message' => get_status_header_desc($http_response_code),
+						'response_message' => get_status_header_desc( $http_response_code ),
 					)
 				);
 
 				return null;
 			}
 
-			curl_close($ch);
+			$result = json_decode( wp_remote_retrieve_body( $response ) );
 
-			$result = json_decode($response);
-
-		} catch (Exception $e) {
+		} catch ( Exception $e ) {
 			$this->wc_sf_log(
 				array(
 					'request_type'     => 'eu_vat_number',
@@ -1767,7 +1762,7 @@ class WC_SuperFaktura {
 			return $this->alter_wc_statuses( $wc_get_order_statuses );
 		}
 
-		$order_status_terms = get_terms( 'shop_order_status', 'hide_empty=0' );
+		$order_status_terms = get_terms( array( 'taxonomy' => 'shop_order_status', 'hide_empty' => false ) );
 
 		$shop_order_statuses = array();
 		if ( ! is_wp_error( $order_status_terms ) ) {

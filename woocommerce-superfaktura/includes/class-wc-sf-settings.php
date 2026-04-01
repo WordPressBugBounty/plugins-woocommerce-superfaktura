@@ -1546,7 +1546,7 @@ class WC_SF_Settings extends WC_Settings_Page {
 			return $this->alter_wc_statuses( $wc_get_order_statuses );
 		}
 
-		$order_status_terms = get_terms( 'shop_order_status', 'hide_empty=0' );
+		$order_status_terms = get_terms( array( 'taxonomy' => 'shop_order_status', 'hide_empty' => false ) );
 
 		$shop_order_statuses = array();
 		if ( ! is_wp_error( $order_status_terms ) ) {
