@@ -55,6 +55,19 @@ class WC_SF_Checkout_Block {
 		// Sync block checkout data to existing order meta keys.
 		add_action( 'woocommerce_store_api_checkout_update_order_from_request', array( $this, 'sync_order_meta' ), 10, 2 );
 
+		// Sync company data to the Store API customer/session during checkout updates.
+		add_action( 'woocommerce_store_api_checkout_update_customer_from_request', array( $this, 'sync_customer_meta_from_request' ), 10, 2 );
+
+		// Persist synced company data to newly created accounts during block checkout.
+		add_action( 'woocommerce_created_customer', array( $this, 'sync_created_customer_meta' ), 10, 1 );
+
+		// Prefill block checkout company fields from the existing customer meta keys used by the classic checkout.
+		add_filter( 'woocommerce_get_default_value_for_superfaktura/wi-as-company', array( $this, 'get_default_company_field_value' ), 10, 3 );
+		add_filter( 'woocommerce_get_default_value_for_superfaktura/billing-company', array( $this, 'get_default_company_field_value' ), 10, 3 );
+		add_filter( 'woocommerce_get_default_value_for_superfaktura/billing-company-wi-id', array( $this, 'get_default_company_field_value' ), 10, 3 );
+		add_filter( 'woocommerce_get_default_value_for_superfaktura/billing-company-wi-tax', array( $this, 'get_default_company_field_value' ), 10, 3 );
+		add_filter( 'woocommerce_get_default_value_for_superfaktura/billing-company-wi-vat', array( $this, 'get_default_company_field_value' ), 10, 3 );
+
 		// Validate fields - use contact location validation hook.
 		add_action( 'woocommerce_blocks_validate_location_contact_fields', array( $this, 'validate_fields' ), 10, 2 );
 
@@ -191,21 +204,6 @@ class WC_SF_Checkout_Block {
 			woocommerce_register_additional_checkout_field( $id_args );
 		}
 
-		// Register "VAT #" field (IČ DPH).
-		if ( 'no' !== get_option( 'woocommerce_sf_add_company_billing_fields_vat', false ) ) {
-			$vat_args = array(
-				'id'       => self::FIELD_PREFIX . 'billing-company-wi-vat',
-				'label'    => $label_vat,
-				'location' => 'contact',
-				'type'     => 'text',
-				'required' => false,
-			);
-			if ( $vat_required ) {
-				$vat_args['optionalLabel'] = $label_vat;
-			}
-			woocommerce_register_additional_checkout_field( $vat_args );
-		}
-
 		// Register "TAX ID #" field (DIČ).
 		if ( 'no' !== get_option( 'woocommerce_sf_add_company_billing_fields_tax', false ) ) {
 			$tax_args = array(
@@ -219,6 +217,21 @@ class WC_SF_Checkout_Block {
 				$tax_args['optionalLabel'] = $label_tax;
 			}
 			woocommerce_register_additional_checkout_field( $tax_args );
+		}
+
+		// Register "VAT #" field (IČ DPH).
+		if ( 'no' !== get_option( 'woocommerce_sf_add_company_billing_fields_vat', false ) ) {
+			$vat_args = array(
+				'id'       => self::FIELD_PREFIX . 'billing-company-wi-vat',
+				'label'    => $label_vat,
+				'location' => 'contact',
+				'type'     => 'text',
+				'required' => false,
+			);
+			if ( $vat_required ) {
+				$vat_args['optionalLabel'] = $label_vat;
+			}
+			woocommerce_register_additional_checkout_field( $vat_args );
 		}
 	}
 
@@ -391,19 +404,19 @@ class WC_SF_Checkout_Block {
 	 * @param \WP_REST_Request $request Request object.
 	 */
 	public function sync_order_meta( $order, $request ) {
-		// Try to get values from order meta first, then from request.
-		$is_company = $this->get_field_value( $order, 'wi-as-company' );
+		$additional_fields = $request->get_param( 'additional_fields' );
+		$checkbox_field_id = self::FIELD_PREFIX . 'wi-as-company';
 
-		// If not found in order meta, try getting from request.
-		if ( '' === $is_company ) {
-			$is_company = $this->get_field_value_from_request( $request, 'wi-as-company' );
+		if ( ! is_array( $additional_fields ) || ! array_key_exists( $checkbox_field_id, $additional_fields ) ) {
+			return;
 		}
 
+		$is_company = $this->is_checked_value( $additional_fields[ $checkbox_field_id ] );
+
 		if ( $is_company ) {
-			// Set company name from our custom field.
-			$company_value = $this->get_field_value( $order, 'billing-company' );
-			if ( empty( $company_value ) ) {
-				$company_value = $this->get_field_value_from_request( $request, 'billing-company' );
+			$company_value = $this->get_field_value_from_request( $request, 'billing-company' );
+			if ( '' === $company_value ) {
+				$company_value = $this->get_field_value( $order, 'billing-company' );
 			}
 			if ( ! empty( $company_value ) ) {
 				$company_value = sanitize_text_field( $company_value );
@@ -414,9 +427,9 @@ class WC_SF_Checkout_Block {
 
 			// Copy values to the meta keys expected by the rest of the plugin.
 			// Save both with and without underscore prefix to match classic checkout behavior.
-			$id_value = $this->get_field_value( $order, 'billing-company-wi-id' );
-			if ( empty( $id_value ) ) {
-				$id_value = $this->get_field_value_from_request( $request, 'billing-company-wi-id' );
+			$id_value = $this->get_field_value_from_request( $request, 'billing-company-wi-id' );
+			if ( '' === $id_value ) {
+				$id_value = $this->get_field_value( $order, 'billing-company-wi-id' );
 			}
 			if ( ! empty( $id_value ) ) {
 				$id_value = sanitize_text_field( $id_value );
@@ -424,29 +437,32 @@ class WC_SF_Checkout_Block {
 				$order->update_meta_data( '_billing_company_wi_id', $id_value );
 			}
 
-			$vat_value = $this->get_field_value( $order, 'billing-company-wi-vat' );
-			if ( empty( $vat_value ) ) {
-				$vat_value = $this->get_field_value_from_request( $request, 'billing-company-wi-vat' );
-			}
-			if ( ! empty( $vat_value ) ) {
-				$vat_value = sanitize_text_field( $vat_value );
-				$order->update_meta_data( 'billing_company_wi_vat', $vat_value );
-				$order->update_meta_data( '_billing_company_wi_vat', $vat_value );
-			}
-
-			$tax_value = $this->get_field_value( $order, 'billing-company-wi-tax' );
-			if ( empty( $tax_value ) ) {
-				$tax_value = $this->get_field_value_from_request( $request, 'billing-company-wi-tax' );
+			$tax_value = $this->get_field_value_from_request( $request, 'billing-company-wi-tax' );
+			if ( '' === $tax_value ) {
+				$tax_value = $this->get_field_value( $order, 'billing-company-wi-tax' );
 			}
 			if ( ! empty( $tax_value ) ) {
 				$tax_value = sanitize_text_field( $tax_value );
 				$order->update_meta_data( 'billing_company_wi_tax', $tax_value );
 				$order->update_meta_data( '_billing_company_wi_tax', $tax_value );
 			}
+
+			$vat_value = $this->get_field_value_from_request( $request, 'billing-company-wi-vat' );
+			if ( '' === $vat_value ) {
+				$vat_value = $this->get_field_value( $order, 'billing-company-wi-vat' );
+			}
+			if ( ! empty( $vat_value ) ) {
+				$vat_value = sanitize_text_field( $vat_value );
+				$order->update_meta_data( 'billing_company_wi_vat', $vat_value );
+				$order->update_meta_data( '_billing_company_wi_vat', $vat_value );
+			}
 		} else {
-			// Clear company name if not buying as company (matching classic checkout behavior).
+			// Clear company data only when the checkbox is explicitly unchecked.
 			$order->set_billing_company( '' );
 			$order->set_shipping_company( '' );
+			foreach ( array( 'billing_company_wi_id', '_billing_company_wi_id', 'billing_company_wi_tax', '_billing_company_wi_tax', 'billing_company_wi_vat', '_billing_company_wi_vat' ) as $meta_key ) {
+				$order->delete_meta_data( $meta_key );
+			}
 		}
 
 		// Delete the additional checkout fields meta since we've synced to standard meta.
@@ -471,6 +487,101 @@ class WC_SF_Checkout_Block {
 	}
 
 	/**
+	 * Sync company data from the block checkout request to the current customer object.
+	 *
+	 * @param \WC_Customer     $customer Customer object.
+	 * @param \WP_REST_Request $request  Request object.
+	 */
+	public function sync_customer_meta_from_request( $customer, $request ) {
+		$additional_fields = $request->get_param( 'additional_fields' );
+		$checkbox_field_id = self::FIELD_PREFIX . 'wi-as-company';
+
+		if ( ! is_array( $additional_fields ) || ! array_key_exists( $checkbox_field_id, $additional_fields ) ) {
+			return;
+		}
+
+		$is_company = $this->is_checked_value( $additional_fields[ $checkbox_field_id ] );
+		$meta_data  = array(
+			'wi_as_company'         => $is_company ? '1' : '0',
+			'billing_company_wi_id'  => $is_company ? sanitize_text_field( $this->get_field_value_from_request( $request, 'billing-company-wi-id' ) ) : '',
+			'billing_company_wi_tax' => $is_company ? sanitize_text_field( $this->get_field_value_from_request( $request, 'billing-company-wi-tax' ) ) : '',
+			'billing_company_wi_vat' => $is_company ? sanitize_text_field( $this->get_field_value_from_request( $request, 'billing-company-wi-vat' ) ) : '',
+		);
+
+		foreach ( $meta_data as $meta_key => $meta_value ) {
+			$customer->update_meta_data( $meta_key, $meta_value );
+		}
+	}
+
+	/**
+	 * Sync block checkout company data to a newly created customer account.
+	 *
+	 * @param int $customer_id New customer ID.
+	 */
+	public function sync_created_customer_meta( $customer_id ) {
+		if ( ! function_exists( 'WC' ) || ! WC()->customer ) {
+			return;
+		}
+
+		$meta_data = array(
+			'wi_as_company'         => WC()->customer->get_meta( 'wi_as_company', true ),
+			'billing_company_wi_id'  => WC()->customer->get_meta( 'billing_company_wi_id', true ),
+			'billing_company_wi_tax' => WC()->customer->get_meta( 'billing_company_wi_tax', true ),
+			'billing_company_wi_vat' => WC()->customer->get_meta( 'billing_company_wi_vat', true ),
+		);
+
+		foreach ( $meta_data as $meta_key => $meta_value ) {
+			update_user_meta( $customer_id, $meta_key, $meta_value );
+		}
+	}
+
+	/**
+	 * Get a default block checkout field value from the customer meta used by the classic checkout.
+	 *
+	 * @param mixed        $value    Existing default value.
+	 * @param string       $group    Checkout field group.
+	 * @param \WC_Customer $customer Customer object.
+	 *
+	 * @return mixed
+	 */
+	public function get_default_company_field_value( $value, $group, $customer ) {
+		$field_id_to_meta_key = array(
+			'woocommerce_get_default_value_for_superfaktura/wi-as-company'         => 'wi_as_company',
+			'woocommerce_get_default_value_for_superfaktura/billing-company'       => 'billing_company',
+			'woocommerce_get_default_value_for_superfaktura/billing-company-wi-id' => 'billing_company_wi_id',
+			'woocommerce_get_default_value_for_superfaktura/billing-company-wi-tax' => 'billing_company_wi_tax',
+			'woocommerce_get_default_value_for_superfaktura/billing-company-wi-vat' => 'billing_company_wi_vat',
+		);
+
+		$current_filter = current_filter();
+		if ( ! isset( $field_id_to_meta_key[ $current_filter ] ) ) {
+			return $value;
+		}
+
+		if ( ! $customer || ! is_callable( array( $customer, 'get_meta' ) ) ) {
+			return $value;
+		}
+
+		$meta_key   = $field_id_to_meta_key[ $current_filter ];
+		$meta_value = 'billing_company' === $meta_key && is_callable( array( $customer, 'get_billing_company' ) )
+			? $customer->get_billing_company()
+			: $customer->get_meta( $meta_key, true );
+
+		return '' !== $meta_value ? $meta_value : $value;
+	}
+
+	/**
+	 * Normalize checkbox values from Blocks to a strict boolean.
+	 *
+	 * @param mixed $value Raw field value.
+	 *
+	 * @return bool Whether the checkbox should be treated as checked.
+	 */
+	private function is_checked_value( $value ) {
+		return in_array( $value, array( true, 1, '1', 'true', 'yes' ), true );
+	}
+
+	/**
 	 * Get field value from the REST API request.
 	 *
 	 * @param \WP_REST_Request $request    Request object.
@@ -483,7 +594,7 @@ class WC_SF_Checkout_Block {
 
 		// WooCommerce stores additional checkout fields in 'additional_fields' parameter.
 		$additional_fields = $request->get_param( 'additional_fields' );
-		if ( is_array( $additional_fields ) && isset( $additional_fields[ $field_id ] ) ) {
+		if ( is_array( $additional_fields ) && array_key_exists( $field_id, $additional_fields ) ) {
 			return $additional_fields[ $field_id ];
 		}
 

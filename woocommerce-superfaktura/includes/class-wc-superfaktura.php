@@ -29,7 +29,7 @@ class WC_SuperFaktura {
 	 *
 	 * @var string
 	 */
-	public $version = '1.52.1';
+	public $version = '1.52.2';
 
 	/**
 	 * Database version.
@@ -333,6 +333,7 @@ class WC_SuperFaktura {
 			add_filter( 'woocommerce_billing_fields', array( $this, 'billing_fields' ) );
 			add_filter( 'woocommerce_form_field', array( $this, 'billing_fields_labels' ), 10, 4 );
 			add_filter( 'woocommerce_checkout_process', array( $this, 'checkout_process' ) );
+			add_action( 'woocommerce_checkout_update_customer', array( $this, 'checkout_update_customer' ), 10, 2 );
 
 			add_filter( 'woocommerce_admin_billing_fields', array( $this, 'woocommerce_admin_billing_fields' ), 10, 1 );
 			add_action( 'woocommerce_process_shop_order_meta', array( $this, 'woocommerce_process_shop_order_meta' ), 10, 2 );
@@ -1283,21 +1284,21 @@ class WC_SuperFaktura {
 					);
 				}
 
-				// Add "VAT #" field (IC DPH).
-				if ( 'no' !== get_option( 'woocommerce_sf_add_company_billing_fields_vat', false ) ) {
-					$new_fields['billing_company_wi_vat'] = array(
-						'type'     => 'text',
-						'label'    => __( 'VAT #', 'woocommerce-superfaktura' ),
-						'required' => false,
-						'class'    => array( 'form-row-wide' ),
-					);
-				}
-
 				// Add "TAX ID #" field (DIC).
 				if ( 'no' !== get_option( 'woocommerce_sf_add_company_billing_fields_tax', false ) ) {
 					$new_fields['billing_company_wi_tax'] = array(
 						'type'     => 'text',
 						'label'    => __( 'TAX ID #', 'woocommerce-superfaktura' ),
+						'required' => false,
+						'class'    => array( 'form-row-wide' ),
+					);
+				}
+
+				// Add "VAT #" field (IC DPH).
+				if ( 'no' !== get_option( 'woocommerce_sf_add_company_billing_fields_vat', false ) ) {
+					$new_fields['billing_company_wi_vat'] = array(
+						'type'     => 'text',
+						'label'    => __( 'VAT #', 'woocommerce-superfaktura' ),
 						'required' => false,
 						'class'    => array( 'form-row-wide' ),
 					);
@@ -1334,12 +1335,12 @@ class WC_SuperFaktura {
 				$replace = ( 'required' === get_option( 'woocommerce_sf_add_company_billing_fields_id', 'optional' ) );
 				break;
 
-			case 'billing_company_wi_vat':
-				$replace = ( 'required' === get_option( 'woocommerce_sf_add_company_billing_fields_vat', 'optional' ) );
-				break;
-
 			case 'billing_company_wi_tax':
 				$replace = ( 'required' === get_option( 'woocommerce_sf_add_company_billing_fields_tax', 'optional' ) );
+				break;
+
+			case 'billing_company_wi_vat':
+				$replace = ( 'required' === get_option( 'woocommerce_sf_add_company_billing_fields_vat', 'optional' ) );
 				break;
 		}
 
@@ -1471,17 +1472,22 @@ class WC_SuperFaktura {
 	public function checkout_order_meta( $order_id ) {
 		$order = wc_get_order( $order_id );
 
+		if ( ! isset( $_POST['wi_as_company'] ) && ! $this->is_classic_checkout_submission() ) {
+			$order->save();
+			return;
+		}
+
 		$order->update_meta_data( 'has_shipping', ( isset( $_POST['shiptobilling'] ) && '1' == $_POST['shiptobilling'] ) ? '0' : '1' );
 
 		if ( isset( $_POST['wi_as_company'] ) && '1' == $_POST['wi_as_company'] ) {
-			foreach ( array( 'billing_company_wi_id', 'billing_company_wi_vat', 'billing_company_wi_tax' ) as $key ) {
+			foreach ( array( 'billing_company_wi_id', 'billing_company_wi_tax', 'billing_company_wi_vat' ) as $key ) {
 				if ( isset( $_POST[ $key ] ) ) {
 					$order->update_meta_data( $key, sanitize_text_field( wp_unslash( $_POST[ $key ] ) ) );
 				}
 			}
 		} else {
-			// Delete the private custom fields prefixed with "_" which are automatically saved even if "Buy as Business client" checkbox is not checked.
-			foreach ( array( '_billing_company_wi_id', '_billing_company_wi_vat', '_billing_company_wi_tax' ) as $key ) {
+			// Clear company ID fields which WooCommerce may prefill from the customer profile even when the business checkbox is unchecked.
+			foreach ( array( 'billing_company_wi_id', 'billing_company_wi_tax', 'billing_company_wi_vat', '_billing_company_wi_id', '_billing_company_wi_tax', '_billing_company_wi_vat' ) as $key ) {
 				$order->delete_meta_data( $key );
 			}
 
@@ -1496,6 +1502,25 @@ class WC_SuperFaktura {
 		}
 
 		$order->save();
+	}
+
+	/**
+	 * Sync the classic checkout business checkbox to the customer profile.
+	 *
+	 * @param \WC_Customer $customer Customer object.
+	 * @param array        $data     Posted checkout data.
+	 */
+	public function checkout_update_customer( $customer, $data ) {
+		$customer->update_meta_data( 'wi_as_company', ! empty( $data['wi_as_company'] ) ? '1' : '0' );
+	}
+
+	/**
+	 * Check whether the current request is a real classic checkout submission.
+	 *
+	 * @return bool True when WooCommerce's classic checkout form nonce is present.
+	 */
+	private function is_classic_checkout_submission() {
+		return isset( $_POST['woocommerce-process-checkout-nonce'] );
 	}
 
 
@@ -1513,14 +1538,14 @@ class WC_SuperFaktura {
 			'wrapper_class' => 'form-field-wide',
 		);
 
-		$fields['company_wi_vat'] = array(
-			'label'         => __( 'VAT #', 'woocommerce-superfaktura' ),
+		$fields['company_wi_tax'] = array(
+			'label'         => __( 'TAX ID #', 'woocommerce-superfaktura' ),
 			'show'          => true,
 			'wrapper_class' => 'form-field-wide',
 		);
 
-		$fields['company_wi_tax'] = array(
-			'label'         => __( 'TAX ID #', 'woocommerce-superfaktura' ),
+		$fields['company_wi_vat'] = array(
+			'label'         => __( 'VAT #', 'woocommerce-superfaktura' ),
 			'show'          => true,
 			'wrapper_class' => 'form-field-wide',
 		);
@@ -1570,13 +1595,13 @@ class WC_SuperFaktura {
 				'description' => '',
 			);
 
-			$fields['billing']['fields']['billing_company_wi_vat'] = array(
-				'label'       => __( 'VAT #', 'woocommerce-superfaktura' ),
+			$fields['billing']['fields']['billing_company_wi_tax'] = array(
+				'label'       => __( 'TAX ID #', 'woocommerce-superfaktura' ),
 				'description' => '',
 			);
 
-			$fields['billing']['fields']['billing_company_wi_tax'] = array(
-				'label'       => __( 'TAX ID #', 'woocommerce-superfaktura' ),
+			$fields['billing']['fields']['billing_company_wi_vat'] = array(
+				'label'       => __( 'VAT #', 'woocommerce-superfaktura' ),
 				'description' => '',
 			);
 		}
@@ -1598,8 +1623,8 @@ class WC_SuperFaktura {
 	function woocommerce_ajax_get_customer_details( $data, $customer, $user_id ) {
 		if ( isset ( $data['billing'] ) ) {
 			$data['billing']['company_wi_id'] = get_user_meta( $user_id, 'billing_company_wi_id', true );
-			$data['billing']['company_wi_vat'] = get_user_meta( $user_id, 'billing_company_wi_vat', true );
 			$data['billing']['company_wi_tax'] = get_user_meta( $user_id, 'billing_company_wi_tax', true );
+			$data['billing']['company_wi_vat'] = get_user_meta( $user_id, 'billing_company_wi_vat', true );
 		}
 
 		return $data;
