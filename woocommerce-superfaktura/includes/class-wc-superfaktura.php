@@ -1482,7 +1482,9 @@ class WC_SuperFaktura {
 		if ( isset( $_POST['wi_as_company'] ) && '1' == $_POST['wi_as_company'] ) {
 			foreach ( array( 'billing_company_wi_id', 'billing_company_wi_tax', 'billing_company_wi_vat' ) as $key ) {
 				if ( isset( $_POST[ $key ] ) ) {
-					$order->update_meta_data( $key, sanitize_text_field( wp_unslash( $_POST[ $key ] ) ) );
+					$value = sanitize_text_field( wp_unslash( $_POST[ $key ] ) );
+					$order->update_meta_data( $key, $value );
+					$order->update_meta_data( '_' . $key, $value );
 				}
 			}
 		} else {

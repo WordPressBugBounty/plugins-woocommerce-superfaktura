@@ -530,7 +530,7 @@ class WC_SF_Invoice {
 			$tax_rates                   = array();
 			$possible_discount_tax_rates = array();
 			foreach ( $order->get_items( 'tax' ) as $tax_item ) {
-				if ( 'WC_Order_Item_Tax' === get_class( $tax_item ) ) {
+				if ( $tax_item instanceof WC_Order_Item_Tax ) {
 					$tax_rates[ $tax_item->get_rate_id() ] = $tax_item->get_rate_percent();
 
 					if ( 0 < $tax_item->get_tax_total() ) {
@@ -561,14 +561,7 @@ class WC_SF_Invoice {
 								continue;
 							}
 
-							$item_tax = 0;
-							$taxes    = $item->get_taxes();
-							foreach ( $taxes['subtotal'] as $rate_id => $tax ) {
-								if ( empty( $tax ) ) {
-									continue;
-								}
-								$item_tax = $tax_rates[ $rate_id ];
-							}
+							$item_tax = $this->get_item_tax_rate_from_map( $item->get_taxes(), $tax_rates );
 
 							$refund_data = array(
 								'name'       => wp_strip_all_tags( html_entity_decode( $item['name'] ) ),
@@ -630,14 +623,7 @@ class WC_SF_Invoice {
 				foreach ( $items as $item_id => $item ) {
 					$product = $item->get_product();
 
-					$item_tax = 0;
-					$taxes    = $item->get_taxes();
-					foreach ( $taxes['subtotal'] as $rate_id => $tax ) {
-						if ( empty( $tax ) ) {
-							continue;
-						}
-						$item_tax = $tax_rates[ $rate_id ];
-					}
+					$item_tax = $this->get_item_tax_rate_from_map( $item->get_taxes(), $tax_rates );
 
 					$quantity = $item['qty'];
 
@@ -777,19 +763,12 @@ class WC_SF_Invoice {
 
 							$gc_tax_rates = array();
 							foreach ( $gc_order->get_items( 'tax' ) as $tax_item ) {
-								if ( 'WC_Order_Item_Tax' === get_class( $tax_item ) ) {
+								if ( $tax_item instanceof WC_Order_Item_Tax ) {
 									$gc_tax_rates[ $tax_item->get_rate_id() ] = $tax_item->get_rate_percent();
 								}
 							}
 
-							$gc_item_tax = 0;
-							$gc_taxes = $gc_item->get_taxes();
-							foreach ( $gc_taxes['subtotal'] as $rate_id => $tax ) {
-								if ( empty( $tax ) ) {
-									continue;
-								}
-								$gc_item_tax = $gc_tax_rates[ $rate_id ];
-							}
+							$gc_item_tax = $this->get_item_tax_rate_from_map( $gc_item->get_taxes(), $gc_tax_rates );
 
 							// Add gift card to the invoice.
 							$item_data = array(
@@ -1186,6 +1165,31 @@ class WC_SF_Invoice {
 
 		return true;
 
+	}
+
+	/**
+	 * Get the last matching tax rate percent for an order item from a rate map.
+	 *
+	 * @param array $taxes Item taxes array returned by WooCommerce.
+	 * @param array $tax_rates Tax rates indexed by rate ID.
+	 * @return float|int
+	 */
+	private function get_item_tax_rate_from_map( $taxes, $tax_rates ) {
+		if ( empty( $taxes['subtotal'] ) || ! is_array( $taxes['subtotal'] ) ) {
+			return 0;
+		}
+
+		$item_tax = 0;
+
+		foreach ( $taxes['subtotal'] as $rate_id => $tax ) {
+			if ( empty( $tax ) || ! isset( $tax_rates[ $rate_id ] ) ) {
+				continue;
+			}
+
+			$item_tax = $tax_rates[ $rate_id ];
+		}
+
+		return $item_tax;
 	}
 
 }
