@@ -732,7 +732,15 @@ class WC_SF_Invoice {
 						$item_data['AccountingDetail']['preconfidence'] = $preconfidence_product;
 					}
 
-					$item_data = apply_filters( 'sf_item_data', $item_data, $order, $product );
+					/**
+					 * Filters SuperFaktura invoice item data.
+					 *
+					 * @param array                 $item_data Invoice item data.
+					 * @param WC_Order              $order     Order.
+					 * @param WC_Product|false      $product   Product.
+					 * @param WC_Order_Item_Product $item      Current order item.
+					 */
+					$item_data = apply_filters( 'sf_item_data', $item_data, $order, $product, $item );
 
 					// skip free products
 					if ( empty( $item_data['unit_price'] ) && 'yes' === get_option( 'woocommerce_sf_skip_free_products', 'no' ) ) {
