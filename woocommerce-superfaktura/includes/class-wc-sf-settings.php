@@ -51,6 +51,7 @@ class WC_SF_Settings extends WC_Settings_Page {
 		add_action( 'woocommerce_settings_' . $this->id, array( $this, 'output' ) );
 		add_action( 'woocommerce_settings_save_' . $this->id, array( $this, 'save' ) );
 		add_action( 'woocommerce_sections_' . $this->id, array( $this, 'output_sections' ) );
+		add_filter( 'woocommerce_settings-' . $this->id, array( $this, 'filter_settings_for_rest_api' ), 100 );
 
 		$this->notice = null;
 		$this->allowed_tags = wp_kses_allowed_html( 'post' );
@@ -79,6 +80,51 @@ class WC_SF_Settings extends WC_Settings_Page {
 	 */
 	private function create_default_secret_key() {
 		return WC_SF_Helper::generate_secret_key();
+	}
+
+
+
+	/**
+	 * Check whether the current request targets the WooCommerce settings REST API.
+	 *
+	 * @return bool
+	 */
+	private function is_settings_rest_api_request() {
+		if ( ! defined( 'REST_REQUEST' ) || ! REST_REQUEST ) {
+			return false;
+		}
+
+		$request_uri = isset( $_SERVER['REQUEST_URI'] ) ? wp_unslash( $_SERVER['REQUEST_URI'] ) : '';
+
+		return 1 === preg_match( '#/wc/v\d+/settings(?:/|$)#', $request_uri );
+	}
+
+
+
+	/**
+	 * Remove sensitive settings from WooCommerce settings REST API responses.
+	 *
+	 * @param array $settings Settings array.
+	 * @return array
+	 */
+	public function filter_settings_for_rest_api( $settings ) {
+		if ( ! $this->is_settings_rest_api_request() ) {
+			return $settings;
+		}
+
+		$sensitive_setting_ids = array(
+			'woocommerce_sf_apikey',
+			'woocommerce_sf_sync_secret_key',
+		);
+
+		return array_values(
+			array_filter(
+				$settings,
+				function( $setting ) use ( $sensitive_setting_ids ) {
+					return ! isset( $setting['id'] ) || ! in_array( $setting['id'], $sensitive_setting_ids, true );
+				}
+			)
+		);
 	}
 
 
@@ -1004,7 +1050,7 @@ class WC_SF_Settings extends WC_Settings_Page {
 						'id'      => 'woocommerce_sf_sync_secret_key',
 						'desc'    => '<button id="createSecretKey" type="button" class="button">' . __( 'Regenerate', 'woocommerce-superfaktura' ) . '</button>',
 						'class'   => 'input-text regular-input',
-						'type'    => 'text',
+						'type'    => 'password',
 						'default' => $this->get_or_create_default_secret_key(),
 					),
 					array(
@@ -1483,7 +1529,7 @@ class WC_SF_Settings extends WC_Settings_Page {
 						'id'    => 'woocommerce_sf_apikey',
 						'desc'  => '',
 						'class' => 'input-text regular-input',
-						'type'  => 'text',
+						'type'  => 'password',
 					),
 					array(
 						'title' => __( 'Company ID', 'woocommerce-superfaktura' ),
@@ -1519,7 +1565,9 @@ class WC_SF_Settings extends WC_Settings_Page {
 				break;
 		}
 
-		return apply_filters( 'woocommerce_get_settings_' . $this->id, $settings, $current_section );
+		$settings = apply_filters( 'woocommerce_get_settings_' . $this->id, $settings, $current_section );
+
+		return $this->filter_settings_for_rest_api( $settings );
 
 	}
 

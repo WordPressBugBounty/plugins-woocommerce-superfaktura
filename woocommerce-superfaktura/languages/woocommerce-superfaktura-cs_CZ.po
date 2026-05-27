@@ -1355,6 +1355,22 @@ msgstr "%s nebylo možné ověřit."
 msgid "Proforma invoice"
 msgstr "Zálohová faktura"
 
+#: includes/class-wc-sf-admin.php:237 assets/js/admin.js:75 assets/js/admin.js:109
+msgid "Show"
+msgstr "Zobrazit"
+
+#: includes/class-wc-sf-admin.php:238 assets/js/admin.js:79
+msgid "Hide"
+msgstr "Skrýt"
+
+#: includes/class-wc-sf-admin.php:239 assets/js/admin.js:98 assets/js/admin.js:110
+msgid "Copy"
+msgstr "Kopírovat"
+
+#: includes/class-wc-sf-admin.php:240 assets/js/admin.js:96 assets/js/admin.js:145
+msgid "Copied"
+msgstr "Zkopírováno"
+
 #~ msgid "Checkout fields required"
 #~ msgstr "Povinné IČO a (SK) DIČ u objednávky (podle aktivovaných výše)"
 

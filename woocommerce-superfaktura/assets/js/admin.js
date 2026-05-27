@@ -1,4 +1,9 @@
 jQuery(document).ready(function($) {
+	var wcSfI18n = (window.wc_sf && window.wc_sf.i18n) || {};
+
+	function wc_sf_t(key, fallback) {
+		return wcSfI18n[key] || fallback;
+	}
 
 	function wc_sf_toggle_settings(selector, show) {
 		var $items = $(selector).closest('tr');
@@ -9,6 +14,100 @@ jQuery(document).ready(function($) {
 			$items.hide();
 		}
 	}
+
+	function wc_sf_find_secret_input(fieldName) {
+		return $('input[name="' + fieldName + '"]');
+	}
+
+	function wc_sf_sync_secret_toggle_label($input, hidden) {
+		var $toggle = $input.siblings('.wc-sf-secret-actions').find('.wc-sf-secret-toggle');
+
+		$toggle.text(wc_sf_t(hidden ? 'show' : 'hide', hidden ? 'Show' : 'Hide'));
+	}
+
+	function wc_sf_sync_secret_input($input, hidden) {
+		if (hidden) {
+			$input.attr('type', 'password');
+		}
+		else {
+			$input.attr('type', 'text');
+		}
+
+		wc_sf_sync_secret_toggle_label($input, hidden);
+	}
+
+	function wc_sf_copy_secret_fallback($input, $copy) {
+		var wasHidden = $input.attr('type') === 'password';
+		if (wasHidden) {
+			wc_sf_sync_secret_input($input, false);
+		}
+
+		$input.trigger('focus').trigger('select');
+		document.execCommand('copy');
+
+		if (wasHidden) {
+			wc_sf_sync_secret_input($input, true);
+		}
+
+		$copy.text(wc_sf_t('copied', 'Copied'));
+		window.setTimeout(function() {
+			$copy.text(wc_sf_t('copy', 'Copy'));
+		}, 1500);
+	}
+
+	function wc_sf_init_secret_field(fieldName) {
+		var $input = wc_sf_find_secret_input(fieldName);
+		if (!$input.length || $input.data('wcSfSecretReady')) {
+			return;
+		}
+
+		var $toggle = $('<button type="button" class="button button-secondary wc-sf-secret-toggle">' + wc_sf_t('show', 'Show') + '</button>');
+		var $copy = $('<button type="button" class="button button-secondary wc-sf-secret-copy">' + wc_sf_t('copy', 'Copy') + '</button>');
+		var $actions = $('<span class="wc-sf-secret-actions"></span>');
+
+		$input.data('wcSfSecretReady', true);
+		$input.attr('autocomplete', 'new-password');
+		$input.attr('spellcheck', 'false');
+		$input.attr('data-1p-ignore', 'true');
+		$input.attr('data-lpignore', 'true');
+
+		$actions.append($toggle).append($copy);
+		$input.after($actions);
+		wc_sf_sync_secret_toggle_label($input, $input.attr('type') === 'password');
+
+		$toggle.on('click', function() {
+			var isHidden = $input.attr('type') === 'password';
+			wc_sf_sync_secret_input($input, !isHidden);
+
+			if (isHidden) {
+				$input.trigger('focus');
+			}
+		});
+
+		$copy.on('click', function() {
+			var actual = $input.val();
+			if (!actual) {
+				return;
+			}
+
+			if (navigator.clipboard && navigator.clipboard.writeText) {
+				navigator.clipboard.writeText(actual).then(function() {
+					$copy.text(wc_sf_t('copied', 'Copied'));
+					window.setTimeout(function() {
+						$copy.text(wc_sf_t('copy', 'Copy'));
+					}, 1500);
+				}).catch(function() {
+					wc_sf_copy_secret_fallback($input, $copy);
+				});
+				return;
+			}
+
+			wc_sf_copy_secret_fallback($input, $copy);
+		});
+	}
+
+	wc_sf_init_secret_field('woocommerce_sf_apikey');
+	wc_sf_init_secret_field('woocommerce_sf_sync_secret_key');
 
 	// custom invoice numbering
 	$('input[name=woocommerce_sf_invoice_custom_num]').on('click', function(e) {

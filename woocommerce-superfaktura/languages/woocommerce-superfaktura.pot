@@ -1284,3 +1284,19 @@ msgstr ""
 #: includes/class-wc-superfaktura.php:1689
 msgid "Proforma invoice"
 msgstr ""
+
+#: includes/class-wc-sf-admin.php:237 assets/js/admin.js:75 assets/js/admin.js:109
+msgid "Show"
+msgstr ""
+
+#: includes/class-wc-sf-admin.php:238 assets/js/admin.js:79
+msgid "Hide"
+msgstr ""
+
+#: includes/class-wc-sf-admin.php:239 assets/js/admin.js:98 assets/js/admin.js:110
+msgid "Copy"
+msgstr ""
+
+#: includes/class-wc-sf-admin.php:240 assets/js/admin.js:96 assets/js/admin.js:145
+msgid "Copied"
+msgstr ""

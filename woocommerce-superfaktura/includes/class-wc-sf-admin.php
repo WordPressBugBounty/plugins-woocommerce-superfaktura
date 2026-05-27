@@ -227,7 +227,19 @@ class WC_SF_Admin {
      */
     public function admin_enqueue_scripts() {
 		wp_enqueue_script( 'wc-sf-admin-js', plugins_url( 'assets/js/admin.js', WC_SF_FILE_PATH ), array( 'jquery' ), $this->wc_sf->version, true );
-		wp_localize_script( 'wc-sf-admin-js', 'wc_sf', array( 'ajaxnonce'   => wp_create_nonce( 'ajax_validation' ) ) );
+		wp_localize_script(
+			'wc-sf-admin-js',
+			'wc_sf',
+			array(
+				'ajaxnonce' => wp_create_nonce( 'ajax_validation' ),
+				'i18n'      => array(
+					'show'   => __( 'Show', 'woocommerce-superfaktura' ),
+					'hide'   => __( 'Hide', 'woocommerce-superfaktura' ),
+					'copy'   => __( 'Copy', 'woocommerce-superfaktura' ),
+					'copied' => __( 'Copied', 'woocommerce-superfaktura' ),
+				),
+			)
+		);
     }
 
     /**
@@ -391,6 +403,12 @@ class WC_SF_Admin {
 				.wc-sf-url-error,
 				.wc-sf-url-error a {
 					color: #f00;
+				}
+				.wc-sf-secret-actions {
+					margin-left: 6px;
+				}
+				.wc-sf-secret-actions .button + .button {
+					margin-left: 4px;
 				}
 				</style>
 			',

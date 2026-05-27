@@ -4,7 +4,7 @@ Tags: superfaktura, invoice, faktura, proforma, woocommerce
 Requires at least: 4.4
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.52.4
+Stable tag: 1.52.5
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -64,6 +64,10 @@ This usually happens when you change your login email address. The email address
 You can read more about SuperFaktura API integration at [superfaktura.sk/api](http://www.superfaktura.sk/api/)
 
 == Changelog ==
+
+= 1.52.5 =
+* Citlivé hodnoty API Key a Secret Key sa už nevracajú cez WooCommerce settings REST API.
+* API Key a Secret Key sa v administrácii zobrazujú ako password polia s možnosťou zobrazenia a kopírovania.
 
 = 1.52.4 =
 * Pridaný parameter $item do filtra sf_item_data pre prístup k aktuálnej položke objednávky
