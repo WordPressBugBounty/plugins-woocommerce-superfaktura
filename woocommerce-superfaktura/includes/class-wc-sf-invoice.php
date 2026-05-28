@@ -179,7 +179,7 @@ class WC_SF_Invoice {
 				$client_data['state'] = $state;
 			}
 
-			if ( $order->get_formatted_billing_address() !== $order->get_formatted_shipping_address() ) {
+			if ( ( $order->get_formatted_billing_address() !== $order->get_formatted_shipping_address() ) || 'yes' === get_option( 'woocommerce_sf_invoice_delivery_name' ) ) {
 				if ( $order->get_shipping_company() ) {
 					if ( 'yes' === get_option( 'woocommerce_sf_invoice_delivery_name' ) ) {
 						$shipping_name = sprintf( '%s - %s %s', $order->get_shipping_company(), $order->get_shipping_first_name(), $order->get_shipping_last_name() );
