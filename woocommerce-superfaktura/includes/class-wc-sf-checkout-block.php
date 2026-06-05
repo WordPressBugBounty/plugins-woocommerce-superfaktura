@@ -469,7 +469,6 @@ class WC_SF_Checkout_Block {
 		// This prevents duplicate display in admin order page.
 		// WooCommerce creates meta with three prefixes: _wc_billing/, _wc_shipping/, _wc_other/
 		$field_names = array(
-			'wi-as-company',
 			'billing-company',
 			'billing-company-wi-id',
 			'billing-company-wi-vat',
