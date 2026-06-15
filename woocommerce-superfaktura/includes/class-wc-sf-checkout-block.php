@@ -346,16 +346,18 @@ class WC_SF_Checkout_Block {
 							'<strong>' . esc_html__( 'VAT #', 'woocommerce-superfaktura' ) . '</strong>'
 						)
 					);
-				} elseif ( null === $valid_eu_vat_number ) {
-					$errors->add(
-						'billing_company_wi_vat_validation_failed',
-						sprintf(
-							/* translators: %s: Field name */
-							__( '%s could not be validated.', 'woocommerce-superfaktura' ),
-							'<strong>' . esc_html__( 'VAT #', 'woocommerce-superfaktura' ) . '</strong>'
-						)
-					);
 				}
+				// Fail open: when the VAT number could not be validated (null) because the EU VIES
+				// service is unreachable, do not block checkout. Only a confirmed-invalid number blocks.
+				// } elseif ( null === $valid_eu_vat_number ) {
+				// 	$errors->add(
+				// 		'billing_company_wi_vat_validation_failed',
+				// 		sprintf(
+				// 			/* translators: %s: Field name */
+				// 			__( '%s could not be validated.', 'woocommerce-superfaktura' ),
+				// 			'<strong>' . esc_html__( 'VAT #', 'woocommerce-superfaktura' ) . '</strong>'
+				// 		)
+				// 	);
 			}
 		}
 

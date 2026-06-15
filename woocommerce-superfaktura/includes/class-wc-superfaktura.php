@@ -1450,9 +1450,11 @@ class WC_SuperFaktura {
 					// Translators: %s Field name.
 					wc_add_notice( sprintf( __( '%s is not valid.', 'woocommerce-superfaktura' ), '<strong>' . esc_html( __( 'VAT #', 'woocommerce-superfaktura' ) ) . '</strong>' ), 'error' );
 				}
-				elseif ( null === $valid_eu_vat_number ) {
-					wc_add_notice( sprintf( __( '%s could not be validated.', 'woocommerce-superfaktura' ), '<strong>' . esc_html( __( 'VAT #', 'woocommerce-superfaktura' ) ) . '</strong>' ), 'error' );
-				}
+				// Fail open: when the VAT number could not be validated (null) because the EU VIES
+				// service is unreachable, do not block checkout. Only a confirmed-invalid number blocks.
+				// elseif ( null === $valid_eu_vat_number ) {
+				// 	wc_add_notice( sprintf( __( '%s could not be validated.', 'woocommerce-superfaktura' ), '<strong>' . esc_html( __( 'VAT #', 'woocommerce-superfaktura' ) ) . '</strong>' ), 'error' );
+				// }
 			}
 
 			if ( 'required' === get_option( 'woocommerce_sf_add_company_billing_fields_tax', 'optional' ) && empty( $_POST['billing_company_wi_tax'] ) ) {
