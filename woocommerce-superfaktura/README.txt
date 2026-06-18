@@ -4,7 +4,7 @@ Tags: superfaktura, invoice, faktura, proforma, woocommerce
 Requires at least: 4.4
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.52.8
+Stable tag: 1.52.9
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -64,6 +64,10 @@ This usually happens when you change your login email address. The email address
 You can read more about SuperFaktura API integration at [superfaktura.sk/api](http://www.superfaktura.sk/api/)
 
 == Changelog ==
+
+= 1.52.9 =
+* Overovanie IČ DPH cez VIES sa pri zlyhaní spojenia s ec.europa.eu automaticky zopakuje cez HTTP/1.1.
+* Nové nastavenie pre povolenie alebo zablokovanie objednávky pri nedostupnom VIES.
 
 = 1.52.8 =
 * Overovanie IČ DPH cez VIES neblokuje dokončenie objednávky, ak je služba VIES dočasne nedostupná. Blokuje sa iba potvrdené neplatné IČ DPH.

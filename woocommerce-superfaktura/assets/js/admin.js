@@ -121,18 +121,27 @@ jQuery(document).ready(function($) {
 	});
 	wc_sf_toggle_settings('.custom-comment-item', $('input[name=woocommerce_sf_comments]').prop('checked'));
 
+	// validate eu vat id (and its dependent "behavior" setting)
+	function wc_sf_update_vat_validation_visibility() {
+		var companyOn = $('input[name=woocommerce_sf_add_company_billing_fields]').prop('checked');
+		var vatFieldVal = $('select[name=woocommerce_sf_add_company_billing_fields_vat]').val();
+		var validateVisible = companyOn && ('optional' == vatFieldVal || 'required' == vatFieldVal);
+		var behaviorVisible = validateVisible && $('input[name=woocommerce_sf_validate_eu_vat_number]').prop('checked');
+
+		wc_sf_toggle_settings('#woocommerce_sf_validate_eu_vat_number', validateVisible);
+		wc_sf_toggle_settings('#woocommerce_sf_validate_eu_vat_number_behavior', behaviorVisible);
+	}
+
 	// company billing fields
 	$('input[name=woocommerce_sf_add_company_billing_fields]').on('click', function(e) {
 		wc_sf_toggle_settings('.company-billing-fields-item', $(this).prop('checked'));
-		wc_sf_toggle_settings('#woocommerce_sf_validate_eu_vat_number', $(this).prop('checked') && ('optional' == $('select[name=woocommerce_sf_add_company_billing_fields_vat]').val() || 'required' == $('select[name=woocommerce_sf_add_company_billing_fields_vat]').val()));
+		wc_sf_update_vat_validation_visibility();
 	});
 	wc_sf_toggle_settings('.company-billing-fields-item', $('input[name=woocommerce_sf_add_company_billing_fields]').prop('checked'));
 
-	// validate eu vat id
-	$('select[name=woocommerce_sf_add_company_billing_fields_vat]').on('change', function(e) {
-		wc_sf_toggle_settings('#woocommerce_sf_validate_eu_vat_number', $('input[name=woocommerce_sf_add_company_billing_fields]').prop('checked') && ('optional' == $(this).val() || 'required' == $(this).val()));
-	});
-	wc_sf_toggle_settings('#woocommerce_sf_validate_eu_vat_number', $('input[name=woocommerce_sf_add_company_billing_fields]').prop('checked') && ('optional' == $('select[name=woocommerce_sf_add_company_billing_fields_vat]').val() || 'required' == $('select[name=woocommerce_sf_add_company_billing_fields_vat]').val()));
+	$('select[name=woocommerce_sf_add_company_billing_fields_vat]').on('change', wc_sf_update_vat_validation_visibility);
+	$('input[name=woocommerce_sf_validate_eu_vat_number]').on('click', wc_sf_update_vat_validation_visibility);
+	wc_sf_update_vat_validation_visibility();
 
 
 

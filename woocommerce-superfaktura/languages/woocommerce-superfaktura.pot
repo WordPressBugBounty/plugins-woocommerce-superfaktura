@@ -887,6 +887,24 @@ msgstr ""
 msgid "Validate VAT # in EU countries"
 msgstr ""
 
+#: includes/class-wc-sf-settings.php:915
+msgid "When VAT # cannot be validated"
+msgstr ""
+
+#: includes/class-wc-sf-settings.php:919
+msgid "Allow checkout (do not block)"
+msgstr ""
+
+#: includes/class-wc-sf-settings.php:920
+msgid "Block checkout"
+msgstr ""
+
+#: includes/class-wc-sf-settings.php:923
+msgid ""
+"Behavior when the EU VIES service is unreachable and the VAT # cannot be "
+"verified. A confirmed invalid VAT # always blocks checkout."
+msgstr ""
+
 #: includes/class-wc-sf-settings.php:841
 msgid "Add field TAX ID #"
 msgstr ""

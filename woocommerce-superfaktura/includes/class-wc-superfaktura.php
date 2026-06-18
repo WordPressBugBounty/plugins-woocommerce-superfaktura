@@ -29,7 +29,7 @@ class WC_SuperFaktura {
 	 *
 	 * @var string
 	 */
-	public $version = '1.52.5';
+	public $version = '1.52.9';
 
 	/**
 	 * Database version.
@@ -1365,15 +1365,18 @@ class WC_SuperFaktura {
 			return null;
 		}
 
+		$url = "https://ec.europa.eu/taxation_customs/vies/rest-api/ms/{$country}/vat/{$vatno}";
+
 		try {
-			$response = wp_safe_remote_get(
-				"https://ec.europa.eu/taxation_customs/vies/rest-api/ms/{$country}/vat/{$vatno}",
-				array(
-					'timeout'    => 10,
-					'user-agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-					'sslverify'  => true,
-				)
-			);
+			// First attempt: let cURL negotiate the protocol (usually HTTP/2).
+			$response = $this->vies_remote_get( $url );
+
+			// Many hosting setups fail to talk to ec.europa.eu over HTTP/2 and abort the
+			// connection ("cURL error 56: Connection closed abruptly"). Retry once over
+			// HTTP/1.1, which is far more tolerant of strict firewalls and proxies.
+			if ( is_wp_error( $response ) ) {
+				$response = $this->vies_remote_get( $url, '1.1' );
+			}
 
 			if ( is_wp_error( $response ) ) {
 				$this->wc_sf_log(
@@ -1414,13 +1417,67 @@ class WC_SuperFaktura {
 			return null;
 		}
 
+		// Treat an unexpected/unparseable response as "could not validate" rather than invalid.
+		if ( ! is_object( $result ) || ! isset( $result->userError ) ) {
+			$this->wc_sf_log(
+				array(
+					'request_type'     => 'eu_vat_number',
+					'response_status'  => $http_response_code,
+					'response_message' => 'Unexpected VIES response',
+				)
+			);
 
+			return null;
+		}
 
 		if ( 'VALID' !== $result->userError ) {
 			return false;
 		}
 
 		return true;
+	}
+
+
+
+	/**
+	 * Perform a GET request to the EU VIES REST API.
+	 *
+	 * @param string      $url         Request URL.
+	 * @param string|null $httpversion Force a specific HTTP version (e.g. '1.1'), or null to auto-negotiate.
+	 * @return array|WP_Error
+	 */
+	private function vies_remote_get( $url, $httpversion = null ) {
+		$args = array(
+			'timeout'    => 10,
+			'user-agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+			'sslverify'  => true,
+		);
+
+		if ( null === $httpversion ) {
+			return wp_safe_remote_get( $url, $args );
+		}
+
+		$args['httpversion'] = $httpversion;
+
+		// Force the HTTP version at the cURL transport level too. WordPress' "httpversion"
+		// arg is not consistently honored across WP/Requests versions, so on the HTTP/1.1
+		// retry we also set CURLOPT_HTTP_VERSION directly. Scoped to this single request.
+		$force_http_1_1 = '1.1' === $httpversion;
+		$curl_filter    = function ( $handle ) {
+			curl_setopt( $handle, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1 );
+		};
+
+		if ( $force_http_1_1 ) {
+			add_action( 'http_api_curl', $curl_filter );
+		}
+
+		$response = wp_safe_remote_get( $url, $args );
+
+		if ( $force_http_1_1 ) {
+			remove_action( 'http_api_curl', $curl_filter );
+		}
+
+		return $response;
 	}
 
 
@@ -1450,11 +1507,13 @@ class WC_SuperFaktura {
 					// Translators: %s Field name.
 					wc_add_notice( sprintf( __( '%s is not valid.', 'woocommerce-superfaktura' ), '<strong>' . esc_html( __( 'VAT #', 'woocommerce-superfaktura' ) ) . '</strong>' ), 'error' );
 				}
-				// Fail open: when the VAT number could not be validated (null) because the EU VIES
-				// service is unreachable, do not block checkout. Only a confirmed-invalid number blocks.
-				// elseif ( null === $valid_eu_vat_number ) {
-				// 	wc_add_notice( sprintf( __( '%s could not be validated.', 'woocommerce-superfaktura' ), '<strong>' . esc_html( __( 'VAT #', 'woocommerce-superfaktura' ) ) . '</strong>' ), 'error' );
-				// }
+				// When the VAT number could not be validated (null) because the EU VIES service is
+				// unreachable, the behavior depends on the merchant setting. Default is "allow"
+				// (fail open); "block" stops checkout until validation succeeds.
+				elseif ( null === $valid_eu_vat_number && 'block' === get_option( 'woocommerce_sf_validate_eu_vat_number_behavior', 'allow' ) ) {
+					// Translators: %s Field name.
+					wc_add_notice( sprintf( __( '%s could not be validated.', 'woocommerce-superfaktura' ), '<strong>' . esc_html( __( 'VAT #', 'woocommerce-superfaktura' ) ) . '</strong>' ), 'error' );
+				}
 			}
 
 			if ( 'required' === get_option( 'woocommerce_sf_add_company_billing_fields_tax', 'optional' ) && empty( $_POST['billing_company_wi_tax'] ) ) {

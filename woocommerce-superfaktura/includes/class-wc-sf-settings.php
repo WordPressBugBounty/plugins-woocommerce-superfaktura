@@ -912,6 +912,17 @@ class WC_SF_Settings extends WC_Settings_Page {
 						'desc'    => __( 'Validate VAT # in EU countries', 'woocommerce-superfaktura' ),
 					),
 					array(
+						'title'   => __( 'When VAT # cannot be validated', 'woocommerce-superfaktura' ),
+						'id'      => 'woocommerce_sf_validate_eu_vat_number_behavior',
+						'type'    => 'select',
+						'options' => array(
+							'allow' => __( 'Allow checkout (do not block)', 'woocommerce-superfaktura' ),
+							'block' => __( 'Block checkout', 'woocommerce-superfaktura' ),
+						),
+						'default' => 'allow',
+						'desc'    => __( 'Behavior when the EU VIES service is unreachable and the VAT # cannot be verified. A confirmed invalid VAT # always blocks checkout.', 'woocommerce-superfaktura' ),
+					),
+					array(
 						'title'   => __( 'Add field TAX ID #', 'woocommerce-superfaktura' ),
 						'id'      => 'woocommerce_sf_add_company_billing_fields_tax',
 						'type'    => 'select',
