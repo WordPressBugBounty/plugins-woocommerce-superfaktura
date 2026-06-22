@@ -1107,11 +1107,17 @@ class WC_SF_Invoice {
 					$log_data['response_message'] = $response->error_message;
 				}
 			}
+		} elseif ( empty( $response->data->Invoice->id ) ) {
+			// Response without an error flag, but also without an actual invoice.
+			$log_data['response_status']  = 999;
+			$log_data['response_message'] = 'API response contained no invoice.';
 		}
 
 		$this->wc_sf->wc_sf_log( $log_data );
 
-		if ( empty( $response ) || ( isset( $response->error ) && 0 !== $response->error ) ) {
+		if ( empty( $response ) || ( isset( $response->error ) && 0 !== $response->error ) || empty( $response->data->Invoice->id ) ) {
+			// Treat a response without a real invoice id as a failure, so we do not
+			// save empty meta or add a "created" note for an invoice that does not exist.
 			return false;
 		}
 
