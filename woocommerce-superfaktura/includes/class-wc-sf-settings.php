@@ -923,6 +923,14 @@ class WC_SF_Settings extends WC_Settings_Page {
 						'desc'    => __( 'Behavior when the EU VIES service is unreachable and the VAT # cannot be verified. A confirmed invalid VAT # always blocks checkout.', 'woocommerce-superfaktura' ),
 					),
 					array(
+						'title'    => __( 'Remove VAT for EU businesses with a valid VAT #', 'woocommerce-superfaktura' ),
+						'id'       => 'woocommerce_sf_exempt_vat_on_valid_vat_number',
+						'default'  => 'no',
+						'type'     => 'checkbox',
+						'desc'     => __( 'Apply reverse charge for EU businesses with a valid VAT #', 'woocommerce-superfaktura' ),
+						'desc_tip' => __( 'When enabled, VAT is removed from the order if a business customer enters a VIES-verified VAT # and has a billing address in an EU country other than your shop. This changes order tax totals, so make sure your WooCommerce tax setup is correct before enabling.', 'woocommerce-superfaktura' ),
+					),
+					array(
 						'title'   => __( 'Add field TAX ID #', 'woocommerce-superfaktura' ),
 						'id'      => 'woocommerce_sf_add_company_billing_fields_tax',
 						'type'    => 'select',

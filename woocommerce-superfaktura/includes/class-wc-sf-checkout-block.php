@@ -336,7 +336,7 @@ class WC_SF_Checkout_Block {
 			$vat_key   = self::FIELD_PREFIX . 'billing-company-wi-vat';
 			$vat_value = $fields[ $vat_key ] ?? '';
 			if ( ! empty( $vat_value ) ) {
-				$valid_eu_vat_number = $this->wc_sf->validate_eu_vat_number( $vat_value );
+				$valid_eu_vat_number = $this->wc_sf->is_eu_vat_number_valid_cached( $vat_value );
 				if ( false === $valid_eu_vat_number ) {
 					$errors->add(
 						'billing_company_wi_vat_invalid',
@@ -486,6 +486,12 @@ class WC_SF_Checkout_Block {
 			$order->delete_meta_data( '_wc_other/' . $field_id );
 		}
 
+		// The "Buy as business" checkbox is a contact-location field, so only its _wc_other/ copy is meaningful.
+		// Remove _wc_billing/ and _wc_shipping/ duplicates to not clutter the order meta.
+		$checkbox_field_id = self::FIELD_PREFIX . 'wi-as-company';
+		$order->delete_meta_data( '_wc_billing/' . $checkbox_field_id );
+		$order->delete_meta_data( '_wc_shipping/' . $checkbox_field_id );
+
 		$order->save();
 	}
 
@@ -514,6 +520,16 @@ class WC_SF_Checkout_Block {
 		foreach ( $meta_data as $meta_key => $meta_value ) {
 			$customer->update_meta_data( $meta_key, $meta_value );
 		}
+
+		// Apply or clear the intra-EU B2B VAT exemption so the block checkout totals and the resulting order reflect the reverse charge.
+		$billing_country = $customer->get_billing_country();
+		if ( '' === $billing_country ) {
+			$billing_address = $request->get_param( 'billing_address' );
+			if ( is_array( $billing_address ) && ! empty( $billing_address['country'] ) ) {
+				$billing_country = $billing_address['country'];
+			}
+		}
+		$this->wc_sf->apply_vat_exemption( $customer, $is_company, $meta_data['billing_company_wi_vat'], $billing_country );
 	}
 
 	/**

@@ -130,6 +130,7 @@ jQuery(document).ready(function($) {
 
 		wc_sf_toggle_settings('#woocommerce_sf_validate_eu_vat_number', validateVisible);
 		wc_sf_toggle_settings('#woocommerce_sf_validate_eu_vat_number_behavior', behaviorVisible);
+		wc_sf_toggle_settings('#woocommerce_sf_exempt_vat_on_valid_vat_number', behaviorVisible);
 	}
 
 	// company billing fields

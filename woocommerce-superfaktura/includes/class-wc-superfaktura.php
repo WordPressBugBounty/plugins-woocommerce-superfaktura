@@ -29,7 +29,7 @@ class WC_SuperFaktura {
 	 *
 	 * @var string
 	 */
-	public $version = '1.52.10';
+	public $version = '1.53.0';
 
 	/**
 	 * Database version.
@@ -1430,11 +1430,127 @@ class WC_SuperFaktura {
 			return null;
 		}
 
-		if ( 'VALID' !== $result->userError ) {
+		if ( 'VALID' === $result->userError ) {
+			return true;
+		}
+
+		// Only a genuine "INVALID" verdict means the VAT # is not valid.
+		// Every other userError (MS_MAX_CONCURRENT_REQ, GLOBAL_MAX_CONCURRENT_REQ, MS_UNAVAILABLE, SERVICE_UNAVAILABLE, TIMEOUT) must be mistaken for an invalid number.
+		if ( 'INVALID' === $result->userError ) {
 			return false;
 		}
 
-		return true;
+		$this->wc_sf_log(
+			array(
+				'request_type'     => 'eu_vat_number',
+				'response_status'  => $http_response_code,
+				'response_message' => 'VIES could not validate (userError: ' . $result->userError . ')',
+			)
+		);
+
+		return null;
+	}
+
+
+
+	/**
+	 * Validate an EU VAT number through VIES with a short-lived transient cache.
+	 *
+	 * Only definitive results (valid/invalid) are cached, other results are never cached.
+	 *
+	 * @param string $vat_number VAT number to validate.
+	 * @return bool|null True if valid, false if invalid, null if it could not be validated.
+	 */
+	public function is_eu_vat_number_valid_cached( $vat_number ) {
+		$normalized = strtoupper( preg_replace( '/[^A-Z0-9]/i', '', (string) $vat_number ) );
+		if ( '' === $normalized ) {
+			return null;
+		}
+
+		$cache_key = 'wc_sf_vies_' . md5( $normalized );
+		$cached    = get_transient( $cache_key );
+		if ( 'valid' === $cached ) {
+			return true;
+		}
+		if ( 'invalid' === $cached ) {
+			return false;
+		}
+
+		$result = $this->validate_eu_vat_number( $normalized );
+		if ( true === $result ) {
+			set_transient( $cache_key, 'valid', DAY_IN_SECONDS );
+		} elseif ( false === $result ) {
+			set_transient( $cache_key, 'invalid', DAY_IN_SECONDS );
+		}
+
+		return $result;
+	}
+
+
+
+	/**
+	 * Decide whether an order should be exempted from VAT (intra-EU B2B reverse charge).
+	 *
+	 * Returns true only for a business purchase with a VIES-verified VAT number billing to an EU country other than the shop base country.
+	 * A VAT number that could not be validated (VIES unreachable) never exempts. Charging VAT is the safe default.
+	 *
+	 * @param bool   $is_company      Whether the customer is buying as a business.
+	 * @param string $vat_number      Entered VAT number.
+	 * @param string $billing_country Billing country ISO code.
+	 * @return bool
+	 */
+	public function should_exempt_vat( $is_company, $vat_number, $billing_country ) {
+		// Dependent on VAT validation being enabled (mirrors the admin UI, where this option is
+		// only shown when "Validate VAT #" is on).
+		if ( 'yes' !== get_option( 'woocommerce_sf_validate_eu_vat_number', 'no' ) ) {
+			return false;
+		}
+
+		if ( 'yes' !== get_option( 'woocommerce_sf_exempt_vat_on_valid_vat_number', 'no' ) ) {
+			return false;
+		}
+
+		if ( ! $is_company || '' === trim( (string) $vat_number ) ) {
+			return false;
+		}
+
+		$billing_country = strtoupper( (string) $billing_country );
+		if ( '' === $billing_country ) {
+			return false;
+		}
+
+		// Domestic business customers keep local VAT; reverse charge only applies cross-border within the EU.
+		if ( $billing_country === WC()->countries->get_base_country() ) {
+			return false;
+		}
+
+		if ( ! in_array( $billing_country, $this->eu_countries, true ) ) {
+			return false;
+		}
+
+		return true === $this->is_eu_vat_number_valid_cached( $vat_number );
+	}
+
+
+
+	/**
+	 * Apply (or clear) the VAT exemption on a customer based on the entered company billing data.
+	 *
+	 * @param WC_Customer $customer        Customer to update.
+	 * @param bool        $is_company      Whether the customer is buying as a business.
+	 * @param string      $vat_number      Entered VAT number.
+	 * @param string      $billing_country Billing country ISO code.
+	 */
+	public function apply_vat_exemption( $customer, $is_company, $vat_number, $billing_country ) {
+		if ( 'yes' !== get_option( 'woocommerce_sf_exempt_vat_on_valid_vat_number', 'no' ) ) {
+			return;
+		}
+
+		if ( ! $customer instanceof WC_Customer ) {
+			return;
+		}
+
+		$customer->set_is_vat_exempt( $this->should_exempt_vat( $is_company, $vat_number, $billing_country ) );
 	}
 
 
@@ -1451,6 +1567,10 @@ class WC_SuperFaktura {
 			'timeout'    => 10,
 			'user-agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
 			'sslverify'  => true,
+			'headers'    => array(
+				// Request an uncompressed response. On many hosts the compressed TLS stream from ec.europa.eu is aborted mid-transfer ("cURL error 56: unexpected eof while reading"), which made VIES appear permanently unreachable.
+				'Accept-Encoding' => 'identity',
+			),
 		);
 
 		if ( null === $httpversion ) {
@@ -1459,9 +1579,8 @@ class WC_SuperFaktura {
 
 		$args['httpversion'] = $httpversion;
 
-		// Force the HTTP version at the cURL transport level too. WordPress' "httpversion"
-		// arg is not consistently honored across WP/Requests versions, so on the HTTP/1.1
-		// retry we also set CURLOPT_HTTP_VERSION directly. Scoped to this single request.
+		// Force the HTTP version at the cURL transport level too.
+		// WordPress' "httpversion" is not consistently honored across WP/Requests versions, so on the HTTP/1.1 retry we also set CURLOPT_HTTP_VERSION directly.
 		$force_http_1_1 = '1.1' === $httpversion;
 		$curl_filter    = function ( $handle ) {
 			curl_setopt( $handle, CURLOPT_HTTP_VERSION, CURL_HTTP_VERSION_1_1 );
@@ -1502,7 +1621,7 @@ class WC_SuperFaktura {
 				wc_add_notice( sprintf( __( '%s is a required field.', 'woocommerce' ), '<strong>' . esc_html( __( 'VAT #', 'woocommerce-superfaktura' ) ) . '</strong>' ), 'error' );
 			}
 			elseif ( 'yes' === get_option( 'woocommerce_sf_validate_eu_vat_number', 'no' ) && ! empty( $_POST['billing_company_wi_vat'] ) ) {
-				$valid_eu_vat_number = $this->validate_eu_vat_number( $_POST['billing_company_wi_vat'] );
+				$valid_eu_vat_number = $this->is_eu_vat_number_valid_cached( $_POST['billing_company_wi_vat'] );
 				if ( false === $valid_eu_vat_number ) {
 					// Translators: %s Field name.
 					wc_add_notice( sprintf( __( '%s is not valid.', 'woocommerce-superfaktura' ), '<strong>' . esc_html( __( 'VAT #', 'woocommerce-superfaktura' ) ) . '</strong>' ), 'error' );
@@ -1574,7 +1693,12 @@ class WC_SuperFaktura {
 	 * @param array        $data     Posted checkout data.
 	 */
 	public function checkout_update_customer( $customer, $data ) {
-		$customer->update_meta_data( 'wi_as_company', ! empty( $data['wi_as_company'] ) ? '1' : '0' );
+		$is_company = ! empty( $data['wi_as_company'] );
+		$customer->update_meta_data( 'wi_as_company', $is_company ? '1' : '0' );
+
+		// Apply or clear the intra-EU B2B VAT exemption on every checkout update so the cart totals and the resulting order reflect the reverse charge.
+		$billing_country = isset( $data['billing_country'] ) ? $data['billing_country'] : $customer->get_billing_country();
+		$this->apply_vat_exemption( $customer, $is_company, isset( $data['billing_company_wi_vat'] ) ? $data['billing_company_wi_vat'] : '', $billing_country );
 	}
 
 	/**

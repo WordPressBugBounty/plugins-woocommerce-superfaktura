@@ -928,6 +928,26 @@ msgstr ""
 "Chování, když je služba EU VIES nedostupná a DIČ nelze ověřit. Potvrzené "
 "neplatné DIČ vždy zablokuje dokončení objednávky."
 
+#: includes/class-wc-sf-settings.php:926
+msgid "Remove VAT for EU businesses with a valid VAT #"
+msgstr "Odečíst DPH pro firmy z EU s platným DIČ"
+
+#: includes/class-wc-sf-settings.php:930
+msgid "Apply reverse charge for EU businesses with a valid VAT #"
+msgstr "Uplatnit přenesení daňové povinnosti pro firmy z EU s platným DIČ"
+
+#: includes/class-wc-sf-settings.php:931
+msgid ""
+"When enabled, VAT is removed from the order if a business customer enters a "
+"VIES-verified VAT # and has a billing address in an EU country other than "
+"your shop. This changes order tax totals, so make sure your WooCommerce tax "
+"setup is correct before enabling."
+msgstr ""
+"Po zapnutí se DPH z objednávky odečte, pokud firemní zákazník zadá DIČ "
+"ověřené přes VIES a má fakturační adresu v jiné zemi EU než váš obchod. Tím "
+"se mění součet daně v objednávce, proto před zapnutím zkontrolujte nastavení "
+"daní ve WooCommerce."
+
 #: includes/class-wc-sf-settings.php:841
 msgid "Add field TAX ID #"
 msgstr ""

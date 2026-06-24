@@ -905,6 +905,22 @@ msgid ""
 "verified. A confirmed invalid VAT # always blocks checkout."
 msgstr ""
 
+#: includes/class-wc-sf-settings.php:926
+msgid "Remove VAT for EU businesses with a valid VAT #"
+msgstr ""
+
+#: includes/class-wc-sf-settings.php:930
+msgid "Apply reverse charge for EU businesses with a valid VAT #"
+msgstr ""
+
+#: includes/class-wc-sf-settings.php:931
+msgid ""
+"When enabled, VAT is removed from the order if a business customer enters a "
+"VIES-verified VAT # and has a billing address in an EU country other than "
+"your shop. This changes order tax totals, so make sure your WooCommerce tax "
+"setup is correct before enabling."
+msgstr ""
+
 #: includes/class-wc-sf-settings.php:841
 msgid "Add field TAX ID #"
 msgstr ""
