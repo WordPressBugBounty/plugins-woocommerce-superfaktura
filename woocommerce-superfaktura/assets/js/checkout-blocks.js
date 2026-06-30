@@ -118,3 +118,131 @@
 		setTimeout(init, 100);
 	}
 })();
+
+/**
+ * Order-summary "updating" indicator for company-field edits.
+ *
+ * Address fields recalculate through the Cart Store API, which makes the block checkout show its
+ * native loading skeleton on the order summary. The SuperFaktura company fields recalculate through
+ * the Checkout Store API additional-fields update instead, which refreshes the totals but does not
+ * toggle that skeleton - so the reverse-charge totals can change with no visual feedback, making it
+ * look like nothing happened. This adds a lightweight busy state to the summary while a company-field
+ * change is being recalculated, and clears it once the cart totals refresh (with a safety timeout).
+ */
+(function() {
+	'use strict';
+
+	const COMPANY_FIELD_IDS = [
+		'contact-superfaktura-wi-as-company',
+		'contact-superfaktura-billing-company',
+		'contact-superfaktura-billing-company-wi-id',
+		'contact-superfaktura-billing-company-wi-vat',
+		'contact-superfaktura-billing-company-wi-tax'
+	];
+	const BUSY_CLASS = 'sf-summary-updating';
+	const SAFETY_TIMEOUT_MS = 6000;
+
+	let busyTimer = null;
+	let totalsSnapshot = null;
+	let unsubscribe = null;
+
+	function injectStyles() {
+		if (document.getElementById('sf-summary-updating-style')) {
+			return;
+		}
+		const style = document.createElement('style');
+		style.id = 'sf-summary-updating-style';
+		style.textContent =
+			'.' + BUSY_CLASS + '{position:relative;transition:opacity .15s ease;}' +
+			'.' + BUSY_CLASS + '>*{opacity:.45;pointer-events:none;}' +
+			'.' + BUSY_CLASS + '::after{content:"";position:absolute;top:12px;right:12px;width:16px;height:16px;' +
+			'border:2px solid currentColor;border-top-color:transparent;border-radius:50%;opacity:.6;' +
+			'animation:sf-summary-spin .8s linear infinite;}' +
+			'@keyframes sf-summary-spin{to{transform:rotate(360deg);}}';
+		document.head.appendChild(style);
+	}
+
+	function findSummary() {
+		return document.querySelector('.wp-block-woocommerce-checkout-order-summary-block') ||
+			document.querySelector('.wc-block-components-totals-wrapper') ||
+			document.querySelector('.wc-block-checkout__sidebar');
+	}
+
+	function cartTotals() {
+		try {
+			if (window.wp && wp.data && wp.data.select('wc/store/cart')) {
+				return JSON.stringify(wp.data.select('wc/store/cart').getCartTotals());
+			}
+		} catch (e) {}
+		return null;
+	}
+
+	function setBusy(on) {
+		const summary = findSummary();
+		if (!summary) {
+			return;
+		}
+		if (on) {
+			summary.classList.add(BUSY_CLASS);
+		} else {
+			summary.classList.remove(BUSY_CLASS);
+		}
+	}
+
+	function startBusy() {
+		injectStyles();
+		totalsSnapshot = cartTotals();
+		setBusy(true);
+
+		if (busyTimer) {
+			clearTimeout(busyTimer);
+		}
+		// Safety net: clear the indicator even if totals do not change (e.g. invalid VAT, no exemption).
+		busyTimer = setTimeout(function() {
+			setBusy(false);
+		}, SAFETY_TIMEOUT_MS);
+
+		// Clear as soon as the cart totals actually refresh from the recalculation response.
+		if (!unsubscribe && window.wp && wp.data && wp.data.subscribe) {
+			unsubscribe = wp.data.subscribe(function() {
+				if (!document.querySelector('.' + BUSY_CLASS)) {
+					return;
+				}
+				const current = cartTotals();
+				if (current !== null && current !== totalsSnapshot) {
+					totalsSnapshot = current;
+					setBusy(false);
+				}
+			});
+		}
+	}
+
+	function isCompanyField(target) {
+		return target && target.id && COMPANY_FIELD_IDS.indexOf(target.id) !== -1;
+	}
+
+	function init() {
+		const form = document.querySelector('.wc-block-checkout');
+		if (!form) {
+			setTimeout(init, 300);
+			return;
+		}
+		// Delegated listeners: company fields re-render with React, so bind on the stable form root.
+		form.addEventListener('change', function(e) {
+			if (isCompanyField(e.target)) {
+				startBusy();
+			}
+		}, true);
+		form.addEventListener('blur', function(e) {
+			if (isCompanyField(e.target)) {
+				startBusy();
+			}
+		}, true);
+	}
+
+	if (document.readyState === 'loading') {
+		document.addEventListener('DOMContentLoaded', init);
+	} else {
+		setTimeout(init, 100);
+	}
+})();

@@ -58,6 +58,16 @@ class WC_SF_Checkout_Block {
 		// Sync company data to the Store API customer/session during checkout updates.
 		add_action( 'woocommerce_store_api_checkout_update_customer_from_request', array( $this, 'sync_customer_meta_from_request' ), 10, 2 );
 
+		// Re-apply the reverse-charge exemption from the accumulated customer session state on every
+		// Store API recalculation (checkout and cart endpoints, which send company fields as partial deltas).
+		add_action( 'woocommerce_before_calculate_totals', array( $this, 'apply_vat_exemption_before_cart_totals' ), 1, 1 );
+
+		// Belt-and-suspenders: strip shipping-rate taxes for VAT-exempt customers. Invalidating the cached
+		// shipping rates above forces a fresh calculation, so this filter runs again and removes the tax even
+		// for third-party shipping methods (e.g. Packeta) that put precomputed taxes on the rate without
+		// honouring WC_Customer::is_vat_exempt() during WC_Shipping_Method::add_rate().
+		add_filter( 'woocommerce_package_rates', array( $this, 'remove_shipping_taxes_for_vat_exempt_customer' ), PHP_INT_MAX, 2 );
+
 		// Persist synced company data to newly created accounts during block checkout.
 		add_action( 'woocommerce_created_customer', array( $this, 'sync_created_customer_meta' ), 10, 1 );
 
@@ -92,7 +102,7 @@ class WC_SF_Checkout_Block {
 		wp_enqueue_script(
 			'wc-sf-checkout-blocks',
 			plugins_url( 'assets/js/checkout-blocks.js', dirname( __FILE__ ) ),
-			array(),
+			array( 'wp-data' ),
 			filemtime( plugin_dir_path( dirname( __FILE__ ) ) . 'assets/js/checkout-blocks.js' ),
 			true
 		);
@@ -399,6 +409,149 @@ class WC_SF_Checkout_Block {
 	}
 
 	/**
+	 * Read and cache the raw JSON request body.
+	 *
+	 * @return string
+	 */
+	private function get_raw_request_body() {
+		static $raw_input = null;
+
+		if ( null === $raw_input ) {
+			// phpcs:ignore WordPress.WP.AlternativeFunctions.file_get_contents_file_get_contents
+			$raw_input = file_get_contents( 'php://input' );
+		}
+
+		return is_string( $raw_input ) ? $raw_input : '';
+	}
+
+	/**
+	 * Extract normalized SuperFaktura company data from a Store API checkout request.
+	 *
+	 * @param \WP_REST_Request $request Request object.
+	 * @return array|null
+	 */
+	private function get_company_data_from_request( $request ) {
+		if ( ! $request instanceof WP_REST_Request ) {
+			return null;
+		}
+
+		$additional_fields = $request->get_param( 'additional_fields' );
+		if ( null === $additional_fields ) {
+			$raw_input = $this->get_raw_request_body();
+			$data      = '' !== $raw_input ? json_decode( $raw_input, true ) : null;
+			if ( is_array( $data ) && isset( $data['additional_fields'] ) ) {
+				$additional_fields = $data['additional_fields'];
+				$request->set_param( 'additional_fields', $additional_fields );
+			}
+			if ( is_array( $data ) && isset( $data['billing_address'] ) ) {
+				$request->set_param( 'billing_address', $data['billing_address'] );
+			}
+		}
+
+		$checkbox_field_id = self::FIELD_PREFIX . 'wi-as-company';
+		if ( ! is_array( $additional_fields ) || ! array_key_exists( $checkbox_field_id, $additional_fields ) ) {
+			return null;
+		}
+
+		$billing_country = '';
+		$billing_address = $request->get_param( 'billing_address' );
+		if ( is_array( $billing_address ) && ! empty( $billing_address['country'] ) ) {
+			$billing_country = sanitize_text_field( $billing_address['country'] );
+		} elseif ( function_exists( 'WC' ) && WC()->customer ) {
+			$billing_country = WC()->customer->get_billing_country();
+		}
+
+		return array(
+			'is_company'      => $this->is_checked_value( $additional_fields[ $checkbox_field_id ] ),
+			'id'              => sanitize_text_field( $this->get_field_value_from_request( $request, 'billing-company-wi-id' ) ),
+			'tax'             => sanitize_text_field( $this->get_field_value_from_request( $request, 'billing-company-wi-tax' ) ),
+			'vat'             => sanitize_text_field( $this->get_field_value_from_request( $request, 'billing-company-wi-vat' ) ),
+			'billing_country' => $billing_country,
+		);
+	}
+
+	/**
+	 * Read normalized SuperFaktura company data from the persisted Store API customer session.
+	 *
+	 * The block checkout sends partial field deltas across several requests and two endpoints
+	 * (`/wc/store/v1/checkout` and `/wc/store/v1/cart/update-customer`), so no single request
+	 * carries the full company picture. WooCommerce persists each additional field onto the
+	 * customer session (group "other" => `_wc_other/<field id>`) before totals are calculated,
+	 * which is the authoritative accumulated state to drive the reverse-charge exemption from.
+	 *
+	 * @param \WC_Customer $customer Customer object.
+	 * @return array|null
+	 */
+	private function get_company_data_from_customer( $customer ) {
+		if ( ! $customer instanceof WC_Customer ) {
+			return null;
+		}
+
+		// WooCommerce stores contact-location additional fields under the `_wc_other/` meta prefix.
+		$prefix = '_wc_other/' . self::FIELD_PREFIX;
+
+		$is_company = '1' === (string) $customer->get_meta( $prefix . 'wi-as-company', true );
+
+		$billing_country = $customer->get_billing_country();
+		if ( '' === $billing_country ) {
+			$billing_country = $customer->get_shipping_country();
+		}
+
+		return array(
+			'is_company'      => $is_company,
+			'id'              => sanitize_text_field( (string) $customer->get_meta( $prefix . 'billing-company-wi-id', true ) ),
+			'tax'             => sanitize_text_field( (string) $customer->get_meta( $prefix . 'billing-company-wi-tax', true ) ),
+			'vat'             => sanitize_text_field( (string) $customer->get_meta( $prefix . 'billing-company-wi-vat', true ) ),
+			'billing_country' => $billing_country,
+		);
+	}
+
+	/**
+	 * Apply VAT exemption and invalidate cached shipping rates when the exemption state changes.
+	 *
+	 * @param \WC_Customer $customer     Customer object.
+	 * @param array        $company_data Normalized Store API company data.
+	 */
+	private function apply_vat_exemption_from_company_data( $customer, $company_data ) {
+		if ( ! $customer instanceof WC_Customer ) {
+			return;
+		}
+
+		$was_exempt = (bool) $customer->get_is_vat_exempt();
+		$this->wc_sf->apply_vat_exemption( $customer, $company_data['is_company'], $company_data['vat'], $company_data['billing_country'] );
+
+		if ( $was_exempt !== (bool) $customer->get_is_vat_exempt() ) {
+			$this->clear_cached_shipping_rates();
+		}
+	}
+
+	/**
+	 * Clear cached shipping rates for the current session.
+	 *
+	 * WooCommerce's shipping package hash does not include WC_Customer::is_vat_exempt(), so toggling
+	 * reverse charge can otherwise reuse rates whose tax arrays were calculated for the previous state.
+	 */
+	private function clear_cached_shipping_rates() {
+		if ( ! function_exists( 'WC' ) || ! WC()->session ) {
+			return;
+		}
+
+		if ( WC()->cart ) {
+			foreach ( array_keys( WC()->cart->get_shipping_packages() ) as $package_key ) {
+				WC()->session->__unset( 'shipping_for_package_' . $package_key );
+			}
+		}
+
+		if ( method_exists( WC()->session, 'get_session_data' ) ) {
+			foreach ( array_keys( WC()->session->get_session_data() ) as $key ) {
+				if ( 0 === strpos( $key, 'shipping_for_package_' ) ) {
+					WC()->session->__unset( $key );
+				}
+			}
+		}
+	}
+
+	/**
 	 * Sync block checkout data to existing order meta keys.
 	 *
 	 * The Additional Checkout Fields API saves data with its own meta keys.
@@ -502,19 +655,16 @@ class WC_SF_Checkout_Block {
 	 * @param \WP_REST_Request $request  Request object.
 	 */
 	public function sync_customer_meta_from_request( $customer, $request ) {
-		$additional_fields = $request->get_param( 'additional_fields' );
-		$checkbox_field_id = self::FIELD_PREFIX . 'wi-as-company';
-
-		if ( ! is_array( $additional_fields ) || ! array_key_exists( $checkbox_field_id, $additional_fields ) ) {
+		$company_data = $this->get_company_data_from_request( $request );
+		if ( null === $company_data ) {
 			return;
 		}
 
-		$is_company = $this->is_checked_value( $additional_fields[ $checkbox_field_id ] );
 		$meta_data  = array(
-			'wi_as_company'         => $is_company ? '1' : '0',
-			'billing_company_wi_id'  => $is_company ? sanitize_text_field( $this->get_field_value_from_request( $request, 'billing-company-wi-id' ) ) : '',
-			'billing_company_wi_tax' => $is_company ? sanitize_text_field( $this->get_field_value_from_request( $request, 'billing-company-wi-tax' ) ) : '',
-			'billing_company_wi_vat' => $is_company ? sanitize_text_field( $this->get_field_value_from_request( $request, 'billing-company-wi-vat' ) ) : '',
+			'wi_as_company'         => $company_data['is_company'] ? '1' : '0',
+			'billing_company_wi_id'  => $company_data['is_company'] ? $company_data['id'] : '',
+			'billing_company_wi_tax' => $company_data['is_company'] ? $company_data['tax'] : '',
+			'billing_company_wi_vat' => $company_data['is_company'] ? $company_data['vat'] : '',
 		);
 
 		foreach ( $meta_data as $meta_key => $meta_value ) {
@@ -522,14 +672,69 @@ class WC_SF_Checkout_Block {
 		}
 
 		// Apply or clear the intra-EU B2B VAT exemption so the block checkout totals and the resulting order reflect the reverse charge.
-		$billing_country = $customer->get_billing_country();
-		if ( '' === $billing_country ) {
-			$billing_address = $request->get_param( 'billing_address' );
-			if ( is_array( $billing_address ) && ! empty( $billing_address['country'] ) ) {
-				$billing_country = $billing_address['country'];
-			}
+		$this->apply_vat_exemption_from_company_data( $customer, $company_data );
+	}
+
+	/**
+	 * Apply VAT exemption before WooCommerce calculates Store API cart totals.
+	 *
+	 * The Store API recalculates cart totals and shipping on both the checkout and the
+	 * cart/update-customer endpoints, and sends company fields as partial deltas, so the flag must be
+	 * (re)applied from the accumulated customer session state on every Store API recalculation rather
+	 * than from a single request. Running here makes product and shipping taxes see the reverse-charge
+	 * state during the calculation that powers the block checkout response.
+	 *
+	 * @param \WC_Cart $cart Cart object.
+	 */
+	public function apply_vat_exemption_before_cart_totals( $cart ) {
+		if ( ! $cart instanceof WC_Cart || ! function_exists( 'WC' ) || ! WC()->customer ) {
+			return;
 		}
-		$this->wc_sf->apply_vat_exemption( $customer, $is_company, $meta_data['billing_company_wi_vat'], $billing_country );
+
+		// Only act during Store API / REST checkout recalculations to avoid touching unrelated cart calculations.
+		if ( ! defined( 'REST_REQUEST' ) || ! REST_REQUEST ) {
+			return;
+		}
+
+		$company_data = $this->get_company_data_from_customer( WC()->customer );
+		if ( null === $company_data ) {
+			return;
+		}
+
+		$this->apply_vat_exemption_from_company_data( WC()->customer, $company_data );
+	}
+
+	/**
+	 * Remove shipping-rate taxes for VAT-exempt customers.
+	 *
+	 * Runs on the fresh shipping calculation triggered after the cached rates are invalidated on an
+	 * exemption state change. Standard methods already produce tax-free rates because is_taxable() is
+	 * false for exempt customers, but some third-party methods set precomputed taxes on the rate object
+	 * regardless; this strips those so the reverse charge also applies to shipping for any method.
+	 *
+	 * @param array $rates   Shipping rates.
+	 * @param array $package Shipping package.
+	 * @return array
+	 */
+	public function remove_shipping_taxes_for_vat_exempt_customer( $rates, $package ) {
+		if ( 'yes' !== get_option( 'woocommerce_sf_exempt_vat_on_valid_vat_number', 'no' ) ) {
+			return $rates;
+		}
+
+		if ( ! function_exists( 'WC' ) || ! WC()->customer || ! WC()->customer->get_is_vat_exempt() ) {
+			return $rates;
+		}
+
+		$tax_free_rates = array();
+		foreach ( $rates as $rate_id => $rate ) {
+			if ( $rate instanceof WC_Shipping_Rate ) {
+				$rate = clone $rate;
+				$rate->set_taxes( array() );
+			}
+			$tax_free_rates[ $rate_id ] = $rate;
+		}
+
+		return $tax_free_rates;
 	}
 
 	/**
