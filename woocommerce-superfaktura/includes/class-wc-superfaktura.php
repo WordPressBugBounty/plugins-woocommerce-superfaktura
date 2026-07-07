@@ -29,7 +29,7 @@ class WC_SuperFaktura {
 	 *
 	 * @var string
 	 */
-	public $version = '1.53.1';
+	public $version = '1.53.2';
 
 	/**
 	 * Database version.
@@ -334,6 +334,13 @@ class WC_SuperFaktura {
 			add_filter( 'woocommerce_form_field', array( $this, 'billing_fields_labels' ), 10, 4 );
 			add_filter( 'woocommerce_checkout_process', array( $this, 'checkout_process' ) );
 			add_action( 'woocommerce_checkout_update_customer', array( $this, 'checkout_update_customer' ), 10, 2 );
+
+			// Re-apply the reverse-charge exemption on every classic-checkout cart recalculation.
+			// Setting it once in checkout_update_customer is not enough: WooCommerce recalculates the
+			// cart again later in process_checkout() (resetting the session customer's is_vat_exempt
+			// flag), so without this the order is created with VAT even for a valid EU VAT number.
+			// Mirrors the block-checkout safety net in WC_SF_Checkout_Block.
+			add_action( 'woocommerce_before_calculate_totals', array( $this, 'apply_vat_exemption_classic_before_cart_totals' ), 1, 1 );
 
 			add_filter( 'woocommerce_admin_billing_fields', array( $this, 'woocommerce_admin_billing_fields' ), 10, 1 );
 			add_action( 'woocommerce_process_shop_order_meta', array( $this, 'woocommerce_process_shop_order_meta' ), 10, 2 );
@@ -1556,6 +1563,65 @@ class WC_SuperFaktura {
 
 
 	/**
+	 * Apply (or clear) the VAT exemption and invalidate cached shipping rates when the exemption state changes.
+	 *
+	 * WooCommerce caches calculated shipping rates in the session under a hash of the shipping package, and
+	 * that hash does not include WC_Customer::is_vat_exempt(). Toggling the reverse charge therefore reuses
+	 * rates whose tax arrays were computed for the previous exemption state, so the shipping tax would not
+	 * follow the reverse charge unless the cache is cleared. Clearing it forces a fresh calculation, which
+	 * re-runs the woocommerce_package_rates filter that strips shipping taxes for exempt customers.
+	 *
+	 * Shared by the classic and block checkouts so both invalidate the cache the same way.
+	 *
+	 * @param WC_Customer $customer        Customer to update.
+	 * @param bool        $is_company      Whether the customer is buying as a business.
+	 * @param string      $vat_number      Entered VAT number.
+	 * @param string      $billing_country Billing country ISO code.
+	 */
+	public function apply_vat_exemption_with_shipping_refresh( $customer, $is_company, $vat_number, $billing_country ) {
+		if ( ! $customer instanceof WC_Customer ) {
+			return;
+		}
+
+		$was_exempt = (bool) $customer->get_is_vat_exempt();
+		$this->apply_vat_exemption( $customer, $is_company, $vat_number, $billing_country );
+
+		if ( $was_exempt !== (bool) $customer->get_is_vat_exempt() ) {
+			$this->clear_cached_shipping_rates();
+		}
+	}
+
+
+
+	/**
+	 * Clear cached shipping rates for the current session.
+	 *
+	 * WooCommerce's shipping package hash does not include WC_Customer::is_vat_exempt(), so toggling
+	 * reverse charge can otherwise reuse rates whose tax arrays were calculated for the previous state.
+	 */
+	public function clear_cached_shipping_rates() {
+		if ( ! function_exists( 'WC' ) || ! WC()->session ) {
+			return;
+		}
+
+		if ( WC()->cart ) {
+			foreach ( array_keys( WC()->cart->get_shipping_packages() ) as $package_key ) {
+				WC()->session->__unset( 'shipping_for_package_' . $package_key );
+			}
+		}
+
+		if ( method_exists( WC()->session, 'get_session_data' ) ) {
+			foreach ( array_keys( WC()->session->get_session_data() ) as $key ) {
+				if ( 0 === strpos( $key, 'shipping_for_package_' ) ) {
+					WC()->session->__unset( $key );
+				}
+			}
+		}
+	}
+
+
+
+	/**
 	 * Perform a GET request to the EU VIES REST API.
 	 *
 	 * @param string      $url         Request URL.
@@ -1698,7 +1764,55 @@ class WC_SuperFaktura {
 
 		// Apply or clear the intra-EU B2B VAT exemption on every checkout update so the cart totals and the resulting order reflect the reverse charge.
 		$billing_country = isset( $data['billing_country'] ) ? $data['billing_country'] : $customer->get_billing_country();
-		$this->apply_vat_exemption( $customer, $is_company, isset( $data['billing_company_wi_vat'] ) ? $data['billing_company_wi_vat'] : '', $billing_country );
+		$this->apply_vat_exemption_with_shipping_refresh( $customer, $is_company, isset( $data['billing_company_wi_vat'] ) ? $data['billing_company_wi_vat'] : '', $billing_country );
+	}
+
+	/**
+	 * Re-apply the intra-EU B2B VAT exemption before WooCommerce calculates the classic-checkout cart totals.
+	 *
+	 * The classic checkout recalculates the cart totals several times per request (the
+	 * update_order_review AJAX and again inside WC_Checkout::process_checkout()), and the later
+	 * recalculation resets the session customer's is_vat_exempt flag. Applying the exemption only in
+	 * checkout_update_customer therefore does not survive to order creation, so the order is created
+	 * with VAT even for a valid EU VAT number. Re-asserting it from the posted checkout fields on every
+	 * cart calculation makes the reverse charge stick for both the displayed totals and the order.
+	 *
+	 * The block checkout is handled separately in WC_SF_Checkout_Block, so this deliberately skips
+	 * REST requests to avoid applying the exemption twice from two different data sources.
+	 *
+	 * @param \WC_Cart $cart Cart object.
+	 */
+	public function apply_vat_exemption_classic_before_cart_totals( $cart ) {
+		if ( ! function_exists( 'WC' ) || ! WC()->customer ) {
+			return;
+		}
+
+		// The block / Store API checkout re-applies the exemption in its own handler.
+		if ( defined( 'REST_REQUEST' ) && REST_REQUEST ) {
+			return;
+		}
+
+		// Read the posted checkout fields. On the update_order_review AJAX the form is sent serialized
+		// in 'post_data'; on final submission the fields are present in $_POST directly.
+		// phpcs:disable WordPress.Security.NonceVerification.Missing
+		$posted = array();
+		if ( isset( $_POST['post_data'] ) ) {
+			parse_str( wp_unslash( $_POST['post_data'] ), $posted );
+		} elseif ( ! empty( $_POST ) ) {
+			$posted = wp_unslash( $_POST );
+		}
+		// phpcs:enable WordPress.Security.NonceVerification.Missing
+
+		// Only act on our checkout context; leave the exemption untouched for unrelated cart calculations.
+		if ( ! isset( $posted['wi_as_company'] ) && ! isset( $posted['billing_company_wi_vat'] ) ) {
+			return;
+		}
+
+		$is_company      = ! empty( $posted['wi_as_company'] );
+		$vat_number      = isset( $posted['billing_company_wi_vat'] ) ? sanitize_text_field( $posted['billing_company_wi_vat'] ) : '';
+		$billing_country = isset( $posted['billing_country'] ) && '' !== $posted['billing_country'] ? sanitize_text_field( $posted['billing_country'] ) : WC()->customer->get_billing_country();
+
+		$this->apply_vat_exemption_with_shipping_refresh( WC()->customer, $is_company, $vat_number, $billing_country );
 	}
 
 	/**

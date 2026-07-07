@@ -4,7 +4,7 @@ Tags: superfaktura, invoice, faktura, proforma, woocommerce
 Requires at least: 4.4
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 1.53.1
+Stable tag: 1.53.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -64,6 +64,9 @@ This usually happens when you change your login email address. The email address
 You can read more about SuperFaktura API integration at [superfaktura.sk/api](http://www.superfaktura.sk/api/)
 
 == Changelog ==
+
+= 1.53.2 =
+* Opravená chyba s odpočítaním DPH (prenos daňovej povinnosti) v klasickom WooCommerce Checkoute.
 
 = 1.53.1 =
 * Opravené automatické odpočítanie DPH (prenos daňovej povinnosti) na produkty a na dopravu vo WooCommerce Checkout blokoch, aj v reálnom čase počas vypĺňania objednávky. Za identifikovanie problému a doplnenie informácií, ktoré pomohli pri oprave, ďakujeme [@mattbosak](https://profiles.wordpress.org/mattbosak/).

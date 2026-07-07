@@ -509,6 +509,9 @@ class WC_SF_Checkout_Block {
 	/**
 	 * Apply VAT exemption and invalidate cached shipping rates when the exemption state changes.
 	 *
+	 * Delegates to the shared handler on the main plugin class so the block and classic checkouts
+	 * apply the exemption and refresh the cached shipping rates identically.
+	 *
 	 * @param \WC_Customer $customer     Customer object.
 	 * @param array        $company_data Normalized Store API company data.
 	 */
@@ -517,38 +520,7 @@ class WC_SF_Checkout_Block {
 			return;
 		}
 
-		$was_exempt = (bool) $customer->get_is_vat_exempt();
-		$this->wc_sf->apply_vat_exemption( $customer, $company_data['is_company'], $company_data['vat'], $company_data['billing_country'] );
-
-		if ( $was_exempt !== (bool) $customer->get_is_vat_exempt() ) {
-			$this->clear_cached_shipping_rates();
-		}
-	}
-
-	/**
-	 * Clear cached shipping rates for the current session.
-	 *
-	 * WooCommerce's shipping package hash does not include WC_Customer::is_vat_exempt(), so toggling
-	 * reverse charge can otherwise reuse rates whose tax arrays were calculated for the previous state.
-	 */
-	private function clear_cached_shipping_rates() {
-		if ( ! function_exists( 'WC' ) || ! WC()->session ) {
-			return;
-		}
-
-		if ( WC()->cart ) {
-			foreach ( array_keys( WC()->cart->get_shipping_packages() ) as $package_key ) {
-				WC()->session->__unset( 'shipping_for_package_' . $package_key );
-			}
-		}
-
-		if ( method_exists( WC()->session, 'get_session_data' ) ) {
-			foreach ( array_keys( WC()->session->get_session_data() ) as $key ) {
-				if ( 0 === strpos( $key, 'shipping_for_package_' ) ) {
-					WC()->session->__unset( $key );
-				}
-			}
-		}
+		$this->wc_sf->apply_vat_exemption_with_shipping_refresh( $customer, $company_data['is_company'], $company_data['vat'], $company_data['billing_country'] );
 	}
 
 	/**
