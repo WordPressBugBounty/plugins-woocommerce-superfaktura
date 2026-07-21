@@ -118,6 +118,12 @@ class WC_SF_Invoice {
 				$ic_dph  = $details->get_company_vat_id();
 				$dic     = $details->get_company_tax_id();
 			} else {
+				// Versions up to 1.53.2 could leave a block-checkout order without the plugin's
+				// company meta while WooCommerce kept the entered values under its own
+				// additional-field keys. Repair the order before reading, so the invoice
+				// (including a regeneration of an older document) carries the company data.
+				$this->wc_sf->checkout_block->repair_order_company_meta( $order );
+
 				$ico    = $order->get_meta( 'billing_company_wi_id', true );
 				$ic_dph = $order->get_meta( 'billing_company_wi_vat', true );
 				$dic    = $order->get_meta( 'billing_company_wi_tax', true );

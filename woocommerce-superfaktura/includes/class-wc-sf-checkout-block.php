@@ -71,6 +71,10 @@ class WC_SF_Checkout_Block {
 		// Persist synced company data to newly created accounts during block checkout.
 		add_action( 'woocommerce_created_customer', array( $this, 'sync_created_customer_meta' ), 10, 1 );
 
+		// Backfill company meta on subscription renewal orders when the subscription was created
+		// while versions up to 1.53.2 skipped the block checkout sync (inert without WooCommerce Subscriptions).
+		add_filter( 'wcs_renewal_order_created', array( $this, 'repair_renewal_order_company_meta' ), 10, 2 );
+
 		// Prefill block checkout company fields from the existing customer meta keys used by the classic checkout.
 		add_filter( 'woocommerce_get_default_value_for_superfaktura/wi-as-company', array( $this, 'get_default_company_field_value' ), 10, 3 );
 		add_filter( 'woocommerce_get_default_value_for_superfaktura/billing-company', array( $this, 'get_default_company_field_value' ), 10, 3 );
@@ -536,11 +540,20 @@ class WC_SF_Checkout_Block {
 		$additional_fields = $request->get_param( 'additional_fields' );
 		$checkbox_field_id = self::FIELD_PREFIX . 'wi-as-company';
 
-		if ( ! is_array( $additional_fields ) || ! array_key_exists( $checkbox_field_id, $additional_fields ) ) {
-			return;
+		if ( is_array( $additional_fields ) && array_key_exists( $checkbox_field_id, $additional_fields ) ) {
+			$is_company = $this->is_checked_value( $additional_fields[ $checkbox_field_id ] );
+		} else {
+			// The block checkout does not re-send untouched prefilled fields, so a returning
+			// customer's checkout request may carry no company fields at all. WooCommerce has
+			// already persisted the accumulated field state onto the order, so resolve the
+			// checkbox from there. Only bail when neither source knows the checkbox (e.g. the
+			// company fields are disabled or an express checkout skipped them entirely).
+			$checkbox_value = $this->get_field_value( $order, 'wi-as-company' );
+			if ( '' === $checkbox_value || null === $checkbox_value ) {
+				return;
+			}
+			$is_company = $this->is_checked_value( $checkbox_value );
 		}
-
-		$is_company = $this->is_checked_value( $additional_fields[ $checkbox_field_id ] );
 
 		if ( $is_company ) {
 			$company_value = $this->get_field_value_from_request( $request, 'billing-company' );
@@ -830,5 +843,178 @@ class WC_SF_Checkout_Block {
 		// Note: This is only used during sync_order_meta() to read values before we
 		// copy them to our own meta keys and delete the WooCommerce ones.
 		return $order->get_meta( '_wc_other/' . $field_id, true );
+	}
+
+	/**
+	 * Read the company data WooCommerce itself persisted onto an order under the
+	 * Additional Checkout Fields meta keys (_wc_other/superfaktura/*).
+	 *
+	 * Versions up to 1.53.2 could skip copying these values into the plugin's own
+	 * billing_company_wi_* keys during the block checkout (untouched prefilled fields are
+	 * not re-sent by the checkout), so orders and subscriptions from that period carry
+	 * the entered company data only under these keys.
+	 *
+	 * @param WC_Order $order Order (or subscription) to read.
+	 * @return array|null Array with 'is_company', 'company', 'id', 'tax' and 'vat' keys,
+	 *                    or null when the persisted checkbox state is unknown.
+	 */
+	public function get_persisted_company_data( $order ) {
+		if ( ! $order instanceof WC_Order ) {
+			return null;
+		}
+
+		$prefix   = '_wc_other/' . self::FIELD_PREFIX;
+		$checkbox = $order->get_meta( $prefix . 'wi-as-company', true );
+		if ( '' === (string) $checkbox ) {
+			return null;
+		}
+
+		return array(
+			'is_company' => $this->is_checked_value( $checkbox ),
+			'company'    => sanitize_text_field( (string) $order->get_meta( $prefix . 'billing-company', true ) ),
+			'id'         => sanitize_text_field( (string) $order->get_meta( $prefix . 'billing-company-wi-id', true ) ),
+			'tax'        => sanitize_text_field( (string) $order->get_meta( $prefix . 'billing-company-wi-tax', true ) ),
+			'vat'        => sanitize_text_field( (string) $order->get_meta( $prefix . 'billing-company-wi-vat', true ) ),
+		);
+	}
+
+	/**
+	 * Copy company data persisted by WooCommerce under its additional-field keys into the
+	 * plugin's own meta keys when they are missing on the order.
+	 *
+	 * Repairs only confirmed company purchases (persisted checkbox checked) and never
+	 * overwrites existing values. Orders without any persisted checkbox state, and orders
+	 * where the customer opted out of buying as a business, are left untouched.
+	 *
+	 * @param WC_Order $order Order (or subscription) to repair.
+	 * @return bool Whether the order was repaired.
+	 */
+	public function repair_order_company_meta( $order ) {
+		if ( ! $order instanceof WC_Order ) {
+			return false;
+		}
+
+		// The plugin's own keys are written only for confirmed company purchases,
+		// so their presence means there is nothing to repair.
+		foreach ( array( 'billing_company_wi_id', 'billing_company_wi_tax', 'billing_company_wi_vat' ) as $meta_key ) {
+			if ( '' !== (string) $order->get_meta( $meta_key, true ) ) {
+				return false;
+			}
+		}
+
+		$persisted = $this->get_persisted_company_data( $order );
+		if ( null === $persisted || ! $persisted['is_company'] ) {
+			return false;
+		}
+
+		if ( '' === $persisted['id'] && '' === $persisted['tax'] && '' === $persisted['vat'] ) {
+			return false;
+		}
+
+		$this->fill_company_meta( $order, $persisted );
+
+		return true;
+	}
+
+	/**
+	 * Repair company meta on a newly created subscription renewal order.
+	 *
+	 * Subscriptions created while versions up to 1.53.2 skipped the block checkout sync
+	 * carry the company data only under WooCommerce's persisted additional-field keys, so
+	 * every renewal order (and its invoice) would be created without IČO, DIČ and IČ DPH.
+	 * Resolve the data from the renewal order itself, the subscription, or the original
+	 * parent order, and also heal the subscription so future renewals inherit it directly.
+	 *
+	 * @param WC_Order $renewal_order Newly created renewal order.
+	 * @param WC_Order $subscription  Subscription the renewal order was created from.
+	 * @return WC_Order
+	 */
+	public function repair_renewal_order_company_meta( $renewal_order, $subscription ) {
+		if ( ! $renewal_order instanceof WC_Order ) {
+			return $renewal_order;
+		}
+
+		// Nothing to do when the renewal already inherited the plugin's company meta.
+		foreach ( array( 'billing_company_wi_id', 'billing_company_wi_tax', 'billing_company_wi_vat' ) as $meta_key ) {
+			if ( '' !== (string) $renewal_order->get_meta( $meta_key, true ) ) {
+				return $renewal_order;
+			}
+		}
+
+		$sources = array( $renewal_order );
+		if ( $subscription instanceof WC_Order ) {
+			$sources[] = $subscription;
+			$parent    = $subscription->get_parent_id() ? wc_get_order( $subscription->get_parent_id() ) : false;
+			if ( $parent instanceof WC_Order ) {
+				$sources[] = $parent;
+			}
+		}
+
+		$company_data = null;
+		foreach ( $sources as $source ) {
+			// The plugin's own keys mean a confirmed company purchase.
+			$classic = array(
+				'company' => $source->get_billing_company(),
+				'id'      => (string) $source->get_meta( 'billing_company_wi_id', true ),
+				'tax'     => (string) $source->get_meta( 'billing_company_wi_tax', true ),
+				'vat'     => (string) $source->get_meta( 'billing_company_wi_vat', true ),
+			);
+			if ( '' !== $classic['id'] || '' !== $classic['tax'] || '' !== $classic['vat'] ) {
+				$company_data = $classic;
+				break;
+			}
+
+			$persisted = $this->get_persisted_company_data( $source );
+			if ( null === $persisted ) {
+				continue;
+			}
+			if ( ! $persisted['is_company'] ) {
+				// The customer opted out of buying as a business — do not resurrect old data.
+				return $renewal_order;
+			}
+			$company_data = $persisted;
+			break;
+		}
+
+		if ( null === $company_data || ( '' === $company_data['id'] && '' === $company_data['tax'] && '' === $company_data['vat'] ) ) {
+			return $renewal_order;
+		}
+
+		$this->fill_company_meta( $renewal_order, $company_data );
+
+		// Heal the subscription too so future renewals inherit the data directly.
+		if ( $subscription instanceof WC_Order
+			&& '' === (string) $subscription->get_meta( 'billing_company_wi_id', true )
+			&& '' === (string) $subscription->get_meta( 'billing_company_wi_tax', true )
+			&& '' === (string) $subscription->get_meta( 'billing_company_wi_vat', true ) ) {
+			$this->fill_company_meta( $subscription, $company_data );
+		}
+
+		return $renewal_order;
+	}
+
+	/**
+	 * Write resolved company data into the plugin's meta keys on an order.
+	 *
+	 * Writes both key variants to match the checkout sync, sets the billing company name
+	 * only when it is empty, and never writes empty values.
+	 *
+	 * @param WC_Order $order        Order (or subscription) to fill.
+	 * @param array    $company_data Array with 'company', 'id', 'tax' and 'vat' keys.
+	 */
+	private function fill_company_meta( $order, $company_data ) {
+		foreach ( array( 'id', 'tax', 'vat' ) as $field ) {
+			if ( '' === (string) $company_data[ $field ] ) {
+				continue;
+			}
+			$order->update_meta_data( 'billing_company_wi_' . $field, $company_data[ $field ] );
+			$order->update_meta_data( '_billing_company_wi_' . $field, $company_data[ $field ] );
+		}
+
+		if ( ! empty( $company_data['company'] ) && '' === $order->get_billing_company() ) {
+			$order->set_billing_company( $company_data['company'] );
+		}
+
+		$order->save();
 	}
 }
