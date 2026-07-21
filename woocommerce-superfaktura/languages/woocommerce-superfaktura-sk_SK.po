@@ -206,6 +206,10 @@ msgstr "Refundované"
 msgid "Gift Card"
 msgstr "Darčeková karta"
 
+#: includes/class-wc-sf-invoice.php
+msgid "Voucher credit used"
+msgstr "Uplatnený poukaz"
+
 #: includes/class-wc-sf-invoice.php:1050
 msgid "Proforma invoice created."
 msgstr "Zálohová faktúra bola vytvorená."

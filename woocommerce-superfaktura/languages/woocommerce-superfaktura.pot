@@ -212,6 +212,10 @@ msgstr ""
 msgid "Gift Card"
 msgstr ""
 
+#: includes/class-wc-sf-invoice.php
+msgid "Voucher credit used"
+msgstr ""
+
 #: includes/class-wc-sf-invoice.php:1050
 msgid "Proforma invoice created."
 msgstr ""

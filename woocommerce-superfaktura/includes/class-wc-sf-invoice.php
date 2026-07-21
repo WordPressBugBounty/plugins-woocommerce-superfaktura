@@ -801,6 +801,66 @@ class WC_SF_Invoice {
 					}
 				}
 
+				// Compatibility with WooCommerce PDF Product Vouchers (https://woocommerce.com/products/pdf-product-vouchers/) plugin.
+				// A multi-purpose voucher applies its credit directly to the order total (like store credit),
+				// not through WooCommerce discounts, so the order's discount total never includes it. The credit
+				// used is persisted on the voucher's coupon line item.
+				include_once ABSPATH . 'wp-admin/includes/plugin.php';
+				if ( is_plugin_active( 'woocommerce-pdf-product-vouchers/woocommerce-pdf-product-vouchers.php' ) || class_exists( 'WC_PDF_Product_Vouchers' ) ) {
+
+					foreach ( $order->get_items( 'coupon' ) as $coupon_item ) {
+
+						$voucher_credit = (float) $coupon_item->get_discount();
+						if ( ! $voucher_credit ) {
+							continue;
+						}
+
+						// Read the coupon type from the snapshot stored on the order item, so old orders
+						// keep working even after the voucher's coupon is deleted.
+						$discount_type = '';
+						$coupon_data   = $coupon_item->get_meta( 'coupon_data', true );
+						if ( is_array( $coupon_data ) && ! empty( $coupon_data['discount_type'] ) ) {
+							$discount_type = $coupon_data['discount_type'];
+						} else {
+							$coupon_info = $coupon_item->get_meta( 'coupon_info', true );
+							$coupon_info = $coupon_info ? json_decode( $coupon_info, true ) : null;
+							if ( is_array( $coupon_info ) && isset( $coupon_info[2] ) ) {
+								$discount_type = $coupon_info[2];
+							}
+						}
+						if ( '' === $discount_type ) {
+							$coupon        = new WC_Coupon( $coupon_item->get_code() );
+							$discount_type = $coupon->get_discount_type();
+						}
+
+						if ( 'multi_purpose_voucher' !== $discount_type ) {
+							continue;
+						}
+
+						// The credit reduces only the amount due. The goods above stay fully taxed, because
+						// with a multi-purpose voucher the redemption is the taxable supply, so the credit
+						// line must not carry any tax of its own.
+						$item_data = array(
+							'name'        => __( 'Voucher credit used', 'woocommerce-superfaktura' ),
+							'quantity'    => '',
+							'unit'        => '',
+							'unit_price'  => $voucher_credit * -1,
+							'tax'         => 0,
+							'description' => $coupon_item->get_code(),
+						);
+
+						if ( 'cancel' === $type ) {
+							$item_data['unit_price'] *= -1;
+						}
+
+						$item_data = apply_filters( 'sf_voucher_credit_data', $item_data, $order, $coupon_item );
+
+						if ( $item_data ) {
+							$api->addItem( $item_data );
+						}
+					}
+				}
+
 				/* FEES */
 
 				if ( $order->get_fees() ) {
