@@ -902,18 +902,72 @@ class WC_SF_Checkout_Block {
 			}
 		}
 
-		$persisted = $this->get_persisted_company_data( $order );
-		if ( null === $persisted || ! $persisted['is_company'] ) {
+		// For a subscription renewal order the data may live only on the subscription
+		// or on the original parent order, so extend the chain there.
+		$sources = array( $order );
+		if ( function_exists( 'wcs_get_subscriptions_for_renewal_order' ) ) {
+			foreach ( wcs_get_subscriptions_for_renewal_order( $order ) as $subscription ) {
+				$sources[] = $subscription;
+				$parent    = $subscription->get_parent_id() ? wc_get_order( $subscription->get_parent_id() ) : false;
+				if ( $parent instanceof WC_Order ) {
+					$sources[] = $parent;
+				}
+			}
+		}
+
+		$company_data = $this->resolve_company_data_from_sources( $sources );
+		if ( null === $company_data ) {
 			return false;
 		}
 
-		if ( '' === $persisted['id'] && '' === $persisted['tax'] && '' === $persisted['vat'] ) {
-			return false;
-		}
-
-		$this->fill_company_meta( $order, $persisted );
+		$this->fill_company_meta( $order, $company_data );
 
 		return true;
+	}
+
+	/**
+	 * Resolve company data from a chain of orders/subscriptions, nearest first.
+	 *
+	 * A source with the plugin's own keys wins immediately (those are written only for
+	 * confirmed company purchases). A source whose persisted checkbox says "not a company"
+	 * stops the whole chain — the customer opted out and old data must not be resurrected.
+	 * A source that only knows the checkbox but carries no values (the sync deletes the
+	 * WooCommerce value copies but keeps the checkbox) falls through to the next source.
+	 *
+	 * @param WC_Order[] $sources Orders/subscriptions to inspect, nearest first.
+	 * @return array|null Array with 'company', 'id', 'tax' and 'vat' keys, or null.
+	 */
+	private function resolve_company_data_from_sources( $sources ) {
+		foreach ( $sources as $source ) {
+			if ( ! $source instanceof WC_Order ) {
+				continue;
+			}
+
+			$classic = array(
+				'company' => $source->get_billing_company(),
+				'id'      => (string) $source->get_meta( 'billing_company_wi_id', true ),
+				'tax'     => (string) $source->get_meta( 'billing_company_wi_tax', true ),
+				'vat'     => (string) $source->get_meta( 'billing_company_wi_vat', true ),
+			);
+			if ( '' !== $classic['id'] || '' !== $classic['tax'] || '' !== $classic['vat'] ) {
+				return $classic;
+			}
+
+			$persisted = $this->get_persisted_company_data( $source );
+			if ( null === $persisted ) {
+				continue;
+			}
+			if ( ! $persisted['is_company'] ) {
+				return null;
+			}
+			if ( '' === $persisted['id'] && '' === $persisted['tax'] && '' === $persisted['vat'] ) {
+				continue;
+			}
+
+			return $persisted;
+		}
+
+		return null;
 	}
 
 	/**
@@ -950,33 +1004,8 @@ class WC_SF_Checkout_Block {
 			}
 		}
 
-		$company_data = null;
-		foreach ( $sources as $source ) {
-			// The plugin's own keys mean a confirmed company purchase.
-			$classic = array(
-				'company' => $source->get_billing_company(),
-				'id'      => (string) $source->get_meta( 'billing_company_wi_id', true ),
-				'tax'     => (string) $source->get_meta( 'billing_company_wi_tax', true ),
-				'vat'     => (string) $source->get_meta( 'billing_company_wi_vat', true ),
-			);
-			if ( '' !== $classic['id'] || '' !== $classic['tax'] || '' !== $classic['vat'] ) {
-				$company_data = $classic;
-				break;
-			}
-
-			$persisted = $this->get_persisted_company_data( $source );
-			if ( null === $persisted ) {
-				continue;
-			}
-			if ( ! $persisted['is_company'] ) {
-				// The customer opted out of buying as a business — do not resurrect old data.
-				return $renewal_order;
-			}
-			$company_data = $persisted;
-			break;
-		}
-
-		if ( null === $company_data || ( '' === $company_data['id'] && '' === $company_data['tax'] && '' === $company_data['vat'] ) ) {
+		$company_data = $this->resolve_company_data_from_sources( $sources );
+		if ( null === $company_data ) {
 			return $renewal_order;
 		}
 
