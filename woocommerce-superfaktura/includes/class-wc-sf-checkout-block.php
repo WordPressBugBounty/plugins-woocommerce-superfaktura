@@ -35,8 +35,11 @@ class WC_SF_Checkout_Block {
 	public function __construct( $wc_sf ) {
 		$this->wc_sf = $wc_sf;
 
-		// Register checkout fields early - woocommerce_blocks_loaded fires before init.
-		add_action( 'woocommerce_blocks_loaded', array( $this, 'on_blocks_loaded' ) );
+		// Register checkout fields on woocommerce_init: it fires during the init action, so the
+		// translated field labels no longer trigger the WordPress 6.7+ _load_textdomain_just_in_time
+		// notice on every request (woocommerce_blocks_loaded fires already on plugins_loaded), and it
+		// is the hook the Additional Checkout Fields documentation prescribes for field registration.
+		add_action( 'woocommerce_init', array( $this, 'on_blocks_loaded' ) );
 	}
 
 	/**

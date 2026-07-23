@@ -29,7 +29,7 @@ class WC_SuperFaktura {
 	 *
 	 * @var string
 	 */
-	public $version = '1.53.6';
+	public $version = '1.53.7';
 
 	/**
 	 * Database version.
@@ -344,6 +344,9 @@ class WC_SuperFaktura {
 
 			add_filter( 'woocommerce_admin_billing_fields', array( $this, 'woocommerce_admin_billing_fields' ), 10, 1 );
 			add_action( 'woocommerce_process_shop_order_meta', array( $this, 'woocommerce_process_shop_order_meta' ), 10, 2 );
+
+			// Subscriptions use their own admin save hook, with the same ($id, $object) signature.
+			add_action( 'woocommerce_process_shop_subscription_meta', array( $this, 'woocommerce_process_shop_order_meta' ), 10, 2 );
 
 			// Add editable fields to user profile in admin.
 			add_filter( 'woocommerce_customer_meta_fields' , array( $this, 'woocommerce_customer_meta_fields' ) );
