@@ -2,9 +2,9 @@
 Contributors: superfaktura, webikon, johnnypea, savione, kravco, martinkrcho
 Tags: superfaktura, invoice, faktura, proforma, woocommerce
 Requires at least: 4.4
-Tested up to: 7.0
+Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.53.7
+Stable tag: 1.53.8
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -64,6 +64,9 @@ This usually happens when you change your login email address. The email address
 You can read more about SuperFaktura API integration at [superfaktura.sk/api](http://www.superfaktura.sk/api/)
 
 == Changelog ==
+
+= 1.53.8 =
+* Opravené duplicitné zobrazenie firemných údajov v e-mailoch objednávky pri blokovej pokladni.
 
 = 1.53.7 =
 * Opravené ukladanie firemných údajov pri úprave WooCommerce Subscriptions predplatného v administrácii.

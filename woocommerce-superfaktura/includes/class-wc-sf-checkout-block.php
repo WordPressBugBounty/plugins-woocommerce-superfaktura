@@ -78,6 +78,11 @@ class WC_SF_Checkout_Block {
 		// while versions up to 1.53.2 skipped the block checkout sync (inert without WooCommerce Subscriptions).
 		add_filter( 'wcs_renewal_order_created', array( $this, 'repair_renewal_order_company_meta' ), 10, 2 );
 
+		// Hide the plugin's fields from WooCommerce's "Additional information" section in order
+		// emails — the plugin prints the company data in emails itself (WC_SF_Email), so block
+		// checkout orders would otherwise list the same fields twice. Filter exists since WC 10.1.
+		add_filter( 'woocommerce_filter_fields_for_order_confirmation', array( $this, 'hide_own_fields_in_email' ), 10, 4 );
+
 		// Prefill block checkout company fields from the existing customer meta keys used by the classic checkout.
 		add_filter( 'woocommerce_get_default_value_for_superfaktura/wi-as-company', array( $this, 'get_default_company_field_value' ), 10, 3 );
 		add_filter( 'woocommerce_get_default_value_for_superfaktura/billing-company', array( $this, 'get_default_company_field_value' ), 10, 3 );
@@ -846,6 +851,33 @@ class WC_SF_Checkout_Block {
 		// Note: This is only used during sync_order_meta() to read values before we
 		// copy them to our own meta keys and delete the WooCommerce ones.
 		return $order->get_meta( '_wc_other/' . $field_id, true );
+	}
+
+	/**
+	 * Hide the plugin's checkout fields from WooCommerce's "Additional information"
+	 * section in order emails.
+	 *
+	 * The plugin prints the company data in order emails itself (see WC_SF_Email), so for
+	 * block checkout orders WooCommerce would list the same fields a second time. Only the
+	 * email rendering is suppressed — the order confirmation page and the My Account order
+	 * view keep showing the fields.
+	 *
+	 * @param bool  $show    Whether the field should be shown.
+	 * @param array $field   Field definition including its value.
+	 * @param array $fields  All fields being rendered.
+	 * @param array $context Filter context; 'caller' identifies the rendering method.
+	 * @return bool
+	 */
+	public function hide_own_fields_in_email( $show, $field, $fields, $context ) {
+		if ( ! is_array( $context ) || ! isset( $context['caller'] ) || 0 !== strpos( (string) $context['caller'], 'WC_Email::' ) ) {
+			return $show;
+		}
+
+		if ( isset( $field['id'] ) && 0 === strpos( (string) $field['id'], self::FIELD_PREFIX ) ) {
+			return false;
+		}
+
+		return $show;
 	}
 
 	/**
