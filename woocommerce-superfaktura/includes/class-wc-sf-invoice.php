@@ -95,7 +95,9 @@ class WC_SF_Invoice {
 							return new WP_Error( 'duplicate_document', __( 'Document was not created, because it already exists.', 'woocommerce-superfaktura' ) );
 						}
 
-						$this->wc_sf->sf_clean_invoice_items( $sf_id, $api );
+						if ( false === $this->wc_sf->sf_clean_invoice_items( $sf_id, $api ) ) {
+							return new WP_Error( 'regeneration_refused', __( 'Document was not regenerated, because replacing its items was refused.', 'woocommerce-superfaktura' ) );
+						}
 						$edit = true;
 					}
 				}

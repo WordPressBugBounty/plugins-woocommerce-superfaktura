@@ -1381,6 +1381,112 @@ msgstr "Kopírovat"
 msgid "Copied"
 msgstr "Zkopírováno"
 
+#: includes/class-wc-sf-bulk.php
+msgid "SuperFaktúra: create invoices"
+msgstr "SuperFaktura: vystavit faktury"
+
+#: includes/class-wc-sf-bulk.php
+msgid "SuperFaktúra: create proforma invoices"
+msgstr "SuperFaktura: vystavit zálohové faktury"
+
+#: includes/class-wc-sf-bulk.php
+msgid "SuperFaktúra: regenerate existing documents"
+msgstr "SuperFaktura: znovu vygenerovat existující doklady"
+
+#: includes/class-wc-sf-bulk.php
+msgid "Run this SuperFaktúra action for %d selected orders? If e-mail sending is enabled in your SuperFaktúra account, customers will receive their documents right away."
+msgstr "Spustit tuto akci SuperFaktury pro %d vybraných objednávek? Pokud máte v účtu SuperFaktury zapnuté odesílání e-mailů, zákazníci obdrží doklady okamžitě."
+
+#: includes/class-wc-sf-bulk.php
+msgid "Please select at most %d orders per batch."
+msgstr "Vyberte prosím nejvýše %d objednávek na jednu dávku."
+
+#: includes/class-wc-sf-bulk.php
+msgid "SuperFaktúra: processing documents…"
+msgstr "SuperFaktura: zpracovávám doklady…"
+
+#: includes/class-wc-sf-bulk.php
+msgid "SuperFaktúra: processing paused"
+msgstr "SuperFaktura: zpracování pozastaveno"
+
+#: includes/class-wc-sf-bulk.php
+msgid "SuperFaktúra: unfinished batch"
+msgstr "SuperFaktura: nedokončená dávka"
+
+#: includes/class-wc-sf-bulk.php
+msgid "SuperFaktúra: batch finished"
+msgstr "SuperFaktura: dávka dokončena"
+
+#: includes/class-wc-sf-bulk.php
+msgid "%1$d of %2$d orders processed"
+msgstr "Zpracováno %1$d z %2$d objednávek"
+
+#: includes/class-wc-sf-bulk.php
+msgid "Several documents in a row could not be created — the SuperFaktúra API may be unavailable. Check the API log and continue later."
+msgstr "Několik dokladů po sobě se nepodařilo vytvořit — API SuperFaktury může být nedostupné. Zkontrolujte API log a pokračujte později."
+
+#: includes/class-wc-sf-bulk.php
+msgid "The request failed. Check your connection and continue."
+msgstr "Požadavek selhal. Zkontrolujte připojení a pokračujte."
+
+#: includes/class-wc-sf-bulk.php
+msgid "Continue"
+msgstr "Pokračovat"
+
+#: includes/class-wc-sf-bulk.php
+msgid "Cancel batch"
+msgstr "Zrušit dávku"
+
+#: includes/class-wc-sf-bulk.php
+msgid "Dismiss"
+msgstr "Zavřít"
+
+#: includes/class-wc-sf-bulk.php
+msgid "created"
+msgstr "vystaveno"
+
+#: includes/class-wc-sf-bulk.php
+msgid "regenerated"
+msgstr "znovu vygenerováno"
+
+#: includes/class-wc-sf-bulk.php
+msgid "skipped – document already exists"
+msgstr "přeskočeno – doklad již existuje"
+
+#: includes/class-wc-sf-bulk.php
+msgid "skipped – no document to regenerate"
+msgstr "přeskočeno – žádný doklad k opětovnému vygenerování"
+
+#: includes/class-wc-sf-bulk.php
+msgid "skipped – paid or completed orders are not regenerated (see the sf_can_regenerate filter)"
+msgstr "přeskočeno – uhrazené nebo vyřízené objednávky se znovu negenerují (viz filtr sf_can_regenerate)"
+
+#: includes/class-wc-sf-bulk.php
+msgid "skipped – cancelled, refunded or failed orders"
+msgstr "přeskočeno – zrušené, refundované nebo neúspěšné objednávky"
+
+#: includes/class-wc-sf-bulk.php
+msgid "failed"
+msgstr "selhalo"
+
+#: includes/class-wc-sf-bulk.php
+msgid "Failed orders:"
+msgstr "Neúspěšné objednávky:"
+
+#: includes/class-wc-sf-bulk.php
+msgid "No orders were selected."
+msgstr "Nebyly vybrány žádné objednávky."
+
+#. Translators: %d number of API requests kept free for new orders.
+#: includes/class-wc-sf-bulk.php
+msgid "The selected orders do not fit into the remaining daily limit of SuperFaktúra API requests (%d requests are always kept for new orders)."
+msgstr "Vybrané objednávky se nevejdou do zbývajícího denního limitu požadavků na API SuperFaktury (%d požadavků zůstává vždy rezervováno pro nové objednávky)."
+
+#. Translators: %d number of API requests kept free for new orders.
+#: includes/class-wc-sf-bulk.php
+msgid "The remaining daily limit of SuperFaktúra API requests is too low to continue (%d requests are always kept for new orders). Continue after the limit resets or increase it."
+msgstr "Zbývající denní limit požadavků na API SuperFaktury je příliš nízký pro pokračování (%d požadavků zůstává vždy rezervováno pro nové objednávky). Pokračujte po obnovení limitu nebo si jej navyšte."
+
 #~ msgid "Checkout fields required"
 #~ msgstr "Povinné IČO a (SK) DIČ u objednávky (podle aktivovaných výše)"
 
@@ -1395,3 +1501,7 @@ msgstr "Zkopírováno"
 
 #~ msgid "Do not set invoice as paid for order status \"Completed\""
 #~ msgstr "Neoznačovat fakturu jako uhrazenou pro stav objednávky “Vybavená”"
+
+#: includes/class-wc-sf-invoice.php
+msgid "Document was not regenerated, because replacing its items was refused."
+msgstr "Doklad nebyl přegenerován, protože nahrazení jeho položek bylo zamítnuto."

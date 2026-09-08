@@ -29,7 +29,7 @@ class WC_SuperFaktura {
 	 *
 	 * @var string
 	 */
-	public $version = '1.53.8';
+	public $version = '1.54.0';
 
 	/**
 	 * Database version.
@@ -116,6 +116,13 @@ class WC_SuperFaktura {
 	 * @var WC_SF_Invoice
 	 */
 	public $invoice_generator;
+
+	/**
+	 * Instance of WC_SF_Bulk.
+	 *
+	 * @var WC_SF_Bulk
+	 */
+	public $bulk;
 
 	/**
 	 * Instance of WC_SF_Checkout_Block.
@@ -208,6 +215,7 @@ class WC_SuperFaktura {
 		$this->email = new WC_SF_Email($this);
 		$this->invoice_generator = new WC_SF_Invoice($this);
 		$this->checkout_block = new WC_SF_Checkout_Block($this);
+		$this->bulk = new WC_SF_Bulk($this);
 	}
 
 
@@ -378,6 +386,7 @@ class WC_SuperFaktura {
 
 		$this->email->init();
 		$this->checkout_block->init();
+		$this->bulk->init();
 	}
 
 
@@ -848,6 +857,7 @@ class WC_SuperFaktura {
 	 *
 	 * @param int                                     $invoice_id Invoice ID.
 	 * @param WC_SF_Api|WC_SF_Api_At|WC_SF_Api_Cz $api SuperFaktura API client.
+	 * @return bool False when the deletion was refused by the sf_clean_invoice_items_allowed filter.
 	 */
 	public function sf_clean_invoice_items( $invoice_id, $api ) {
 		$response = $api->invoice( $invoice_id );
@@ -858,6 +868,17 @@ class WC_SuperFaktura {
 					$delete_item_ids[] = $item->id;
 				}
 
+				/**
+				 * Last chance to refuse replacing the document's items, now that their number is known.
+				 *
+				 * @param bool  $allowed         Whether to delete the items and continue regenerating.
+				 * @param int   $invoice_id      Invoice ID.
+				 * @param array $delete_item_ids IDs of the items on the document.
+				 */
+				if ( ! apply_filters( 'sf_clean_invoice_items_allowed', true, $invoice_id, $delete_item_ids ) ) {
+					return false;
+				}
+
 				// Delete items in chunks of 50.
 				$delete_item_ids_chunks = array_chunk( $delete_item_ids, 50 );
 				foreach ( $delete_item_ids_chunks as $delete_item_ids_chunk ) {
@@ -865,6 +886,8 @@ class WC_SuperFaktura {
 				}
 			}
 		}
+
+		return true;
 	}
 
 

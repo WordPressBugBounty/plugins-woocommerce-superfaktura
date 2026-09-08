@@ -1338,3 +1338,113 @@ msgstr ""
 #: includes/class-wc-sf-admin.php:240 assets/js/admin.js:96 assets/js/admin.js:145
 msgid "Copied"
 msgstr ""
+
+#: includes/class-wc-sf-bulk.php
+msgid "SuperFaktúra: create invoices"
+msgstr ""
+
+#: includes/class-wc-sf-bulk.php
+msgid "SuperFaktúra: create proforma invoices"
+msgstr ""
+
+#: includes/class-wc-sf-bulk.php
+msgid "SuperFaktúra: regenerate existing documents"
+msgstr ""
+
+#: includes/class-wc-sf-bulk.php
+msgid "Run this SuperFaktúra action for %d selected orders? If e-mail sending is enabled in your SuperFaktúra account, customers will receive their documents right away."
+msgstr ""
+
+#: includes/class-wc-sf-bulk.php
+msgid "Please select at most %d orders per batch."
+msgstr ""
+
+#: includes/class-wc-sf-bulk.php
+msgid "SuperFaktúra: processing documents…"
+msgstr ""
+
+#: includes/class-wc-sf-bulk.php
+msgid "SuperFaktúra: processing paused"
+msgstr ""
+
+#: includes/class-wc-sf-bulk.php
+msgid "SuperFaktúra: unfinished batch"
+msgstr ""
+
+#: includes/class-wc-sf-bulk.php
+msgid "SuperFaktúra: batch finished"
+msgstr ""
+
+#: includes/class-wc-sf-bulk.php
+msgid "%1$d of %2$d orders processed"
+msgstr ""
+
+#: includes/class-wc-sf-bulk.php
+msgid "Several documents in a row could not be created — the SuperFaktúra API may be unavailable. Check the API log and continue later."
+msgstr ""
+
+#: includes/class-wc-sf-bulk.php
+msgid "The request failed. Check your connection and continue."
+msgstr ""
+
+#: includes/class-wc-sf-bulk.php
+msgid "Continue"
+msgstr ""
+
+#: includes/class-wc-sf-bulk.php
+msgid "Cancel batch"
+msgstr ""
+
+#: includes/class-wc-sf-bulk.php
+msgid "Dismiss"
+msgstr ""
+
+#: includes/class-wc-sf-bulk.php
+msgid "created"
+msgstr ""
+
+#: includes/class-wc-sf-bulk.php
+msgid "regenerated"
+msgstr ""
+
+#: includes/class-wc-sf-bulk.php
+msgid "skipped – document already exists"
+msgstr ""
+
+#: includes/class-wc-sf-bulk.php
+msgid "skipped – no document to regenerate"
+msgstr ""
+
+#: includes/class-wc-sf-bulk.php
+msgid "skipped – paid or completed orders are not regenerated (see the sf_can_regenerate filter)"
+msgstr ""
+
+#: includes/class-wc-sf-bulk.php
+msgid "skipped – cancelled, refunded or failed orders"
+msgstr ""
+
+#: includes/class-wc-sf-bulk.php
+msgid "failed"
+msgstr ""
+
+#: includes/class-wc-sf-bulk.php
+msgid "Failed orders:"
+msgstr ""
+
+#: includes/class-wc-sf-bulk.php
+msgid "No orders were selected."
+msgstr ""
+
+#. Translators: %d number of API requests kept free for new orders.
+#: includes/class-wc-sf-bulk.php
+msgid "The selected orders do not fit into the remaining daily limit of SuperFaktúra API requests (%d requests are always kept for new orders)."
+msgstr ""
+
+#. Translators: %d number of API requests kept free for new orders.
+#: includes/class-wc-sf-bulk.php
+msgid "The remaining daily limit of SuperFaktúra API requests is too low to continue (%d requests are always kept for new orders). Continue after the limit resets or increase it."
+msgstr ""
+
+#: includes/class-wc-sf-invoice.php
+msgid "Document was not regenerated, because replacing its items was refused."
+msgstr ""
