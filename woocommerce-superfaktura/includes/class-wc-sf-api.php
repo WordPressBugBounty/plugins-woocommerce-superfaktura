@@ -51,15 +51,24 @@ class WC_SF_Api {
         $this->email      = $email;
         $this->apikey     = $apikey;
         $this->company_id = $company_id;
-        $this->headers    = array(
-            'Authorization' => self::API_AUTH_KEYWORD
-                . ' '
-                . http_build_query(array(
-                    'email' => $this->email,
-                    'apikey' => $this->apikey,
-                    'company_id' => $this->company_id,
-                    'module' => $this->getModuleString($module)
-                ))
+
+        $auth = array(
+            'email'  => $this->email,
+            'apikey' => $this->apikey,
+        );
+
+        // Send company_id only when it is set. A missing option would otherwise be sent as
+        // "company_id=0" (http_build_query() casts false to 0), which the API rejects as
+        // invalid credentials; without the parameter the API uses the account's default company.
+        $company_id = trim((string) $this->company_id);
+        if ('' !== $company_id && '0' !== $company_id) {
+            $auth['company_id'] = $company_id;
+        }
+
+        $auth['module'] = $this->getModuleString($module);
+
+        $this->headers = array(
+            'Authorization' => self::API_AUTH_KEYWORD . ' ' . http_build_query($auth)
         );
         $this->data['apptitle'] = $apptitle;
     }

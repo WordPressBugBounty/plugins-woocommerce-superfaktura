@@ -29,7 +29,7 @@ class WC_SuperFaktura {
 	 *
 	 * @var string
 	 */
-	public $version = '1.54.0';
+	public $version = '1.54.1';
 
 	/**
 	 * Database version.
@@ -824,7 +824,7 @@ class WC_SuperFaktura {
 		$sf_lang       = ( isset( $credentials['woocommerce_sf_lang'] ) ) ? $credentials['woocommerce_sf_lang'] : get_option( 'woocommerce_sf_lang', 'sk' );
 		$sf_email      = ( isset( $credentials['woocommerce_sf_email'] ) ) ? $credentials['woocommerce_sf_email'] : get_option( 'woocommerce_sf_email' );
 		$sf_key        = ( isset( $credentials['woocommerce_sf_apikey'] ) ) ? $credentials['woocommerce_sf_apikey'] : get_option( 'woocommerce_sf_apikey' );
-		$sf_company_id = ( isset( $credentials['woocommerce_sf_company_id'] ) ) ? $credentials['woocommerce_sf_company_id'] : get_option( 'woocommerce_sf_company_id' );
+		$sf_company_id = ( isset( $credentials['woocommerce_sf_company_id'] ) ) ? $credentials['woocommerce_sf_company_id'] : get_option( 'woocommerce_sf_company_id', '' );
 		$sf_sandbox    = ( isset( $credentials['woocommerce_sf_sandbox'] ) ) ? $credentials['woocommerce_sf_sandbox'] : get_option( 'woocommerce_sf_sandbox', 'no' );
 
 		$module_id = sprintf( 'WordPress %s (WC %s, WC SF %s)', get_bloginfo( 'version' ), WC()->version, $this->version );
