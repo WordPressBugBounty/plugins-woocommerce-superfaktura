@@ -248,6 +248,7 @@ class WC_SF_Settings extends WC_Settings_Page {
 			'shipping'         => __( 'Shipping', 'woocommerce-superfaktura' ),
 			'accounting'       => __( 'Accounting', 'woocommerce-superfaktura' ),
 			'api_log'          => __( 'API log', 'woocommerce-superfaktura' ),
+			'tools'            => __( 'Tools', 'woocommerce-superfaktura' ),
 			'help'             => __( 'Help', 'woocommerce-superfaktura' ),
 		);
 
@@ -1466,6 +1467,10 @@ class WC_SF_Settings extends WC_Settings_Page {
 				$settings = apply_filters( 'superfaktura_api_log_settings', $settings );
 				break;
 
+			case 'tools':
+				$settings = $this->wc_sf->tools->get_settings();
+				break;
+
 			case 'help':
 				$settings = array(
 					array(
@@ -1656,6 +1661,11 @@ class WC_SF_Settings extends WC_Settings_Page {
 			echo wp_kses( '<div class="sf-notice-error">' . $this->notice . '</div>', $this->allowed_tags );
 		}
 
+		if ( 'tools' === $current_section ) {
+			$GLOBALS['hide_save_button'] = true;
+			echo wp_kses( $this->wc_sf->tools->get_result_notice(), $this->allowed_tags );
+		}
+
 		WC_Admin_Settings::output_fields( $settings );
 
 		if ( 'invoice' === $current_section ) {
@@ -1696,6 +1706,12 @@ class WC_SF_Settings extends WC_Settings_Page {
 	 */
 	public function save() {
 		global $current_section;
+
+		if ( 'tools' === $current_section ) {
+			$this->wc_sf->tools->handle_request();
+			return;
+		}
+
 		$settings = $this->get_settings( $current_section );
 		WC_Admin_Settings::save_fields( $settings );
 

@@ -1,4 +1,15 @@
 jQuery(document).ready(function($) {
+	// Tools section: ask for confirmation where needed and disarm WooCommerce's "unsaved changes" warning,
+	// which it only disarms for its own Save button, so submitting export/import/reset does not prompt.
+	$(document).on('click', '.wc-sf-tools-action', function(e) {
+		var message = $(this).data('confirm');
+		if (message && !window.confirm(message)) {
+			e.preventDefault();
+			return;
+		}
+		window.onbeforeunload = '';
+	});
+
 	var wcSfI18n = (window.wc_sf && window.wc_sf.i18n) || {};
 
 	function wc_sf_t(key, fallback) {

@@ -1448,3 +1448,99 @@ msgstr ""
 #: includes/class-wc-sf-invoice.php
 msgid "Document was not regenerated, because replacing its items was refused."
 msgstr ""
+
+#: includes/class-wc-sf-tools.php
+msgid "Tools"
+msgstr ""
+
+#: includes/class-wc-sf-tools.php
+msgid "Export and import settings"
+msgstr ""
+
+#: includes/class-wc-sf-tools.php
+msgid "Transfer the plugin settings to another site, keep a backup before making changes, or start over with default settings."
+msgstr ""
+
+#: includes/class-wc-sf-tools.php
+msgid "All plugin settings were reset to their defaults."
+msgstr ""
+
+#: includes/class-wc-sf-tools.php
+msgid "No file was uploaded."
+msgstr ""
+
+#: includes/class-wc-sf-tools.php
+msgid "The file is too large."
+msgstr ""
+
+#: includes/class-wc-sf-tools.php
+msgid "The file is not a SuperFaktúra WooCommerce settings export."
+msgstr ""
+
+#: includes/class-wc-sf-tools.php
+msgid "The file contains no settings that could be imported."
+msgstr ""
+
+#: includes/class-wc-sf-tools.php
+msgid "The import failed."
+msgstr ""
+
+#: includes/class-wc-sf-tools.php
+msgid "Export"
+msgstr ""
+
+#: includes/class-wc-sf-tools.php
+msgid "Include API credentials (e-mail, API key, company ID and secret key)"
+msgstr ""
+
+#: includes/class-wc-sf-tools.php
+msgid "Export settings"
+msgstr ""
+
+#: includes/class-wc-sf-tools.php
+msgid "Downloads a JSON file with all plugin settings. Leave the credentials out when the file is meant for a different site, and leave the account references out when it is meant for a different SuperFaktúra account, because their IDs exist only in the account they were created in."
+msgstr ""
+
+#: includes/class-wc-sf-tools.php
+msgid "Import"
+msgstr ""
+
+#: includes/class-wc-sf-tools.php
+msgid "Import the settings from the selected file? Settings present in the file will be overwritten."
+msgstr ""
+
+#: includes/class-wc-sf-tools.php
+msgid "Import settings"
+msgstr ""
+
+#: includes/class-wc-sf-tools.php
+msgid "Overwrites the current settings with the values from the file. Settings that are not in the file stay unchanged. Export the current settings first if you may need them again. Settings that refer to payment gateways, shipping methods or order statuses only take effect when the same ones exist on this site, so review the Invoice Creation, Payment and Shipping sections after importing from a different site. Document counters used for custom numbering are never overwritten."
+msgstr ""
+
+#: includes/class-wc-sf-tools.php
+msgid "Reset"
+msgstr ""
+
+#: includes/class-wc-sf-tools.php
+msgid "Reset all plugin settings, including the API credentials? This cannot be undone."
+msgstr ""
+
+#: includes/class-wc-sf-tools.php
+msgid "Reset all settings"
+msgstr ""
+
+#: includes/class-wc-sf-tools.php
+msgid "Deletes all plugin settings including the API credentials, so the plugin behaves like a fresh installation. Useful after copying a site. Documents already created and the API log are not affected."
+msgstr ""
+
+#. translators: %d: number of imported settings.
+#: includes/class-wc-sf-tools.php
+msgid "%d setting was imported."
+msgid_plural "%d settings were imported."
+msgstr[0] ""
+msgstr[1] ""
+msgstr[2] ""
+
+#: includes/class-wc-sf-tools.php
+msgid "Include references to the SuperFaktúra account (number sequences, bank account, cash registers, logo, country overrides)"
+msgstr ""

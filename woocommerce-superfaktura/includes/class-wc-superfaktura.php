@@ -29,7 +29,7 @@ class WC_SuperFaktura {
 	 *
 	 * @var string
 	 */
-	public $version = '1.54.1';
+	public $version = '1.55.0';
 
 	/**
 	 * Database version.
@@ -131,6 +131,13 @@ class WC_SuperFaktura {
 	 */
 	public $checkout_block;
 
+	/**
+	 * Settings export, import and reset.
+	 *
+	 * @var WC_SF_Tools
+	 */
+	public $tools;
+
 
 
 	/**
@@ -216,6 +223,7 @@ class WC_SuperFaktura {
 		$this->invoice_generator = new WC_SF_Invoice($this);
 		$this->checkout_block = new WC_SF_Checkout_Block($this);
 		$this->bulk = new WC_SF_Bulk($this);
+		$this->tools = new WC_SF_Tools($this);
 	}
 
 

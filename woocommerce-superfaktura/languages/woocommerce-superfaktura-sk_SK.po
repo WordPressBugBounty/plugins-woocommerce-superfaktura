@@ -1509,3 +1509,99 @@ msgstr "Zostávajúci denný limit požiadaviek na API SuperFaktúry je príliš
 #: includes/class-wc-sf-invoice.php
 msgid "Document was not regenerated, because replacing its items was refused."
 msgstr "Doklad nebol pregenerovaný, pretože nahradenie jeho položiek bolo zamietnuté."
+
+#: includes/class-wc-sf-tools.php
+msgid "Tools"
+msgstr "Nástroje"
+
+#: includes/class-wc-sf-tools.php
+msgid "Export and import settings"
+msgstr "Export a import nastavení"
+
+#: includes/class-wc-sf-tools.php
+msgid "Transfer the plugin settings to another site, keep a backup before making changes, or start over with default settings."
+msgstr "Preneste nastavenia pluginu na iný web, uložte si zálohu pred zmenami alebo začnite odznova s predvolenými nastaveniami."
+
+#: includes/class-wc-sf-tools.php
+msgid "All plugin settings were reset to their defaults."
+msgstr "Všetky nastavenia pluginu boli obnovené na predvolené hodnoty."
+
+#: includes/class-wc-sf-tools.php
+msgid "No file was uploaded."
+msgstr "Nebol nahraný žiadny súbor."
+
+#: includes/class-wc-sf-tools.php
+msgid "The file is too large."
+msgstr "Súbor je príliš veľký."
+
+#: includes/class-wc-sf-tools.php
+msgid "The file is not a SuperFaktúra WooCommerce settings export."
+msgstr "Súbor nie je exportom nastavení pluginu SuperFaktúra WooCommerce."
+
+#: includes/class-wc-sf-tools.php
+msgid "The file contains no settings that could be imported."
+msgstr "Súbor neobsahuje žiadne nastavenia, ktoré by bolo možné importovať."
+
+#: includes/class-wc-sf-tools.php
+msgid "The import failed."
+msgstr "Import zlyhal."
+
+#: includes/class-wc-sf-tools.php
+msgid "Export"
+msgstr "Export"
+
+#: includes/class-wc-sf-tools.php
+msgid "Include API credentials (e-mail, API key, company ID and secret key)"
+msgstr "Zahrnúť prístupové údaje k API (e-mail, API kľúč, Company ID a tajný kľúč)"
+
+#: includes/class-wc-sf-tools.php
+msgid "Export settings"
+msgstr "Exportovať nastavenia"
+
+#: includes/class-wc-sf-tools.php
+msgid "Downloads a JSON file with all plugin settings. Leave the credentials out when the file is meant for a different site, and leave the account references out when it is meant for a different SuperFaktúra account, because their IDs exist only in the account they were created in."
+msgstr "Stiahne súbor JSON so všetkými nastaveniami pluginu. Ak je súbor určený pre iný web, nezahŕňajte prístupové údaje, a ak je určený pre iný účet SuperFaktúry, nezahŕňajte odkazy na účet, pretože ich ID existujú len v účte, v ktorom vznikli."
+
+#: includes/class-wc-sf-tools.php
+msgid "Import"
+msgstr "Import"
+
+#: includes/class-wc-sf-tools.php
+msgid "Import the settings from the selected file? Settings present in the file will be overwritten."
+msgstr "Importovať nastavenia z vybraného súboru? Nastavenia obsiahnuté v súbore budú prepísané."
+
+#: includes/class-wc-sf-tools.php
+msgid "Import settings"
+msgstr "Importovať nastavenia"
+
+#: includes/class-wc-sf-tools.php
+msgid "Overwrites the current settings with the values from the file. Settings that are not in the file stay unchanged. Export the current settings first if you may need them again. Settings that refer to payment gateways, shipping methods or order statuses only take effect when the same ones exist on this site, so review the Invoice Creation, Payment and Shipping sections after importing from a different site. Document counters used for custom numbering are never overwritten."
+msgstr "Prepíše aktuálne nastavenia hodnotami zo súboru. Nastavenia, ktoré v súbore nie sú, zostanú nezmenené. Ak by ste aktuálne nastavenia ešte mohli potrebovať, najprv ich exportujte. Nastavenia, ktoré odkazujú na platobné brány, spôsoby dopravy alebo stavy objednávok, sa uplatnia len vtedy, keď na tomto webe existujú rovnaké, preto po importe z iného webu skontrolujte sekcie Vytvorenie faktúry, Platby a Doprava. Počítadlá dokladov používané pri vlastnom číslovaní sa nikdy neprepisujú."
+
+#: includes/class-wc-sf-tools.php
+msgid "Reset"
+msgstr "Reset"
+
+#: includes/class-wc-sf-tools.php
+msgid "Reset all plugin settings, including the API credentials? This cannot be undone."
+msgstr "Obnoviť všetky nastavenia pluginu vrátane prístupových údajov k API? Túto akciu nie je možné vrátiť späť."
+
+#: includes/class-wc-sf-tools.php
+msgid "Reset all settings"
+msgstr "Obnoviť predvolené nastavenia"
+
+#: includes/class-wc-sf-tools.php
+msgid "Deletes all plugin settings including the API credentials, so the plugin behaves like a fresh installation. Useful after copying a site. Documents already created and the API log are not affected."
+msgstr "Vymaže všetky nastavenia pluginu vrátane prístupových údajov k API, takže sa plugin bude správať ako po novej inštalácii. Hodí sa po skopírovaní webu. Už vystavené doklady a API log zostanú zachované."
+
+#. translators: %d: number of imported settings.
+#: includes/class-wc-sf-tools.php
+msgid "%d setting was imported."
+msgid_plural "%d settings were imported."
+msgstr[0] "Importovalo sa %d nastavenie."
+msgstr[1] "Importovali sa %d nastavenia."
+msgstr[2] "Importovalo sa %d nastavení."
+
+#: includes/class-wc-sf-tools.php
+msgid "Include references to the SuperFaktúra account (number sequences, bank account, cash registers, logo, country overrides)"
+msgstr "Zahrnúť odkazy na účet SuperFaktúry (číselníky, bankový účet, pokladne, logo, nastavenia pre krajiny)"
