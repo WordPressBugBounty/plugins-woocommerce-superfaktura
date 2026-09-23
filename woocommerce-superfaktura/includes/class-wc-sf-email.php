@@ -206,9 +206,10 @@ class WC_SF_Email {
                 return $attachments;
             }
 
-            $pdf_path = get_temp_dir() . $invoice_data['invoice_id'] . '.pdf';
-            $pdf_path = str_replace("\0", "", $pdf_path); // Remove null bytes (error reported by users).
-            file_put_contents($pdf_path, $pdf_resource['body']);
+            $pdf_path = $this->save_invoice_attachment($pdf_resource, $order, $invoice_data);
+            if (!$pdf_path) {
+                return $attachments;
+            }
             $attachments[] = $pdf_path;
 
             // Mark invoice as sent only if email is sent to the customer and invoice wasn't marked as sent in "sf_invoice_link_email()" already.
@@ -223,5 +224,103 @@ class WC_SF_Email {
         }
 
         return $attachments;
+    }
+
+    /**
+     * Save the downloaded invoice PDF to a temporary file named like the SuperFaktura download.
+     *
+     * The file name comes from the Content-Disposition header SuperFaktura sends with the PDF
+     * (e.g. "fa_Company_2026011.pdf"), with the document ID as a fallback. Each document gets its
+     * own temporary folder, so a custom name set through the filter cannot collide between documents.
+     *
+     * @param array    $pdf_resource Response from wp_safe_remote_get().
+     * @param WC_Order $order        Order.
+     * @param array    $invoice_data Invoice data from WC_SuperFaktura::get_invoice_data().
+     * @return string|false Path to the saved file, or false on failure.
+     */
+    private function save_invoice_attachment($pdf_resource, $order, $invoice_data) {
+        $document_id = (int) $invoice_data['invoice_id'];
+
+        $filename = $this->get_filename_from_content_disposition(wp_remote_retrieve_header($pdf_resource, 'content-disposition'));
+        if ('' === $filename) {
+            $filename = $document_id . '.pdf';
+        }
+
+        /**
+         * Filter the file name of the invoice PDF attached to WooCommerce emails.
+         *
+         * @param string   $filename     File name, by default the one SuperFaktura uses for the download.
+         * @param WC_Order $order        Order.
+         * @param array    $invoice_data Invoice data (type, pdf, invoice_id).
+         */
+        $filename = sanitize_file_name((string) apply_filters('sf_invoice_attachment_filename', $filename, $order, $invoice_data));
+        if ('' === $filename || '.pdf' === strtolower($filename)) {
+            $filename = $document_id . '.pdf';
+        }
+        if ('.pdf' !== strtolower(substr($filename, -4))) {
+            $filename .= '.pdf';
+        }
+
+        $base_dir = trailingslashit(get_temp_dir()) . 'wc-sf-attachments/';
+        $dir      = $base_dir . ($document_id ? $document_id : md5($invoice_data['pdf'])) . '/';
+        if (!wp_mkdir_p($dir)) {
+            return false;
+        }
+        $this->cleanup_old_attachments($base_dir, $dir);
+
+        $pdf_path = str_replace("\0", '', $dir . $filename); // Remove null bytes (error reported by users).
+        if (false === file_put_contents($pdf_path, $pdf_resource['body'])) {
+            return false;
+        }
+
+        return $pdf_path;
+    }
+
+    /**
+     * Extract a file name from a Content-Disposition header, preferring the UTF-8 "filename*" form.
+     *
+     * @param string|array $header Header value.
+     * @return string File name, or empty string when none is present.
+     */
+    private function get_filename_from_content_disposition($header) {
+        if (is_array($header)) {
+            $header = reset($header);
+        }
+        $header = (string) $header;
+
+        if (preg_match("/filename\\*\\s*=\\s*(?:UTF-8|utf-8)''([^;]+)/", $header, $matches)) {
+            return trim(rawurldecode($matches[1]), " \"'");
+        }
+        if (preg_match('/filename\\s*=\\s*"([^"]+)"/', $header, $matches) || preg_match('/filename\\s*=\\s*([^;]+)/', $header, $matches)) {
+            return trim($matches[1], " \"'");
+        }
+
+        return '';
+    }
+
+    /**
+     * Remove attachment folders older than one day, so temporary files do not accumulate.
+     *
+     * @param string $base_dir    Folder holding one subfolder per document.
+     * @param string $current_dir Folder in use by the current email, never removed.
+     */
+    private function cleanup_old_attachments($base_dir, $current_dir) {
+        $dirs = glob($base_dir . '*', GLOB_ONLYDIR);
+        if (!$dirs) {
+            return;
+        }
+
+        $limit = time() - DAY_IN_SECONDS;
+        foreach ($dirs as $dir) {
+            if (trailingslashit($dir) === $current_dir || filemtime($dir) > $limit) {
+                continue;
+            }
+            foreach ((array) glob(trailingslashit($dir) . '*') as $file) {
+                if (is_file($file)) {
+                    @unlink($file); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+                }
+            }
+            @rmdir($dir); // phpcs:ignore WordPress.PHP.NoSilencedErrors.Discouraged
+        }
     }
 }
