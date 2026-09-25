@@ -29,7 +29,7 @@ class WC_SuperFaktura {
 	 *
 	 * @var string
 	 */
-	public $version = '1.55.1';
+	public $version = '1.55.2';
 
 	/**
 	 * Database version.
@@ -138,6 +138,13 @@ class WC_SuperFaktura {
 	 */
 	public $tools;
 
+	/**
+	 * WooCommerce Subscriptions company data sync.
+	 *
+	 * @var WC_SF_Subscriptions
+	 */
+	public $subscriptions;
+
 
 
 	/**
@@ -224,6 +231,7 @@ class WC_SuperFaktura {
 		$this->checkout_block = new WC_SF_Checkout_Block($this);
 		$this->bulk = new WC_SF_Bulk($this);
 		$this->tools = new WC_SF_Tools($this);
+		$this->subscriptions = new WC_SF_Subscriptions($this);
 	}
 
 
@@ -1783,6 +1791,22 @@ class WC_SuperFaktura {
 			}
 		}
 
+		// A subscription renewal inherits the block checkout's stored company fields from its subscription. When the
+		// renewal is paid through the classic checkout, update that copy too, so it never contradicts this choice.
+		// A renewal order always records the choice, so an invoice issued before the subscriptions are synced never
+		// falls back to the subscription's company data for a private renewal.
+		$is_renewal      = function_exists( 'wcs_order_contains_renewal' ) && wcs_order_contains_renewal( $order );
+		$fields_enabled  = 'yes' === get_option( 'woocommerce_sf_add_company_billing_fields', 'yes' ) && ! $this->wc_nastavenia_skcz_activated;
+		$fields_in_form  = isset( $_POST['billing_company_wi_id'] ) || isset( $_POST['billing_company_wi_tax'] ) || isset( $_POST['billing_company_wi_vat'] );
+		if ( $fields_enabled && $fields_in_form && ( $is_renewal || $order->meta_exists( '_wc_other/superfaktura/wi-as-company' ) ) ) {
+			$is_company = isset( $_POST['wi_as_company'] ) && '1' == $_POST['wi_as_company'];
+			$order->update_meta_data( '_wc_other/superfaktura/wi-as-company', $is_company ? '1' : '0' );
+			$order->update_meta_data( '_wc_other/superfaktura/billing-company', $is_company ? $order->get_billing_company() : '' );
+			foreach ( array( 'id', 'tax', 'vat' ) as $field ) {
+				$order->update_meta_data( '_wc_other/superfaktura/billing-company-wi-' . $field, $is_company ? (string) $order->get_meta( 'billing_company_wi_' . $field, true ) : '' );
+			}
+		}
+
 		$order->save();
 	}
 
@@ -1795,6 +1819,20 @@ class WC_SuperFaktura {
 	public function checkout_update_customer( $customer, $data ) {
 		$is_company = ! empty( $data['wi_as_company'] );
 		$customer->update_meta_data( 'wi_as_company', $is_company ? '1' : '0' );
+
+		// Keep the block checkout's stored choice in step when the customer has one, so My Account and a later
+		// block checkout show what was chosen here.
+		if ( $customer->meta_exists( '_wc_other/superfaktura/wi-as-company' ) ) {
+			$customer->update_meta_data( '_wc_other/superfaktura/wi-as-company', $is_company ? '1' : '0' );
+			if ( $is_company ) {
+				$customer->update_meta_data( '_wc_other/superfaktura/billing-company', isset( $data['billing_company'] ) ? sanitize_text_field( $data['billing_company'] ) : '' );
+				foreach ( array( 'id', 'tax', 'vat' ) as $field ) {
+					if ( isset( $data[ 'billing_company_wi_' . $field ] ) ) {
+						$customer->update_meta_data( '_wc_other/superfaktura/billing-company-wi-' . $field, sanitize_text_field( $data[ 'billing_company_wi_' . $field ] ) );
+					}
+				}
+			}
+		}
 
 		// Apply or clear the intra-EU B2B VAT exemption on every checkout update so the cart totals and the resulting order reflect the reverse charge.
 		$billing_country = isset( $data['billing_country'] ) ? $data['billing_country'] : $customer->get_billing_country();
@@ -1902,12 +1940,34 @@ class WC_SuperFaktura {
 		}
 
 		$should_save = false;
+		$had_ids     = '' !== (string) $order->get_meta( 'billing_company_wi_id', true ) . (string) $order->get_meta( 'billing_company_wi_tax', true ) . (string) $order->get_meta( 'billing_company_wi_vat', true );
 
 		// Because the filter "woocommerce_admin_billing_fields" above saves only private custom fields prefixed with "_" and the plugin for some reason uses duplicates of these fields without the prefix, we need to update those values here as well.
 		foreach ( array( 'billing_company_wi_id', 'billing_company_wi_vat', 'billing_company_wi_tax' ) as $key ) {
 			if ( isset( $_POST[ '_' . $key ] ) ) {
 				$order->update_meta_data( $key, sanitize_text_field( wp_unslash( $_POST[ '_' . $key ] ) ) );
 				$should_save = true;
+			}
+		}
+
+		// Keep the block checkout's stored copy in step with the admin's edit, so a renewal repair or the next
+		// renewal checkout never brings back values the admin changed or removed.
+		if ( $should_save && $order->meta_exists( '_wc_other/superfaktura/wi-as-company' ) ) {
+			$has_ids = false;
+			foreach ( array( 'id', 'tax', 'vat' ) as $field ) {
+				$value   = (string) $order->get_meta( 'billing_company_wi_' . $field, true );
+				$has_ids = $has_ids || '' !== $value;
+				$order->update_meta_data( '_wc_other/superfaktura/billing-company-wi-' . $field, $value );
+			}
+			if ( $has_ids ) {
+				// The order's own data box saves later (priority 40), so take the company name from the form.
+				$company = isset( $_POST['_billing_company'] ) ? sanitize_text_field( wp_unslash( $_POST['_billing_company'] ) ) : $order->get_billing_company();
+				$order->update_meta_data( '_wc_other/superfaktura/wi-as-company', '1' );
+				$order->update_meta_data( '_wc_other/superfaktura/billing-company', $company );
+			} elseif ( $had_ids ) {
+				// The admin removed all company IDs: record a private choice. A company without IDs stays as it was.
+				$order->update_meta_data( '_wc_other/superfaktura/wi-as-company', '0' );
+				$order->update_meta_data( '_wc_other/superfaktura/billing-company', '' );
 			}
 		}
 

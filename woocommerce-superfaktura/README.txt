@@ -4,7 +4,7 @@ Tags: superfaktura, invoice, faktura, proforma, woocommerce
 Requires at least: 4.4
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.55.1
+Stable tag: 1.55.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -64,6 +64,12 @@ This usually happens when you change your login email address. The email address
 You can read more about SuperFaktura API integration at [superfaktura.sk/api](http://www.superfaktura.sk/api/)
 
 == Changelog ==
+
+= 1.55.2 =
+* Opravená strata názvu firmy a firemných údajov v predplatnom (WooCommerce Subscriptions) po zaplatení zlyhanej obnovy cez pokladňu. Pri úhrade obnovy sa firemné údaje predvyplnia z predplatného.
+* Zmena fakturačnej adresy v Môj účet s voľbou aktualizovať predplatné prenesie do predplatných aj IČO, DIČ a IČ DPH.
+* Firemné údaje z blokovej pokladne sa ukladajú aj do profilu zákazníka a zobrazujú sa v Môj účet.
+* Obnovovacia objednávka s firemnými údajmi, ale bez názvu firmy, doplní názov z predplatného alebo pôvodnej objednávky.
 
 = 1.55.1 =
 * PDF faktúra v prílohe emailu má rovnaký názov ako pri stiahnutí zo SuperFaktúry, namiesto interného ID dokladu.

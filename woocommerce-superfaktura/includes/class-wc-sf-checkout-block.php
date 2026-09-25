@@ -58,6 +58,9 @@ class WC_SF_Checkout_Block {
 		// Sync block checkout data to existing order meta keys.
 		add_action( 'woocommerce_store_api_checkout_update_order_from_request', array( $this, 'sync_order_meta' ), 10, 2 );
 
+		// Persist the company data of a successful block checkout to the customer profile.
+		add_action( 'woocommerce_store_api_checkout_order_processed', array( $this, 'persist_customer_company_data' ), 10, 1 );
+
 		// Sync company data to the Store API customer/session during checkout updates.
 		add_action( 'woocommerce_store_api_checkout_update_customer_from_request', array( $this, 'sync_customer_meta_from_request' ), 10, 2 );
 
@@ -669,6 +672,45 @@ class WC_SF_Checkout_Block {
 	}
 
 	/**
+	 * Persist the company data of a processed block checkout order to the customer's profile.
+	 *
+	 * For logged-in customers the Store API works with the session copy of the customer, so the plugin's
+	 * customer meta written during the checkout never reaches the profile, and My Account shows outdated
+	 * company fields. Copy the order's synced values, as the classic checkout does. A private purchase
+	 * records the choice but keeps the stored company data for next time.
+	 *
+	 * @param WC_Order $order Processed order.
+	 */
+	public function persist_customer_company_data( $order ) {
+		if ( ! $order instanceof WC_Order ) {
+			return;
+		}
+
+		$customer_id = (int) $order->get_customer_id();
+		$checkbox    = (string) $order->get_meta( '_wc_other/' . self::FIELD_PREFIX . 'wi-as-company', true );
+		if ( $customer_id <= 0 || '' === $checkbox ) {
+			return;
+		}
+
+		$is_company = $this->is_checked_value( $checkbox );
+		update_user_meta( $customer_id, 'wi_as_company', $is_company ? '1' : '0' );
+		if ( ! $is_company ) {
+			return;
+		}
+
+		foreach ( array( 'id', 'tax', 'vat' ) as $field ) {
+			// A field the site has disabled keeps its stored value, as in the classic checkout.
+			if ( 'no' === get_option( 'woocommerce_sf_add_company_billing_fields_' . $field, 'optional' ) ) {
+				continue;
+			}
+			update_user_meta( $customer_id, 'billing_company_wi_' . $field, (string) $order->get_meta( 'billing_company_wi_' . $field, true ) );
+		}
+		if ( '' !== $order->get_billing_company() ) {
+			update_user_meta( $customer_id, 'billing_company', $order->get_billing_company() );
+		}
+	}
+
+	/**
 	 * Apply VAT exemption before WooCommerce calculates Store API cart totals.
 	 *
 	 * The Store API recalculates cart totals and shipping on both the checkout and the
@@ -1023,11 +1065,14 @@ class WC_SF_Checkout_Block {
 			return $renewal_order;
 		}
 
-		// Nothing to do when the renewal already inherited the plugin's company meta.
+		$has_ids = false;
 		foreach ( array( 'billing_company_wi_id', 'billing_company_wi_tax', 'billing_company_wi_vat' ) as $meta_key ) {
-			if ( '' !== (string) $renewal_order->get_meta( $meta_key, true ) ) {
-				return $renewal_order;
-			}
+			$has_ids = $has_ids || '' !== (string) $renewal_order->get_meta( $meta_key, true );
+		}
+
+		// The renewal already inherited complete company data: nothing to repair (and no need to load the parent).
+		if ( $has_ids && '' !== $renewal_order->get_billing_company() ) {
+			return $renewal_order;
 		}
 
 		$sources = array( $renewal_order );
@@ -1037,6 +1082,13 @@ class WC_SF_Checkout_Block {
 			if ( $parent instanceof WC_Order ) {
 				$sources[] = $parent;
 			}
+		}
+
+		// The renewal inherited the plugin's company meta but not the company name: paying a failed renewal through
+		// the block checkout used to empty it on the subscription.
+		if ( $has_ids ) {
+			$this->repair_missing_company_name( $renewal_order, $subscription, $sources );
+			return $renewal_order;
 		}
 
 		$company_data = $this->resolve_company_data_from_sources( $sources );
@@ -1055,6 +1107,42 @@ class WC_SF_Checkout_Block {
 		}
 
 		return $renewal_order;
+	}
+
+	/**
+	 * Fill an empty company name on a company renewal order (and its subscription) from the nearest source that has one.
+	 *
+	 * @param WC_Order   $renewal_order Renewal order with company IDs but possibly no company name.
+	 * @param WC_Order   $subscription  Subscription the renewal was created from.
+	 * @param WC_Order[] $sources       Renewal order, subscription and parent order, nearest first.
+	 */
+	private function repair_missing_company_name( $renewal_order, $subscription, $sources ) {
+		if ( '' !== $renewal_order->get_billing_company() ) {
+			return;
+		}
+
+		foreach ( $sources as $source ) {
+			if ( ! $source instanceof WC_Order ) {
+				continue;
+			}
+			$name = $source->get_billing_company();
+			if ( '' === $name ) {
+				$persisted = $this->get_persisted_company_data( $source );
+				$name      = ( null !== $persisted && $persisted['is_company'] ) ? $persisted['company'] : '';
+			}
+			if ( '' === $name ) {
+				continue;
+			}
+
+			$renewal_order->set_billing_company( $name );
+			$renewal_order->save();
+
+			if ( $subscription instanceof WC_Order && '' === $subscription->get_billing_company() ) {
+				$subscription->set_billing_company( $name );
+				$subscription->save();
+			}
+			return;
+		}
 	}
 
 	/**
