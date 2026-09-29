@@ -490,7 +490,19 @@ class WC_SF_Invoice {
 			if ( 'yes' === get_option( 'woocommerce_sf_oss', 'no' ) ) {
 
 				// Pri vystavení faktúry s odberateľom z inej krajiny EÚ, ktorý je súkromná osoba (nepodnikateľ) alebo firma bez IČ DPH.
-				if ( empty( $client_data['ic_dph'] ) && WC()->countries->get_base_country() !== $order->get_billing_country() && in_array( $order->get_billing_country(), $this->wc_sf->eu_countries, true ) ) {
+				// The country is the one WooCommerce taxed the order by (shipping or billing address per the tax settings,
+				// the shop base for local pickup), so the OSS flag always matches the VAT rates on the invoice.
+				$tax_country = $this->get_order_tax_country( $order );
+				$is_oss      = empty( $client_data['ic_dph'] ) && '' !== $tax_country && WC()->countries->get_base_country() !== $tax_country && in_array( $tax_country, $this->wc_sf->eu_countries, true );
+
+				/**
+				 * Filter whether the document is flagged as a One Stop Shop (OSS) sale.
+				 *
+				 * @param bool     $is_oss      Whether to send the OSS flag.
+				 * @param WC_Order $order       Order.
+				 * @param string   $tax_country Country the order was taxed by.
+				 */
+				if ( apply_filters( 'sf_invoice_oss', $is_oss, $order, $tax_country ) ) {
 					$extras['oss'] = true;
 				}
 			}
@@ -1247,6 +1259,34 @@ class WC_SF_Invoice {
 
 		return true;
 
+	}
+
+	/**
+	 * Country the order was taxed by, as WooCommerce determines it.
+	 *
+	 * Follows "Calculate tax based on" (shipping address with a billing fallback, billing address, or shop base)
+	 * and uses the shop base for local pickup orders. WooCommerce 7.6+ exposes this directly, including filters
+	 * third-party plugins apply; older versions get the same rules without the local pickup special case.
+	 *
+	 * @param WC_Order $order Order.
+	 * @return string Upper-case country code, or empty string.
+	 */
+	private function get_order_tax_country( $order ) {
+		if ( is_callable( array( $order, 'get_taxable_location' ) ) ) {
+			$location = $order->get_taxable_location();
+			return strtoupper( (string) ( $location['country'] ?? '' ) );
+		}
+
+		$based_on = get_option( 'woocommerce_tax_based_on', 'shipping' );
+		if ( 'base' === $based_on ) {
+			return strtoupper( (string) WC()->countries->get_base_country() );
+		}
+		if ( 'shipping' === $based_on && $order->get_shipping_country() ) {
+			return strtoupper( (string) $order->get_shipping_country() );
+		}
+
+		$country = $order->get_billing_country() ? $order->get_billing_country() : WC()->countries->get_base_country();
+		return strtoupper( (string) $country );
 	}
 
 	/**
