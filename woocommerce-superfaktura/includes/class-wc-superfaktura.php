@@ -29,7 +29,7 @@ class WC_SuperFaktura {
 	 *
 	 * @var string
 	 */
-	public $version = '1.55.3';
+	public $version = '1.56.1';
 
 	/**
 	 * Database version.
@@ -145,6 +145,13 @@ class WC_SuperFaktura {
 	 */
 	public $subscriptions;
 
+	/**
+	 * Admin notices (eFaktúra announcement, failed documents).
+	 *
+	 * @var WC_SF_Notices
+	 */
+	public $notices;
+
 
 
 	/**
@@ -232,6 +239,7 @@ class WC_SuperFaktura {
 		$this->bulk = new WC_SF_Bulk($this);
 		$this->tools = new WC_SF_Tools($this);
 		$this->subscriptions = new WC_SF_Subscriptions($this);
+		$this->notices = new WC_SF_Notices($this);
 	}
 
 
@@ -403,6 +411,7 @@ class WC_SuperFaktura {
 		$this->email->init();
 		$this->checkout_block->init();
 		$this->bulk->init();
+		$this->notices->init();
 	}
 
 
@@ -695,6 +704,9 @@ class WC_SuperFaktura {
 
 		$order->save();
 
+		// The invoice is attached without a log entry, so refresh the failed documents warning.
+		WC_SF_Notices::flush_errors();
+
 		return true;
 	}
 
@@ -807,6 +819,9 @@ class WC_SuperFaktura {
 			$order->update_meta_data( 'wc_sf_invoice_' . $type, $pdf );
 
 			$order->save();
+
+			// The document is attached without a log entry, so refresh the failed documents warning.
+			WC_SF_Notices::flush_errors();
 
 			return true;
 		}
@@ -1007,6 +1022,10 @@ class WC_SuperFaktura {
 
 		$log_data['time'] = current_time( 'mysql' );
 		$wpdb->insert( $wpdb->prefix . 'wc_sf_log', $log_data );
+
+		if ( isset( $log_data['request_type'] ) && in_array( $log_data['request_type'], array( 'create', 'edit' ), true ) ) {
+			WC_SF_Notices::flush_errors();
+		}
 	}
 
 
@@ -1139,6 +1158,68 @@ class WC_SuperFaktura {
 
 
 	/**
+	 * Map of customer countries to the SuperFaktúra invoice language of that country.
+	 *
+	 * Only countries whose language SuperFaktúra supports; other countries use the fallback language from the settings.
+	 *
+	 * @return array Country code => SuperFaktúra language code.
+	 */
+	public function get_language_country_map() {
+		$country_map = array(
+			'SK' => 'slo',
+			'CZ' => 'cze',
+			'DE' => 'deu',
+			'AT' => 'deu',
+			'LI' => 'deu',
+			'NL' => 'nld',
+			'HR' => 'hrv',
+			'HU' => 'hun',
+			'PL' => 'pol',
+			'RO' => 'rom',
+			'RU' => 'rus',
+			'SI' => 'slv',
+			'ES' => 'spa',
+			'MX' => 'spa',
+			'AR' => 'spa',
+			'CO' => 'spa',
+			'CL' => 'spa',
+			'PE' => 'spa',
+			'VE' => 'spa',
+			'EC' => 'spa',
+			'GT' => 'spa',
+			'CU' => 'spa',
+			'BO' => 'spa',
+			'DO' => 'spa',
+			'HN' => 'spa',
+			'PY' => 'spa',
+			'SV' => 'spa',
+			'NI' => 'spa',
+			'CR' => 'spa',
+			'PA' => 'spa',
+			'UY' => 'spa',
+			'IT' => 'ita',
+			'SM' => 'ita',
+			'UA' => 'ukr',
+			'GB' => 'eng',
+			'IE' => 'eng',
+			'US' => 'eng',
+			'AU' => 'eng',
+			'NZ' => 'eng',
+		);
+
+		/**
+		 * Filter the map of customer countries to invoice languages used by the "Customer country" invoice language.
+		 *
+		 * @since 1.56.0
+		 *
+		 * @param array $country_map Country code => SuperFaktúra language code (slo, cze, eng, deu, nld, hrv, hun, pol, rom, rus, slv, spa, ita, ukr).
+		 */
+		return apply_filters( 'sf_invoice_language_country_map', $country_map );
+	}
+
+
+
+	/**
 	 * Get invoice language.
 	 *
 	 * @param int    $order_id Order ID.
@@ -1182,6 +1263,22 @@ class WC_SuperFaktura {
 				if ( class_exists( 'sitepress' ) ) {
 					global $sitepress;
 					$sitepress->switch_lang( $wpml_language, false );
+				}
+				break;
+
+			case 'country':
+				$order   = wc_get_order( $order_id );
+				$country = '';
+				if ( $order ) {
+					$country = $order->get_billing_country() ? $order->get_billing_country() : $order->get_shipping_country();
+				}
+
+				$country_map = $this->get_language_country_map();
+				if ( isset( $country_map[ $country ] ) ) {
+					$language = $country_map[ $country ];
+				} else {
+					// SuperFaktúra has no language for this country.
+					$language = get_option( 'woocommerce_sf_invoice_language_fallback', 'endpoint' );
 				}
 				break;
 

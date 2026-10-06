@@ -4,7 +4,7 @@ Tags: superfaktura, invoice, faktura, proforma, woocommerce
 Requires at least: 4.4
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.55.3
+Stable tag: 1.56.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -64,6 +64,14 @@ This usually happens when you change your login email address. The email address
 You can read more about SuperFaktura API integration at [superfaktura.sk/api](http://www.superfaktura.sk/api/)
 
 == Changelog ==
+
+= 1.56.1 =
+* Informácia o povinnej eFaktúre od 1. 1. 2027 a o tom, ako sa na ňu pripraviť so SuperFaktúrou. Upravený text a obrázok.
+
+= 1.56.0 =
+* Informácia o eFaktúre, ktorá bude pre platiteľov DPH povinná od 1. 1. 2027, a o tom, ako sa na ňu pripraviť so SuperFaktúrou. Nový filter sf_show_efaktura_banner.
+* Upozornenie v administrácii, keď sa doklad nepodarilo vytvoriť alebo aktualizovať v SuperFaktúre, s odkazmi na objednávky a API log. Nový filter sf_admin_document_errors.
+* Jazyk faktúry podľa krajiny zákazníka, s nastaviteľným jazykom pre krajiny, ktorých jazyk SuperFaktúra nepodporuje. Nový filter sf_invoice_language_country_map.
 
 = 1.55.3 =
 * Príznak OSS sa určuje podľa krajiny, podľa ktorej WooCommerce vypočítal DPH (dodacia alebo fakturačná adresa podľa nastavení dane, pri osobnom odbere krajina obchodu), namiesto vždy podľa fakturačnej adresy. Nový filter sf_invoice_oss.

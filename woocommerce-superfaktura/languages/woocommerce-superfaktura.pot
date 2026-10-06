@@ -465,7 +465,7 @@ msgid "Czech"
 msgstr ""
 
 #: includes/class-wc-sf-settings.php:352
-msgid "Εnglish"
+msgid "English"
 msgstr ""
 
 #: includes/class-wc-sf-settings.php:353
@@ -1543,4 +1543,44 @@ msgstr[2] ""
 
 #: includes/class-wc-sf-tools.php
 msgid "Include references to the SuperFaktúra account (number sequences, bank account, cash registers, logo, country overrides)"
+msgstr ""
+
+#: includes/class-wc-sf-settings.php
+msgid "Customer country"
+msgstr ""
+
+#: includes/class-wc-sf-settings.php
+msgid "Fallback invoice language"
+msgstr ""
+
+#: includes/class-wc-sf-settings.php
+msgid "Used with the customer country option when SuperFaktúra does not support the language of the customer's country."
+msgstr ""
+
+#: includes/class-wc-sf-notices.php
+msgid "%d document could not be created or updated in SuperFaktúra in the last 30 days."
+msgid_plural "%d documents could not be created or updated in SuperFaktúra in the last 30 days."
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/class-wc-sf-notices.php
+msgid "Order #%s"
+msgstr ""
+
+#: includes/class-wc-sf-notices.php
+msgid "and %d more"
+msgid_plural "and %d more"
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/class-wc-sf-notices.php
+msgid "Open API log"
+msgstr ""
+
+#: includes/class-wc-sf-notices.php
+msgid "More than %d documents could not be created or updated in SuperFaktúra in the last 30 days."
+msgstr ""
+
+#: includes/class-wc-sf-notices.php
+msgid "and more"
 msgstr ""

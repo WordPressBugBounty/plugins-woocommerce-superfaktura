@@ -1,0 +1,197 @@
+/* eFaktúra notice on the Dashboard, Plugins and WooCommerce screens */
+.notice.wc-sf-efaktura-notice {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 12px 28px;
+	border-left-color: #4c9a2a;
+}
+
+.wc-sf-efaktura-badge {
+	flex: 0 0 auto;
+	width: 130px;
+	height: auto;
+}
+
+.wc-sf-efaktura-notice__body {
+	flex: 1 1 420px;
+	min-width: 0;
+}
+
+.notice.wc-sf-efaktura-notice .wc-sf-efaktura-notice__body p {
+	max-width: 860px;
+	margin: 0 0 12px;
+	padding: 0;
+	line-height: 1.6;
+}
+
+.notice.wc-sf-efaktura-notice p.wc-sf-efaktura-eyebrow {
+	margin: 6.5px 0 4px; /* WordPress notices use 0.5em at 13px */
+	color: #50575e;
+	font-size: 12px;
+}
+
+.notice.wc-sf-efaktura-notice p.wc-sf-efaktura-notice__title {
+	margin-bottom: 8px;
+	font-size: 15px;
+}
+
+.wc-sf-efaktura-actions .button {
+	height: auto;
+	white-space: normal;
+}
+
+.notice.wc-sf-efaktura-notice p.wc-sf-efaktura-actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 8px 16px;
+	margin: 16px 0 10px; /* Optically matches the top gap, which includes the first line's line spacing */
+}
+
+/* eFaktúra banner on the SuperFaktúra settings tab */
+.wc-sf-efaktura-hero {
+	position: relative;
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 16px 48px;
+	margin: 12px 0 16px;
+	padding: 32px 48px;
+	border-radius: 10px;
+	background: #0a3576;
+	color: #dce6f5;
+}
+
+.wc-sf-efaktura-hero__body {
+	flex: 1 1 420px;
+	min-width: 0;
+}
+
+.wc-sf-efaktura-hero__body p {
+	max-width: 720px;
+	margin: 0 0 12px;
+	font-size: 15px;
+	line-height: 1.55;
+}
+
+.wc-sf-efaktura-hero .wc-sf-efaktura-hero__eyebrow {
+	margin-bottom: 8px;
+	color: #ffd23f;
+	font-size: 13px;
+	font-weight: 600;
+}
+
+.wc-sf-efaktura-hero .wc-sf-efaktura-hero__title {
+	margin: 0 0 12px;
+	padding: 0;
+	color: #ffffff;
+	font-size: 28px;
+	line-height: 1.2;
+}
+
+.wc-sf-efaktura-hero strong {
+	color: #ffffff;
+	font-weight: 600;
+}
+
+.wc-sf-efaktura-hero a {
+	color: #ffffff;
+}
+
+.wc-sf-efaktura-hero a:not(.wc-sf-efaktura-hero__cta) {
+	text-decoration: underline;
+}
+
+.wc-sf-efaktura-hero a:hover,
+.wc-sf-efaktura-hero a:focus {
+	color: #ffd23f;
+}
+
+.wc-sf-efaktura-hero .wc-sf-efaktura-hero__actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: 12px 24px;
+	margin: 20px 0 0;
+}
+
+.wc-sf-efaktura-hero .wc-sf-efaktura-hero__cta {
+	display: inline-flex;
+	align-items: center;
+	min-height: 48px;
+	padding: 0 28px;
+	border-radius: 999px;
+	background: #3f8222;
+	color: #ffffff;
+	font-size: 15px;
+	font-weight: 600;
+	text-decoration: none;
+}
+
+.wc-sf-efaktura-hero .wc-sf-efaktura-hero__cta:hover,
+.wc-sf-efaktura-hero .wc-sf-efaktura-hero__cta:focus {
+	background: #356f1c;
+	color: #ffffff;
+}
+
+.wc-sf-efaktura-hero a:focus,
+.wc-sf-efaktura-hero__close:focus {
+	outline: 2px solid #ffd23f;
+	outline-offset: 2px;
+	box-shadow: none;
+}
+
+.wc-sf-efaktura-hero__badge {
+	flex: 0 0 auto;
+	width: 260px;
+	max-width: 100%;
+	height: auto;
+}
+
+.wc-sf-efaktura-hero__close {
+	position: absolute;
+	top: 8px;
+	right: 8px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 40px;
+	height: 40px;
+	padding: 0;
+	border: 0;
+	border-radius: 50%;
+	background: transparent;
+	color: #b9c8e0;
+	cursor: pointer;
+}
+
+.wc-sf-efaktura-hero__close:hover,
+.wc-sf-efaktura-hero__close:focus {
+	background: rgba(255, 255, 255, 0.1);
+	color: #ffffff;
+}
+
+@media screen and (max-width: 782px) {
+	.wc-sf-efaktura-hero {
+		padding: 24px 20px;
+	}
+
+	.wc-sf-efaktura-hero .wc-sf-efaktura-hero__title {
+		font-size: 22px;
+	}
+
+	.wc-sf-efaktura-hero__badge {
+		width: 180px;
+	}
+}
+
+/* Failed documents warning */
+.wc-sf-document-errors__list {
+	margin: 0 0 4px 18px;
+	list-style: disc;
+}
+
+.wc-sf-document-errors__time {
+	color: #646970;
+}

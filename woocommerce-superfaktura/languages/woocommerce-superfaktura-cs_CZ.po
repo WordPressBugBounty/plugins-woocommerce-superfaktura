@@ -463,7 +463,7 @@ msgid "Czech"
 msgstr "Čeština"
 
 #: includes/class-wc-sf-settings.php:352
-msgid "Εnglish"
+msgid "English"
 msgstr "Angličtina"
 
 #: includes/class-wc-sf-settings.php:353
@@ -1601,3 +1601,45 @@ msgstr[2] "Bylo importováno %d nastavení."
 #: includes/class-wc-sf-tools.php
 msgid "Include references to the SuperFaktúra account (number sequences, bank account, cash registers, logo, country overrides)"
 msgstr "Zahrnout odkazy na účet SuperFaktury (číselníky, bankovní účet, pokladny, logo, nastavení pro země)"
+
+#: includes/class-wc-sf-settings.php
+msgid "Customer country"
+msgstr "Země zákazníka"
+
+#: includes/class-wc-sf-settings.php
+msgid "Fallback invoice language"
+msgstr "Náhradní jazyk faktury"
+
+#: includes/class-wc-sf-settings.php
+msgid "Used with the customer country option when SuperFaktúra does not support the language of the customer's country."
+msgstr "Použije se při volbě Země zákazníka, pokud SuperFaktura nepodporuje jazyk země zákazníka."
+
+#: includes/class-wc-sf-notices.php
+msgid "%d document could not be created or updated in SuperFaktúra in the last 30 days."
+msgid_plural "%d documents could not be created or updated in SuperFaktúra in the last 30 days."
+msgstr[0] "%d doklad se za posledních 30 dní nepodařilo vytvořit nebo aktualizovat v SuperFaktuře."
+msgstr[1] "%d doklady se za posledních 30 dní nepodařilo vytvořit nebo aktualizovat v SuperFaktuře."
+msgstr[2] "%d dokladů se za posledních 30 dní nepodařilo vytvořit nebo aktualizovat v SuperFaktuře."
+
+#: includes/class-wc-sf-notices.php
+msgid "Order #%s"
+msgstr "Objednávka #%s"
+
+#: includes/class-wc-sf-notices.php
+msgid "and %d more"
+msgid_plural "and %d more"
+msgstr[0] "a další %d"
+msgstr[1] "a další %d"
+msgstr[2] "a dalších %d"
+
+#: includes/class-wc-sf-notices.php
+msgid "Open API log"
+msgstr "Otevřít API log"
+
+#: includes/class-wc-sf-notices.php
+msgid "More than %d documents could not be created or updated in SuperFaktúra in the last 30 days."
+msgstr "Více než %d dokladů se za posledních 30 dní nepodařilo vytvořit nebo aktualizovat v SuperFaktuře."
+
+#: includes/class-wc-sf-notices.php
+msgid "and more"
+msgstr "a další"

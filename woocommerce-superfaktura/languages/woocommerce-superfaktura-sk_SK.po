@@ -463,7 +463,7 @@ msgid "Czech"
 msgstr "Čeština"
 
 #: includes/class-wc-sf-settings.php:352
-msgid "Εnglish"
+msgid "English"
 msgstr "Angličtina"
 
 #: includes/class-wc-sf-settings.php:353
@@ -1605,3 +1605,45 @@ msgstr[2] "Importovalo sa %d nastavení."
 #: includes/class-wc-sf-tools.php
 msgid "Include references to the SuperFaktúra account (number sequences, bank account, cash registers, logo, country overrides)"
 msgstr "Zahrnúť odkazy na účet SuperFaktúry (číselníky, bankový účet, pokladne, logo, nastavenia pre krajiny)"
+
+#: includes/class-wc-sf-settings.php
+msgid "Customer country"
+msgstr "Krajina zákazníka"
+
+#: includes/class-wc-sf-settings.php
+msgid "Fallback invoice language"
+msgstr "Náhradný jazyk faktúry"
+
+#: includes/class-wc-sf-settings.php
+msgid "Used with the customer country option when SuperFaktúra does not support the language of the customer's country."
+msgstr "Použije sa pri voľbe Krajina zákazníka, ak SuperFaktúra nepodporuje jazyk krajiny zákazníka."
+
+#: includes/class-wc-sf-notices.php
+msgid "%d document could not be created or updated in SuperFaktúra in the last 30 days."
+msgid_plural "%d documents could not be created or updated in SuperFaktúra in the last 30 days."
+msgstr[0] "%d doklad sa za posledných 30 dní nepodarilo vytvoriť alebo aktualizovať v SuperFaktúre."
+msgstr[1] "%d doklady sa za posledných 30 dní nepodarilo vytvoriť alebo aktualizovať v SuperFaktúre."
+msgstr[2] "%d dokladov sa za posledných 30 dní nepodarilo vytvoriť alebo aktualizovať v SuperFaktúre."
+
+#: includes/class-wc-sf-notices.php
+msgid "Order #%s"
+msgstr "Objednávka #%s"
+
+#: includes/class-wc-sf-notices.php
+msgid "and %d more"
+msgid_plural "and %d more"
+msgstr[0] "a ďalší %d"
+msgstr[1] "a ďalšie %d"
+msgstr[2] "a ďalších %d"
+
+#: includes/class-wc-sf-notices.php
+msgid "Open API log"
+msgstr "Otvoriť API log"
+
+#: includes/class-wc-sf-notices.php
+msgid "More than %d documents could not be created or updated in SuperFaktúra in the last 30 days."
+msgstr "Viac ako %d dokladov sa za posledných 30 dní nepodarilo vytvoriť alebo aktualizovať v SuperFaktúre."
+
+#: includes/class-wc-sf-notices.php
+msgid "and more"
+msgstr "a ďalšie"

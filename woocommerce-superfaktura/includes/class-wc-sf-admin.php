@@ -39,7 +39,7 @@ class WC_SF_Admin {
 		add_action( 'admin_init', array( $this, 'admin_init' ) );
         add_action( 'admin_notices', array( $this, 'admin_notices' ) );
         add_action( 'admin_notices', array( __CLASS__, 'order_number_notice_all' ) );
-        add_action( 'woocommerce_settings_wc_superfaktura', array( __CLASS__, 'order_number_notice' ) );
+        add_action( 'woocommerce_settings_superfaktura', array( __CLASS__, 'order_number_notice' ) );
         add_action( 'admin_enqueue_scripts', array( $this, 'admin_enqueue_scripts' ) );
         add_action( 'add_meta_boxes', array( $this, 'add_meta_boxes' ) );
     }
@@ -96,6 +96,7 @@ class WC_SF_Admin {
 		if ( isset( $_GET['sf_hide_order_number_notice'] ) ) {
 			update_option( 'wc_sf_order_number_notice_hidden', 1 );
 			wp_safe_redirect( remove_query_arg( 'sf_hide_order_number_notice' ) );
+			exit;
 		}
     }
 
@@ -180,7 +181,7 @@ class WC_SF_Admin {
      * Avoid double notice on superfaktura settings tab.
      */
     public static function order_number_notice_all() {
-		if ( isset( $_GET['page'], $_GET['tab'] ) && 'wc-settings' === $_GET['page'] && 'wc_superfaktura' === $_GET['tab'] ) {
+		if ( isset( $_GET['page'], $_GET['tab'] ) && 'wc-settings' === $_GET['page'] && 'superfaktura' === $_GET['tab'] ) {
 			return;
 		}
 

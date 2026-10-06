@@ -26,6 +26,16 @@ jQuery(document).ready(function($) {
 		}
 	}
 
+	// Invoice language: the fallback language applies only to the customer country option.
+	var $invoiceLanguage = $('#woocommerce_sf_invoice_language');
+	if ($invoiceLanguage.length) {
+		var wc_sf_toggle_language_fallback = function() {
+			wc_sf_toggle_settings('#woocommerce_sf_invoice_language_fallback', 'country' === $invoiceLanguage.val());
+		};
+		$invoiceLanguage.on('change', wc_sf_toggle_language_fallback);
+		wc_sf_toggle_language_fallback();
+	}
+
 	function wc_sf_find_secret_input(fieldName) {
 		return $('input[name="' + fieldName + '"]');
 	}
