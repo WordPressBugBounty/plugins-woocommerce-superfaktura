@@ -1584,3 +1584,75 @@ msgstr ""
 #: includes/class-wc-sf-notices.php
 msgid "and more"
 msgstr ""
+
+#: includes/class-wc-superfaktura.php
+msgid "The automatic pairing URL was called without an invoice ID or secret key. SuperFaktura sends both, so the request most likely did not come from SuperFaktura."
+msgstr ""
+
+#: includes/class-wc-superfaktura.php
+msgid "The invoice ID or secret key in the request is not valid. Check that the Secret Key in SuperFaktura settings matches the one in the plugin settings."
+msgstr ""
+
+#: includes/class-wc-superfaktura.php
+msgid "SuperFaktura reported a payment for an invoice that does not belong to exactly one order in this shop. Either no order has it (for example an invoice issued directly in SuperFaktura, or an order in the trash), or several orders have the same invoice."
+msgstr ""
+
+#: includes/class-wc-superfaktura.php
+msgid "SuperFaktura did not return this invoice. It may have been deleted, the plugin may be connected to a different SuperFaktura account or company, or the connection to SuperFaktura failed."
+msgstr ""
+
+#: includes/class-wc-superfaktura.php
+msgid "Only payments of invoices and proforma invoices mark the order as paid."
+msgstr ""
+
+#: includes/class-wc-superfaktura.php
+msgid "The invoice is not paid or is paid only partially, so the order was not marked as paid."
+msgstr ""
+
+#: includes/class-wc-superfaktura.php
+msgid "The invoice was settled by a credit note, so the order was not marked as paid."
+msgstr ""
+
+#: includes/class-wc-superfaktura.php
+msgid "The order was already paid, so its status was not changed. No action is needed."
+msgstr ""
+
+#. Translators: %s Link to the setting.
+#: includes/class-wc-superfaktura.php
+#, php-format
+msgid "SuperFaktura reported a payment, but the order was not in any of the statuses set in %s, so it was not marked as paid. Add the status there if such orders should be marked as paid too."
+msgstr ""
+
+#: includes/class-wc-superfaktura.php
+msgid "If the order is already paid, no action is needed."
+msgstr ""
+
+#: includes/class-wc-superfaktura.php includes/class-wc-sf-settings.php
+msgid "Order statuses for automatic pairing"
+msgstr ""
+
+#: includes/class-wc-superfaktura.php
+msgid "The server could not connect to VIES, so the VAT number could not be verified. If this happens often, contact your hosting provider."
+msgstr ""
+
+#: includes/class-wc-superfaktura.php
+msgid "VIES was temporarily unavailable, so the VAT number could not be verified."
+msgstr ""
+
+#: includes/class-wc-superfaktura.php
+msgid "Check the API email, API key and Company ID in the plugin settings, or use the Test API connection button."
+msgstr ""
+
+#: includes/class-wc-superfaktura.php
+msgid "The server could not connect to SuperFaktura. If this happens often, contact your hosting provider."
+msgstr ""
+
+#. Translators: %s Setting name.
+#: includes/class-wc-superfaktura.php
+#, php-format
+msgid "The plugin stopped this request, because another request for the same document was running at the same time (setting %s). Usually the other request has already created or updated the document. If not, create or regenerate it again."
+msgstr ""
+
+#: includes/class-wc-sf-settings.php
+msgid "When a payment is paired to an invoice in SuperFaktura, orders in these statuses are marked as paid. If no status is selected, paired payments do not change any order."
+msgstr ""

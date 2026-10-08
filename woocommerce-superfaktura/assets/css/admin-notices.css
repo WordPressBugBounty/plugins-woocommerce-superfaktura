@@ -192,6 +192,7 @@
 	list-style: disc;
 }
 
-.wc-sf-document-errors__time {
+.wc-sf-document-errors__time,
+.wc-sf-document-errors__explanation {
 	color: #646970;
 }

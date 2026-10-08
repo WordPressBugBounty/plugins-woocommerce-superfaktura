@@ -64,6 +64,13 @@ class WC_SF_Admin {
 
 			$order_id = (int) $_GET['sf_order'];
 
+			// The links carry a nonce, so that a document cannot be created or regenerated from a link on another site.
+			// A link without a valid nonce (built elsewhere, or from a page open for too long) asks for confirmation first.
+			$nonce_action = 'wc_sf_document_action_' . $order_id;
+			if ( ! wp_verify_nonce( sanitize_text_field( wp_unslash( $_GET['_wpnonce'] ?? '' ) ), $nonce_action ) ) {
+				$this->confirm_document_action( $nonce_action );
+			}
+
 			$result     = true;
 			$result_msg = '';
 			if ( isset( $_GET['sf_regen'] ) ) {
@@ -94,10 +101,55 @@ class WC_SF_Admin {
 		}
 
 		if ( isset( $_GET['sf_hide_order_number_notice'] ) ) {
+			if ( ! current_user_can( 'manage_woocommerce' ) ) {
+				wp_die( 'Unauthorized' );
+			}
+			check_admin_referer( 'wc_sf_hide_order_number_notice' );
+
 			update_option( 'wc_sf_order_number_notice_hidden', 1 );
-			wp_safe_redirect( remove_query_arg( 'sf_hide_order_number_notice' ) );
+			wp_safe_redirect( remove_query_arg( array( 'sf_hide_order_number_notice', '_wpnonce' ) ) );
 			exit;
 		}
+    }
+
+    /**
+     * Ask for confirmation of a document action requested by a link without a valid nonce, then stop.
+     *
+     * Uses WordPress's own texts, so the screen is translated without plugin language files.
+     *
+     * @param string $nonce_action Nonce action for the confirmed link.
+     */
+    private function confirm_document_action( $nonce_action ) {
+		$confirm_url = wp_nonce_url( remove_query_arg( '_wpnonce' ), $nonce_action );
+		$cancel_url  = wp_get_referer() ? wp_get_referer() : admin_url();
+
+		wp_die(
+			'<p>' . esc_html__( 'Are you sure you want to do this?' ) . '</p>' .
+			'<p><a class="button button-primary" href="' . esc_url( $confirm_url ) . '">' . esc_html__( 'Continue' ) . '</a> ' .
+			'<a class="button" href="' . esc_url( $cancel_url ) . '">' . esc_html__( 'Cancel' ) . '</a></p>',
+			'',
+			array( 'response' => 403 )
+		);
+    }
+
+    /**
+     * URL of a document action (create or regenerate a document) for the order edit screen.
+     *
+     * The URL is already HTML-escaped by wp_nonce_url(), ready for an href attribute.
+     *
+     * @param string $action       Action query argument, e.g. sf_invoice_regular_create.
+     * @param int    $order_id     Order ID.
+     * @param bool   $force_create Create a new document even if the order already has one.
+     * @return string
+     */
+    private function document_action_url( $action, $order_id, $force_create = false ) {
+		$args = array( $action => 1 );
+		if ( $force_create ) {
+			$args['force_create'] = 1;
+		}
+		$args['sf_order'] = $order_id;
+
+		return wp_nonce_url( add_query_arg( $args, admin_url( 'admin.php' ) ), 'wc_sf_document_action_' . $order_id );
     }
 
     /**
@@ -196,6 +248,11 @@ class WC_SF_Admin {
 			return;
 		}
 
+		// Only users who manage the shop can fix the numbering or hide the warning.
+		if ( ! current_user_can( 'manage_woocommerce' ) ) {
+			return;
+		}
+
 		if ( is_plugin_active( 'woocommerce-sequential-order-numbers/woocommerce-sequential-order-numbers.php' )
 			|| is_plugin_active( 'woocommerce-sequential-order-numbers-pro/woocommerce-sequential-order-numbers.php' )
 			|| is_plugin_active( 'woocommerce-sequential-order-numbers-pro/woocommerce-sequential-order-numbers-pro.php' )
@@ -218,7 +275,7 @@ class WC_SF_Admin {
 			// Translators: %1$s Order number, %2$s Plugin name.
 			echo '<div class="notice notice-error is-dismissible">';
 			echo '<p><strong>SuperFaktúra Woocommerce</strong>: ' . sprintf( __( 'You use variable %1$s in your invoice nr. or proforma invoice nr., but the plugin "%2$s" is not activated. This may cause that your invoice numbers will not be sequential.', 'woocommerce-superfaktura' ), '[ORDER_NUMBER]', 'WooCommerce Sequential Order Numbers' ) . '</p>';
-			echo '<p><a href="' . esc_url( add_query_arg( 'sf_hide_order_number_notice', 1 ) ) . '">' . __( 'Hide notification forever', 'woocommerce-superfaktura' ) . '</a></p>';
+			echo '<p><a href="' . esc_url( wp_nonce_url( add_query_arg( 'sf_hide_order_number_notice', 1 ), 'wc_sf_hide_order_number_notice' ) ) . '">' . __( 'Hide notification forever', 'woocommerce-superfaktura' ) . '</a></p>';
 			echo '</div>';
 		}
     }
@@ -280,28 +337,28 @@ class WC_SF_Admin {
 		echo wp_kses( '</p>', $this->wc_sf->allowed_tags );
 
 		if ( ! empty( $proforma ) ) {
-			$error_html = sprintf( '%s<br><a href="%s">%s</a>', __( 'Proforma could not be found in SuperFaktura.', 'woocommerce-superfaktura' ), admin_url( 'admin.php?sf_invoice_proforma_create=1&force_create=1&sf_order=' . $order->get_id() ), __( 'Create new proforma invoice', 'woocommerce-superfaktura' ) );
+			$error_html = sprintf( '%s<br><a href="%s">%s</a>', __( 'Proforma could not be found in SuperFaktura.', 'woocommerce-superfaktura' ), $this->document_action_url( 'sf_invoice_proforma_create', $order->get_id(), true ), __( 'Create new proforma invoice', 'woocommerce-superfaktura' ) );
 			echo wp_kses( '<p><a href="' . $proforma . '" class="button sf-url-check" data-error="' . htmlentities( $error_html ) . '" target="_blank">' . __( 'Proforma', 'woocommerce-superfaktura' ) . '</a></p>', $this->wc_sf->allowed_tags );
 		} elseif ( 'yes' === get_option( 'woocommerce_sf_invoice_proforma_manual', 'no' ) ) {
-			echo wp_kses( '<p><a href="' . admin_url( 'admin.php?sf_invoice_proforma_create=1&sf_order=' . $order->get_id() ) . '" class="sf-prevent-duplicity">' . __( 'Create proforma invoice', 'woocommerce-superfaktura' ) . '</a></p>', $this->wc_sf->allowed_tags );
+			echo wp_kses( '<p><a href="' . $this->document_action_url( 'sf_invoice_proforma_create', $order->get_id() ) . '" class="sf-prevent-duplicity">' . __( 'Create proforma invoice', 'woocommerce-superfaktura' ) . '</a></p>', $this->wc_sf->allowed_tags );
 		}
 
 		if ( ! empty( $invoice ) ) {
-			$error_html = sprintf( '%s<br><a href="%s">%s</a>', __( 'Invoice could not be found in SuperFaktura.', 'woocommerce-superfaktura' ), admin_url( 'admin.php?sf_invoice_regular_create=1&force_create=1&sf_order=' . $order->get_id() ), __( 'Create new invoice', 'woocommerce-superfaktura' ) );
+			$error_html = sprintf( '%s<br><a href="%s">%s</a>', __( 'Invoice could not be found in SuperFaktura.', 'woocommerce-superfaktura' ), $this->document_action_url( 'sf_invoice_regular_create', $order->get_id(), true ), __( 'Create new invoice', 'woocommerce-superfaktura' ) );
 			echo wp_kses( '<p><a href="' . $invoice . '" class="button sf-url-check" data-error="' . htmlentities( $error_html ) . '" target="_blank">' . __( 'Invoice', 'woocommerce-superfaktura' ) . '</a></p>', $this->wc_sf->allowed_tags );
 		} elseif ( 'yes' === get_option( 'woocommerce_sf_invoice_regular_manual', 'no' ) ) {
-			echo wp_kses( '<p><a href="' . admin_url( 'admin.php?sf_invoice_regular_create=1&sf_order=' . $order->get_id() ) . '" class="sf-prevent-duplicity">' . __( 'Create invoice', 'woocommerce-superfaktura' ) . '</a></p>', $this->wc_sf->allowed_tags );
+			echo wp_kses( '<p><a href="' . $this->document_action_url( 'sf_invoice_regular_create', $order->get_id() ) . '" class="sf-prevent-duplicity">' . __( 'Create invoice', 'woocommerce-superfaktura' ) . '</a></p>', $this->wc_sf->allowed_tags );
 		}
 
 		if ( ! empty( $cancel ) ) {
-			$error_html = sprintf( '%s<br><a href="%s">%s</a>', __( 'Credit note could not be found in SuperFaktura.', 'woocommerce-superfaktura' ), admin_url( 'admin.php?sf_invoice_cancel_create=1&force_create=1&sf_order=' . $order->get_id() ), __( 'Create new credit note', 'woocommerce-superfaktura' ) );
+			$error_html = sprintf( '%s<br><a href="%s">%s</a>', __( 'Credit note could not be found in SuperFaktura.', 'woocommerce-superfaktura' ), $this->document_action_url( 'sf_invoice_cancel_create', $order->get_id(), true ), __( 'Create new credit note', 'woocommerce-superfaktura' ) );
 			echo wp_kses( '<p><a href="' . $cancel . '" class="button sf-url-check" data-error="' . htmlentities( $error_html ) . '" target="_blank">' . __( 'Credit note', 'woocommerce-superfaktura' ) . '</a></p>', $this->wc_sf->allowed_tags );
 		} elseif ( ! empty( $invoice ) && ( $order->get_refunds() || in_array( $order->get_status(), array( 'cancelled', 'refunded', 'failed' ), true ) ) ) {
-			echo wp_kses( '<p><a href="' . admin_url( 'admin.php?sf_invoice_cancel_create=1&sf_order=' . $order->get_id() ) . '" class="sf-prevent-duplicity">' . __( 'Create credit note', 'woocommerce-superfaktura' ) . '</a></p>', $this->wc_sf->allowed_tags );
+			echo wp_kses( '<p><a href="' . $this->document_action_url( 'sf_invoice_cancel_create', $order->get_id() ) . '" class="sf-prevent-duplicity">' . __( 'Create credit note', 'woocommerce-superfaktura' ) . '</a></p>', $this->wc_sf->allowed_tags );
 		}
 
 		if ( ( ! empty( $proforma ) || ! empty( $invoice ) ) && $this->wc_sf->invoice_generator->sf_can_regenerate( $order ) ) {
-			echo wp_kses( '<p><a href="' . esc_url( admin_url( 'admin.php?sf_regen=1&sf_order=' . $order->get_id() ) ) . '" class="sf-prevent-duplicity">' . __( 'Regenerate existing invoices', 'woocommerce-superfaktura' ) . '</a></p>', $this->wc_sf->allowed_tags );
+			echo wp_kses( '<p><a href="' . esc_url( $this->document_action_url( 'sf_regen', $order->get_id() ) ) . '" class="sf-prevent-duplicity">' . __( 'Regenerate existing invoices', 'woocommerce-superfaktura' ) . '</a></p>', $this->wc_sf->allowed_tags );
 		}
 
 		// 2020/07/01 webikon: Added an action that allows to add content after the invoice button
@@ -370,6 +427,9 @@ class WC_SF_Admin {
 				}
 				table.wc-sf-api-log tr.error td {
 					color: #f00;
+				}
+				table.wc-sf-api-log td .description {
+					color: #50575e;
 				}
 
 				#woocommerce_wi_invoice_creation1-description + .form-table tr:nth-child(odd) th,

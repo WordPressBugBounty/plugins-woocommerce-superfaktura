@@ -62,6 +62,7 @@ class WC_SF_Tools {
 	 */
 	private $array_options = array(
 		'woocommerce_sf_invoice_set_as_paid_statuses',
+		'woocommerce_sf_sync_order_statuses',
 	);
 
 	/**

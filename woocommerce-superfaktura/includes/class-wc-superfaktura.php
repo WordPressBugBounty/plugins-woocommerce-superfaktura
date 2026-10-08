@@ -29,7 +29,7 @@ class WC_SuperFaktura {
 	 *
 	 * @var string
 	 */
-	public $version = '1.56.1';
+	public $version = '1.57.0';
 
 	/**
 	 * Database version.
@@ -421,6 +421,11 @@ class WC_SuperFaktura {
 	 */
 	public function generate_secret_key() {
 		check_ajax_referer( 'wc_sf' );
+
+		if ( ! current_user_can( 'manage_woocommerce' ) ) {
+			wp_die( -1, 403 );
+		}
+
 		echo esc_attr( WC_SF_Helper::generate_secret_key() );
 		wp_die();
 	}
@@ -593,22 +598,42 @@ class WC_SuperFaktura {
 		}
 
 		// Get order status (see https://docs.woocommerce.com/document/managing-orders/).
-		$order_status = $order->get_status();
-		if ( 'on-hold' !== $order_status ) {
+		$order_status  = $order->get_status();
+		$sync_statuses = $this->get_sync_order_statuses();
+		if ( ! in_array( $order_status, $sync_statuses, true ) ) {
 			$this->wc_sf_log(
 				array(
 					'order_id'         => $order->get_id(),
 					'document_type'    => $response->{$invoice_id}->Invoice->type,
 					'request_type'     => 'callback_paid',
 					'response_status'  => 905,
-					'response_message' => 'Order is not on hold',
+					'response_message' => sprintf( 'Order status "%s" is not set for automatic pairing', $order_status ),
 				)
 			);
 			exit();
 		}
 
+		// WooCommerce changes the status only for orders in its own unpaid statuses. For an order in another status
+		// set for automatic pairing, allow that status for this order only. On hold orders are left to WooCommerce as before.
+		$valid_statuses = null;
+		if ( 'on-hold' !== $order_status ) {
+			$paired_order_id = $order->get_id();
+			$valid_statuses  = function( $statuses, $paid_order = null ) use ( $order_status, $paired_order_id ) {
+				if ( $paid_order instanceof WC_Order && $paid_order->get_id() === $paired_order_id ) {
+					$statuses   = (array) $statuses;
+					$statuses[] = $order_status;
+				}
+				return $statuses;
+			};
+			add_filter( 'woocommerce_valid_order_statuses_for_payment_complete', $valid_statuses, 10, 2 );
+		}
+
 		// Mark order as paid (see https://woocommerce.wp-a2z.org/oik_api/wc_orderpayment_complete/).
 		$order->payment_complete();
+
+		if ( $valid_statuses ) {
+			remove_filter( 'woocommerce_valid_order_statuses_for_payment_complete', $valid_statuses, 10 );
+		}
 
 		$this->wc_sf_log(
 			array(
@@ -1026,6 +1051,151 @@ class WC_SuperFaktura {
 		if ( isset( $log_data['request_type'] ) && in_array( $log_data['request_type'], array( 'create', 'edit' ), true ) ) {
 			WC_SF_Notices::flush_errors();
 		}
+	}
+
+
+
+	/**
+	 * Explain a log entry in plain language, so that shop owners understand the error without contacting support.
+	 *
+	 * @param array $row Log row with request_type, response_status and response_message.
+	 * @return string Explanation (may contain a link) or an empty string when there is nothing to add.
+	 */
+	public function get_log_explanation( $row ) {
+		$request_type = isset( $row['request_type'] ) ? (string) $row['request_type'] : '';
+		$status       = isset( $row['response_status'] ) ? (int) $row['response_status'] : 0;
+		$message      = isset( $row['response_message'] ) ? (string) $row['response_message'] : '';
+		$explanation  = '';
+
+		if ( 'callback_paid' === $request_type ) {
+			switch ( $status ) {
+				case 908:
+					$explanation = __( 'The automatic pairing URL was called without an invoice ID or secret key. SuperFaktura sends both, so the request most likely did not come from SuperFaktura.', 'woocommerce-superfaktura' );
+					break;
+
+				case 901:
+					$explanation = __( 'The invoice ID or secret key in the request is not valid. Check that the Secret Key in SuperFaktura settings matches the one in the plugin settings.', 'woocommerce-superfaktura' );
+					break;
+
+				case 904:
+					$explanation = __( 'SuperFaktura reported a payment for an invoice that does not belong to exactly one order in this shop. Either no order has it (for example an invoice issued directly in SuperFaktura, or an order in the trash), or several orders have the same invoice.', 'woocommerce-superfaktura' );
+					break;
+
+				case 902:
+					$explanation = __( 'SuperFaktura did not return this invoice. It may have been deleted, the plugin may be connected to a different SuperFaktura account or company, or the connection to SuperFaktura failed.', 'woocommerce-superfaktura' );
+					break;
+
+				case 906:
+					$explanation = __( 'Only payments of invoices and proforma invoices mark the order as paid.', 'woocommerce-superfaktura' );
+					break;
+
+				case 903:
+					$explanation = __( 'The invoice is not paid or is paid only partially, so the order was not marked as paid.', 'woocommerce-superfaktura' );
+					break;
+
+				case 907:
+					$explanation = __( 'The invoice was settled by a credit note, so the order was not marked as paid.', 'woocommerce-superfaktura' );
+					break;
+
+				case 905:
+					// Since 1.57.0 the message contains the order status, older entries do not.
+					$order_status = preg_match( '/^Order status "([^"]+)"/', $message, $matches ) ? $matches[1] : '';
+
+					if ( $order_status && in_array( $order_status, wc_get_is_paid_statuses(), true ) ) {
+						$explanation = __( 'The order was already paid, so its status was not changed. No action is needed.', 'woocommerce-superfaktura' );
+						break;
+					}
+
+					$explanation = sprintf(
+						// Translators: %s Link to the setting.
+						__( 'SuperFaktura reported a payment, but the order was not in any of the statuses set in %s, so it was not marked as paid. Add the status there if such orders should be marked as paid too.', 'woocommerce-superfaktura' ),
+						'<a href="' . esc_url( admin_url( 'admin.php?page=wc-settings&tab=superfaktura&section=integration' ) ) . '">' . esc_html__( 'Order statuses for automatic pairing', 'woocommerce-superfaktura' ) . '</a>'
+					);
+
+					if ( ! $order_status ) {
+						$explanation .= ' ' . __( 'If the order is already paid, no action is needed.', 'woocommerce-superfaktura' );
+					}
+					break;
+			}
+		} elseif ( 'eu_vat_number' === $request_type ) {
+			if ( 0 === strpos( $message, 'cURL error' ) ) {
+				$explanation = __( 'The server could not connect to VIES, so the VAT number could not be verified. If this happens often, contact your hosting provider.', 'woocommerce-superfaktura' );
+			} elseif ( 500 <= $status || preg_match( '/SERVICE_UNAVAILABLE|MS_UNAVAILABLE|TIMEOUT|MAX_CONCURRENT_REQ/', $message ) ) {
+				$explanation = __( 'VIES was temporarily unavailable, so the VAT number could not be verified.', 'woocommerce-superfaktura' );
+			}
+		} elseif ( 401 === $status ) {
+			$explanation = __( 'Check the API email, API key and Company ID in the plugin settings, or use the Test API connection button.', 'woocommerce-superfaktura' );
+		} elseif ( 0 === strpos( $message, 'cURL error' ) ) {
+			$explanation = __( 'The server could not connect to SuperFaktura. If this happens often, contact your hosting provider.', 'woocommerce-superfaktura' );
+		} elseif ( $this->is_concurrency_message( $message ) ) {
+			$explanation = sprintf(
+				// Translators: %s Setting name.
+				__( 'The plugin stopped this request, because another request for the same document was running at the same time (setting %s). Usually the other request has already created or updated the document. If not, create or regenerate it again.', 'woocommerce-superfaktura' ),
+				__( 'Prevent document duplicity', 'woocommerce-superfaktura' )
+			);
+		}
+
+		$explanation = apply_filters( 'sf_log_explanation', $explanation, $row );
+
+		return is_string( $explanation ) ? $explanation : '';
+	}
+
+
+
+	/**
+	 * Check if a log message comes from the plugin's own concurrency check (setting Prevent document duplicity).
+	 *
+	 * @param string $message Log message, possibly translated and followed by the file and line.
+	 * @return bool
+	 */
+	private function is_concurrency_message( $message ) {
+		$texts = array(
+			'Request failed because of concurrency check.',
+			__( 'Request failed because of concurrency check.', 'woocommerce-superfaktura' ),
+			// Slovak and Czech translations, for entries logged in another admin language.
+			'Požiadavka zlyhala z dôvodu súbežných API volaní.',
+			'Požadavek selhal z důvodu souběžných API volání.',
+		);
+
+		foreach ( $texts as $text ) {
+			if ( '' !== $text && false !== strpos( $message, $text ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+
+
+	/**
+	 * Order statuses that cannot be used for automatic pairing.
+	 *
+	 * Paid orders have nothing to pair, refunded and draft orders are not waiting for a payment. On hold is the
+	 * original pairing status and is never excluded.
+	 *
+	 * @return string[]
+	 */
+	public function get_sync_excluded_order_statuses() {
+		return array_diff( array_merge( wc_get_is_paid_statuses(), array( 'refunded', 'checkout-draft' ) ), array( 'on-hold' ) );
+	}
+
+
+
+	/**
+	 * Order statuses in which a payment paired in SuperFaktura marks the order as paid.
+	 *
+	 * @return string[]
+	 */
+	public function get_sync_order_statuses() {
+		$statuses = get_option( 'woocommerce_sf_sync_order_statuses', array( 'on-hold' ) );
+
+		// An invalid stored value falls back to the default instead of disabling automatic pairing.
+		if ( ! is_array( $statuses ) ) {
+			$statuses = array( 'on-hold' );
+		}
+
+		return array_values( array_diff( $statuses, $this->get_sync_excluded_order_statuses() ) );
 	}
 
 
@@ -2397,6 +2567,11 @@ class WC_SuperFaktura {
 	 * Test SuperFaktura API connection.
 	 */
 	public function wc_sf_api_test() {
+		check_ajax_referer( 'ajax_validation', 'security' );
+
+		if ( ! current_user_can( 'manage_woocommerce' ) ) {
+			wp_die( -1, 403 );
+		}
 
 		$api = $this->sf_api(
 			array(

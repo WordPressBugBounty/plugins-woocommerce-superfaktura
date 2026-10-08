@@ -222,6 +222,7 @@ jQuery(document).ready(function($) {
 
 		var data = {
 			'action': 'wc_sf_api_test',
+			'security': wc_sf.ajaxnonce,
 			'woocommerce_sf_lang': $('input[name=woocommerce_sf_lang]:checked').val(),
 			'woocommerce_sf_email': $('input[name=woocommerce_sf_email]').val(),
 			'woocommerce_sf_apikey': $('input[name=woocommerce_sf_apikey]').val(),
@@ -239,6 +240,10 @@ jQuery(document).ready(function($) {
 				$('span.wc-sf-api-test-fail').show();
 				$('span.wc-sf-api-test-fail-message').text(response).show();
 			}
+		}).fail(function() {
+			// Rejected request, for example an expired nonce after the page was open for a long time.
+			$('span.wc-sf-api-test-loading').hide();
+			$('span.wc-sf-api-test-fail').show();
 		});
 	});
 

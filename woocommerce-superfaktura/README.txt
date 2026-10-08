@@ -4,7 +4,7 @@ Tags: superfaktura, invoice, faktura, proforma, woocommerce
 Requires at least: 4.4
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.56.1
+Stable tag: 1.57.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -64,6 +64,11 @@ This usually happens when you change your login email address. The email address
 You can read more about SuperFaktura API integration at [superfaktura.sk/api](http://www.superfaktura.sk/api/)
 
 == Changelog ==
+
+= 1.57.0 =
+* Nastavenie Stavy objednávky pre automatické párovanie: úhrada spárovaná v SuperFaktúre označí objednávku ako zaplatenú aj v ďalších zvolených stavoch, nielen v stave Čaká na platbu. Predvolené správanie sa nemení.
+* Vysvetlenie častých chýb v API logu a v upozornení na neúspešné doklady. Nový filter sf_log_explanation.
+* Test API pripojenia je dostupný len pre správcov obchodu. Odkazy na vytvorenie a pregenerovanie dokladov v objednávke sú chránené pred zneužitím z iných stránok.
 
 = 1.56.1 =
 * Informácia o povinnej eFaktúre od 1. 1. 2027 a o tom, ako sa na ňu pripraviť so SuperFaktúrou. Upravený text a obrázok.

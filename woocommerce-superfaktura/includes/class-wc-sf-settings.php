@@ -879,6 +879,12 @@ class WC_SF_Settings extends WC_Settings_Page {
 				break;
 
 			case 'integration':
+				// On hold is always offered, it is the default and saving this page must keep it selected.
+				$sync_order_statuses = array_diff_key( $this->get_order_statuses(), array_flip( $this->wc_sf->get_sync_excluded_order_statuses() ) );
+				if ( ! isset( $sync_order_statuses['on-hold'] ) ) {
+					$sync_order_statuses = array( 'on-hold' => wc_get_order_status_name( 'on-hold' ) ) + $sync_order_statuses;
+				}
+
 				$settings = array(
 					array(
 						'title' => __( 'Checkout', 'woocommerce-superfaktura' ),
@@ -1098,6 +1104,15 @@ class WC_SF_Settings extends WC_Settings_Page {
 						'class'   => 'input-text regular-input',
 						'type'    => 'password',
 						'default' => $this->get_or_create_default_secret_key(),
+					),
+					array(
+						'title'   => __( 'Order statuses for automatic pairing', 'woocommerce-superfaktura' ),
+						'id'      => 'woocommerce_sf_sync_order_statuses',
+						'desc'    => __( 'When a payment is paired to an invoice in SuperFaktura, orders in these statuses are marked as paid. If no status is selected, paired payments do not change any order.', 'woocommerce-superfaktura' ),
+						'default' => array( 'on-hold' ),
+						'type'    => 'multiselect',
+						'class'   => 'wc-enhanced-select',
+						'options' => $sync_order_statuses,
 					),
 					array(
 						'type' => 'sectionend',
@@ -1459,13 +1474,18 @@ class WC_SF_Settings extends WC_Settings_Page {
 
 				if ( $results ) {
 					foreach ( $results as $index => $row ) {
+						$explanation = $this->wc_sf->get_log_explanation( $row );
+						if ( $explanation ) {
+							$explanation = '<br><span class="description">' . wp_kses( $explanation, array( 'a' => array( 'href' => array() ) ) ) . '</span>';
+						}
+
 						$content .= '
 							<tr class="' . ( ( 0 === $index % 2 ) ? 'odd' : '' ) . ' ' . ( ( $row['response_status'] ) ? ' error' : '' ) . '">
 								<td>' . $row['order_id'] . '</td>
 								<td>' . $row['document_type'] . '</td>
 								<td>' . $row['request_type'] . '</td>
 								<td>' . $row['response_status'] . '</td>
-								<td>' . $row['response_message'] . '</td>
+								<td>' . $row['response_message'] . $explanation . '</td>
 								<td>' . $row['time'] . '</td>
 							</tr>
 						';

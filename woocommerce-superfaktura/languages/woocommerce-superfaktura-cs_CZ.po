@@ -1051,7 +1051,7 @@ msgid ""
 msgstr ""
 "Chcete-li automaticky aktualizovat stav objednávky, když je platba spárována s "
 "fakturou v SuperFaktuře, vyplňte Callback URL a Secret Key v <a "
-"target=\"_blank\" href=“%1$s”> nastaveních SuperFaktúry </a>. <br>Callback URL: "
+"target=\"_blank\" href=\"%1$s\"> nastaveních SuperFaktury</a>. <br>Callback URL: "
 "<strong>%2$s</strong>"
 
 #: includes/class-wc-sf-settings.php:959 includes/class-wc-sf-settings.php:971
@@ -1282,7 +1282,7 @@ msgid ""
 "API call to create proforma invoice for <a href=\"%s\">order #%d</a> failed %d "
 "times. Try creating it manually."
 msgstr ""
-"API volání k vytvoření zálohové faktury pro <a href=“%s”>objednávku č. %d</a> "
+"API volání k vytvoření zálohové faktury pro <a href=\"%s\">objednávku č. %d</a> "
 "se nezdařilo %dkrát. Zkuste ji vytvořit ručně."
 
 #: includes/class-wc-superfaktura.php:709
@@ -1299,7 +1299,7 @@ msgid ""
 "API call to create invoice for <a href=\"%s\">order #%d</a> failed %d times. "
 "Try creating it manually."
 msgstr ""
-"API volání k vytvoření faktury pro <a href=“%s”>objednávku č. %d</a> se "
+"API volání k vytvoření faktury pro <a href=\"%s\">objednávku č. %d</a> se "
 "nezdařilo %dkrát. Zkuste ji vytvořit ručně."
 
 #: includes/class-wc-superfaktura.php:714
@@ -1313,7 +1313,7 @@ msgid ""
 "API call to create credit note for <a href=\"%s\">order #%d</a> failed %d "
 "times. Try creating it manually."
 msgstr ""
-"API volání k vytvoření dobropisu pro <a href=“%s”>objednávku č. %d</a> %dkrát "
+"API volání k vytvoření dobropisu pro <a href=\"%s\">objednávku č. %d</a> %dkrát "
 "selhalo. Zkuste jej vytvořit ručně."
 
 #: includes/class-wc-superfaktura.php:719
@@ -1328,7 +1328,7 @@ msgid ""
 "API call to create document for <a href=\"%s\">order #%d</a> failed %d times. "
 "Try creating it manually."
 msgstr ""
-"API volání k vytvoření dokumentu pro <a href=“%s”>objednávku č. %d</a> %dkrát "
+"API volání k vytvoření dokumentu pro <a href=\"%s\">objednávku č. %d</a> %dkrát "
 "selhalo. Zkuste jej vytvořit ručně."
 
 #: includes/class-wc-superfaktura.php:724
@@ -1643,3 +1643,75 @@ msgstr "Více než %d dokladů se za posledních 30 dní nepodařilo vytvořit n
 #: includes/class-wc-sf-notices.php
 msgid "and more"
 msgstr "a další"
+
+#: includes/class-wc-superfaktura.php
+msgid "The automatic pairing URL was called without an invoice ID or secret key. SuperFaktura sends both, so the request most likely did not come from SuperFaktura."
+msgstr "Adresa pro automatické párování byla zavolána bez ID faktury nebo Secret Key. SuperFaktura posílá obojí, takže požadavek s velkou pravděpodobností nepřišel ze SuperFaktury."
+
+#: includes/class-wc-superfaktura.php
+msgid "The invoice ID or secret key in the request is not valid. Check that the Secret Key in SuperFaktura settings matches the one in the plugin settings."
+msgstr "ID faktury nebo Secret Key v požadavku nejsou platné. Zkontrolujte, zda je Secret Key v nastavení SuperFaktury stejný jako v nastavení pluginu."
+
+#: includes/class-wc-superfaktura.php
+msgid "SuperFaktura reported a payment for an invoice that does not belong to exactly one order in this shop. Either no order has it (for example an invoice issued directly in SuperFaktura, or an order in the trash), or several orders have the same invoice."
+msgstr "SuperFaktura oznámila úhradu faktury, která nepatří právě jedné objednávce v tomto obchodě. Buď ji nemá žádná objednávka (například faktura vystavená přímo v SuperFaktuře nebo objednávka v koši), nebo stejnou fakturu má více objednávek."
+
+#: includes/class-wc-superfaktura.php
+msgid "SuperFaktura did not return this invoice. It may have been deleted, the plugin may be connected to a different SuperFaktura account or company, or the connection to SuperFaktura failed."
+msgstr "SuperFaktura tuto fakturu nevrátila. Mohla být smazána, plugin může být připojen k jinému účtu či firmě v SuperFaktuře, nebo selhalo spojení se SuperFakturou."
+
+#: includes/class-wc-superfaktura.php
+msgid "Only payments of invoices and proforma invoices mark the order as paid."
+msgstr "Objednávku označí jako zaplacenou pouze úhrada faktury nebo zálohové faktury."
+
+#: includes/class-wc-superfaktura.php
+msgid "The invoice is not paid or is paid only partially, so the order was not marked as paid."
+msgstr "Faktura není uhrazena nebo je uhrazena jen částečně, proto objednávka nebyla označena jako zaplacená."
+
+#: includes/class-wc-superfaktura.php
+msgid "The invoice was settled by a credit note, so the order was not marked as paid."
+msgstr "Faktura byla vyrovnána dobropisem, proto objednávka nebyla označena jako zaplacená."
+
+#: includes/class-wc-superfaktura.php
+msgid "The order was already paid, so its status was not changed. No action is needed."
+msgstr "Objednávka už byla zaplacena, proto se její stav nezměnil. Není potřeba nic dělat."
+
+#. Translators: %s Link to the setting.
+#: includes/class-wc-superfaktura.php
+#, php-format
+msgid "SuperFaktura reported a payment, but the order was not in any of the statuses set in %s, so it was not marked as paid. Add the status there if such orders should be marked as paid too."
+msgstr "SuperFaktura oznámila úhradu, ale objednávka nebyla v žádném ze stavů v nastavení %s, proto nebyla označena jako zaplacená. Pokud se mají takové objednávky označit jako zaplacené, přidejte tam i tento stav."
+
+#: includes/class-wc-superfaktura.php
+msgid "If the order is already paid, no action is needed."
+msgstr "Pokud je objednávka už zaplacená, není potřeba nic dělat."
+
+#: includes/class-wc-superfaktura.php includes/class-wc-sf-settings.php
+msgid "Order statuses for automatic pairing"
+msgstr "Stavy objednávky pro automatické párování"
+
+#: includes/class-wc-superfaktura.php
+msgid "The server could not connect to VIES, so the VAT number could not be verified. If this happens often, contact your hosting provider."
+msgstr "Server se nedokázal spojit se službou VIES, proto nebylo možné ověřit DIČ. Pokud se to stává často, kontaktujte poskytovatele hostingu."
+
+#: includes/class-wc-superfaktura.php
+msgid "VIES was temporarily unavailable, so the VAT number could not be verified."
+msgstr "Služba VIES byla dočasně nedostupná, proto nebylo možné ověřit DIČ."
+
+#: includes/class-wc-superfaktura.php
+msgid "Check the API email, API key and Company ID in the plugin settings, or use the Test API connection button."
+msgstr "Zkontrolujte API email, API klíč a Company ID v nastavení pluginu, nebo použijte tlačítko Otestovat API připojení."
+
+#: includes/class-wc-superfaktura.php
+msgid "The server could not connect to SuperFaktura. If this happens often, contact your hosting provider."
+msgstr "Server se nedokázal spojit se SuperFakturou. Pokud se to stává často, kontaktujte poskytovatele hostingu."
+
+#. Translators: %s Setting name.
+#: includes/class-wc-superfaktura.php
+#, php-format
+msgid "The plugin stopped this request, because another request for the same document was running at the same time (setting %s). Usually the other request has already created or updated the document. If not, create or regenerate it again."
+msgstr "Plugin zastavil tento požadavek, protože ve stejnou chvíli probíhal jiný požadavek pro stejný doklad (nastavení %s). Ten druhý požadavek doklad obvykle už vytvořil nebo aktualizoval. Pokud ne, vytvořte nebo přegenerujte ho znovu."
+
+#: includes/class-wc-sf-settings.php
+msgid "When a payment is paired to an invoice in SuperFaktura, orders in these statuses are marked as paid. If no status is selected, paired payments do not change any order."
+msgstr "Když se v SuperFaktuře spáruje úhrada s fakturou, objednávky v těchto stavech se označí jako zaplacené. Pokud není vybrán žádný stav, spárované úhrady nezmění žádnou objednávku."

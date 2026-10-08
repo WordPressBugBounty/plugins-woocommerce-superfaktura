@@ -526,8 +526,14 @@ class WC_SF_Notices {
 							echo esc_html( sprintf( __( 'Order #%s', 'woocommerce-superfaktura' ), $order->get_order_number() ) );
 							?>
 						</a>
-						– <?php echo esc_html( $type ); ?>: <?php echo esc_html( wp_strip_all_tags( (string) $row['response_message'] ) ); ?>
+						– <?php echo esc_html( $type ); ?>: <?php echo esc_html( preg_replace( '/ in \S+:\d+$/', '', wp_strip_all_tags( (string) $row['response_message'] ) ) ); ?>
 						<span class="wc-sf-document-errors__time">(<?php echo esc_html( mysql2date( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), $row['time'] ) ); ?>)</span>
+						<?php
+						$explanation = $this->wc_sf->get_log_explanation( $row );
+						if ( $explanation ) {
+							echo '<br><span class="wc-sf-document-errors__explanation">' . wp_kses( $explanation, array( 'a' => array( 'href' => array() ) ) ) . '</span>';
+						}
+						?>
 					</li>
 				<?php endforeach; ?>
 				<?php if ( $data['more'] ) : ?>
