@@ -29,7 +29,7 @@ class WC_SuperFaktura {
 	 *
 	 * @var string
 	 */
-	public $version = '1.57.0';
+	public $version = '1.58.0';
 
 	/**
 	 * Database version.
@@ -280,7 +280,17 @@ class WC_SuperFaktura {
 	 * @param boolean $network_wide True if WPMU superadmin uses "Network Activate" action, false if WPMU is disabled or plugin is activated on an individual blog.
 	 */
 	public static function deactivate( $network_wide ) {
-		// :TODO: Define deactivation functionality here.
+		// Stop the daily download of announcements, on every site of the network when deactivated network-wide.
+		if ( $network_wide && is_multisite() && function_exists( 'get_sites' ) ) {
+			foreach ( get_sites( array( 'fields' => 'ids', 'number' => 0 ) ) as $site_id ) {
+				switch_to_blog( $site_id );
+				WC_SF_Notices::unschedule_messages();
+				restore_current_blog();
+			}
+			return;
+		}
+
+		WC_SF_Notices::unschedule_messages();
 	}
 
 

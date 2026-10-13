@@ -1719,3 +1719,61 @@ msgstr "Plugin zastavil túto požiadavku, pretože v tom istom čase prebiehala
 #: includes/class-wc-sf-settings.php
 msgid "When a payment is paired to an invoice in SuperFaktura, orders in these statuses are marked as paid. If no status is selected, paired payments do not change any order."
 msgstr "Keď sa v SuperFaktúre spáruje úhrada s faktúrou, objednávky v týchto stavoch sa označia ako zaplatené. Ak nie je vybraný žiadny stav, spárované úhrady nezmenia žiadnu objednávku."
+
+#: includes/class-wc-sf-settings.php
+msgid "Announcements"
+msgstr "Oznamy"
+
+#: includes/class-wc-sf-settings.php
+msgid "Download announcements about SuperFaktura and this plugin once a day. No data about your shop or customers is sent."
+msgstr "Raz denne sťahovať oznamy o SuperFaktúre a tomto plugine. Neposielajú sa žiadne údaje o vašom obchode ani zákazníkoch."
+
+#. translators: %s: customer's VAT ID
+#: includes/class-wc-sf-admin.php
+#, php-format
+msgid "Customer has a VAT ID (%s)."
+msgstr "Zákazník má IČ DPH (%s)."
+
+#: includes/class-wc-sf-admin.php
+msgid "The order has no tax country."
+msgstr "Objednávka nemá krajinu zdanenia."
+
+#. translators: %s: country code
+#: includes/class-wc-sf-admin.php
+#, php-format
+msgid "The tax country is the shop's country (%s)."
+msgstr "Krajina zdanenia je krajina obchodu (%s)."
+
+#. translators: %s: country code
+#: includes/class-wc-sf-admin.php
+#, php-format
+msgid "The tax country (%s) is not in the EU."
+msgstr "Krajina zdanenia (%s) nie je v EÚ."
+
+#. translators: %s: country code
+#: includes/class-wc-sf-admin.php
+#, php-format
+msgid "The tax country (%s) is another EU country and the customer has no VAT ID."
+msgstr "Krajina zdanenia (%s) je iná krajina EÚ a zákazník nemá IČ DPH."
+
+#: includes/class-wc-sf-admin.php
+msgid "The result was changed by the sf_invoice_oss filter."
+msgstr "Výsledok zmenil filter sf_invoice_oss."
+
+#: includes/class-wc-sf-admin.php
+msgctxt "OSS status"
+msgid "Yes."
+msgstr "Áno."
+
+#: includes/class-wc-sf-admin.php
+msgctxt "OSS status"
+msgid "No."
+msgstr "Nie."
+
+#: includes/class-wc-sf-admin.php
+msgid "Applies to documents created now."
+msgstr "Platí pre doklady vytvorené teraz."
+
+#: includes/class-wc-sf-admin.php
+msgid "WooCommerce sets the tax country by the \"Calculate tax based on\" setting, for local pickup usually by the shop's address."
+msgstr "WooCommerce určuje krajinu zdanenia podľa nastavenia „Počítať daň na základe“, pri osobnom odbere spravidla podľa adresy obchodu."

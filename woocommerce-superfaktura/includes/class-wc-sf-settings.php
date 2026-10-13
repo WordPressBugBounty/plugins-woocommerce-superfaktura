@@ -1068,6 +1068,13 @@ class WC_SF_Settings extends WC_Settings_Page {
 						'default' => 'no',
 					),
 					array(
+						'title'   => __( 'Announcements', 'woocommerce-superfaktura' ),
+						'id'      => 'woocommerce_sf_remote_messages',
+						'type'    => 'checkbox',
+						'desc'    => __( 'Download announcements about SuperFaktura and this plugin once a day. No data about your shop or customers is sent.', 'woocommerce-superfaktura' ),
+						'default' => 'yes',
+					),
+					array(
 						'type' => 'sectionend',
 						'id'   => 'woocommerce_sf_invoice_title13',
 					),

@@ -4,7 +4,7 @@ Tags: superfaktura, invoice, faktura, proforma, woocommerce
 Requires at least: 4.4
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.57.0
+Stable tag: 1.58.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -35,6 +35,22 @@ This plugin is not directly associated with superfaktura.sk, s.r.o. or with supe
 
 Created by [Ján Bočínec](http://bocinec.sk/) with the support of [Slovak WordPress community](http://wp.sk/) and [WordPress agency Webikon](http://www.webikon.sk/). Since 2017 maintained by [2day.sk](https://www.2day.sk/).
 
+== External services ==
+
+This plugin connects to the following external services.
+
+**SuperFaktúra API** (moja.superfaktura.sk, moje.superfaktura.cz, meine.superfaktura.at, or the sandbox at sandbox.superfaktura.sk and sandbox.superfaktura.cz)
+
+The plugin creates, updates and reads invoices, proforma invoices and credit notes in your SuperFaktúra account. It sends your API credentials and the order data needed for the document: the customer's billing and shipping details (including company IDs and VAT number), ordered items, prices, payment and shipping method. With every request it also sends the WordPress, WooCommerce, plugin and PHP versions and your shop's domain name. It connects when a document is created or regenerated (automatically on an order status change or manually), when SuperFaktúra reports a paid invoice to your shop, when the PDF is attached to an email, and when you test the connection or open the plugin settings. Terms of use: [superfaktura.sk](https://www.superfaktura.sk/podmienky-pouzivania/), [superfaktura.cz](https://www.superfaktura.cz/podminky-uzivani/). Privacy policy: [superfaktura.sk](https://www.superfaktura.sk/ochrana-sukromia/), [superfaktura.cz](https://www.superfaktura.cz/ochrana-soukromi/).
+
+**VIES VAT number validation by the European Commission** (ec.europa.eu)
+
+Only when "Validate VAT #" is enabled, the plugin sends the VAT number entered at checkout to VIES to check that it is valid. Service: [VIES](https://ec.europa.eu/taxation_customs/vies/). Privacy policy: [European Commission](https://commission.europa.eu/privacy-policy-websites-managed-european-commission_en).
+
+**Plugin announcements by 2day.sk** (sf.2day.sk)
+
+When "Announcements" is enabled in WooCommerce > Settings > SuperFaktura > Integration (enabled by default), the plugin downloads once a day a small file with announcements about SuperFaktura and this plugin (for example about eFaktúra), its signature and up to 4 images from https://sf.2day.sk/woocommerce/. The announcements are shown in the admin only to users who can manage WooCommerce, and each can be closed. The request contains no data about your shop, users or customers: the server receives only your server's IP address and the user agent "SuperFaktura-WooCommerce/" with the plugin version, as in any web request. The service is operated by 2day.sk, the maintainer of this plugin. Developers can also turn the download off with the filter `sf_remote_messages_enabled`.
+
 == Installation ==
 
 1. Upload the entire SuperFaktura folder *woocommerce-superfaktura* to the /wp-content/plugins/ directory (or use WordPress native installer in Plugins -> Add New Plugin). And activate the plugin through the 'Plugins' menu in WordPress.
@@ -64,6 +80,10 @@ This usually happens when you change your login email address. The email address
 You can read more about SuperFaktura API integration at [superfaktura.sk/api](http://www.superfaktura.sk/api/)
 
 == Changelog ==
+
+= 1.58.0 =
+* Pri zapnutom OSS objednávka pod fakturačnou adresou ukazuje, či sa doklad vystaví v režime OSS a prečo.
+* Dôležité oznamy o SuperFaktúre a plugine, napríklad o eFaktúre, priamo v administrácii.
 
 = 1.57.0 =
 * Nastavenie Stavy objednávky pre automatické párovanie: úhrada spárovaná v SuperFaktúre označí objednávku ako zaplatenú aj v ďalších zvolených stavoch, nielen v stave Čaká na platbu. Predvolené správanie sa nemení.

@@ -967,15 +967,33 @@ class WC_SF_Checkout_Block {
 	 * @return bool Whether the order was repaired.
 	 */
 	public function repair_order_company_meta( $order ) {
-		if ( ! $order instanceof WC_Order ) {
+		$company_data = $this->find_missing_company_data( $order );
+		if ( null === $company_data ) {
 			return false;
+		}
+
+		$this->fill_company_meta( $order, $company_data );
+
+		return true;
+	}
+
+	/**
+	 * Company data of a block-checkout order from versions up to 1.53.2 that is missing under the plugin's keys,
+	 * without saving anything (repair_order_company_meta() saves it).
+	 *
+	 * @param WC_Order $order Order.
+	 * @return array|null 'company', 'id', 'tax', 'vat', or null when nothing is missing or nothing can be found.
+	 */
+	public function find_missing_company_data( $order ) {
+		if ( ! $order instanceof WC_Order ) {
+			return null;
 		}
 
 		// The plugin's own keys are written only for confirmed company purchases,
 		// so their presence means there is nothing to repair.
 		foreach ( array( 'billing_company_wi_id', 'billing_company_wi_tax', 'billing_company_wi_vat' ) as $meta_key ) {
 			if ( '' !== (string) $order->get_meta( $meta_key, true ) ) {
-				return false;
+				return null;
 			}
 		}
 
@@ -992,14 +1010,7 @@ class WC_SF_Checkout_Block {
 			}
 		}
 
-		$company_data = $this->resolve_company_data_from_sources( $sources );
-		if ( null === $company_data ) {
-			return false;
-		}
-
-		$this->fill_company_meta( $order, $company_data );
-
-		return true;
+		return $this->resolve_company_data_from_sources( $sources );
 	}
 
 	/**

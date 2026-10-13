@@ -16,7 +16,7 @@ if ( ! defined( 'WP_UNINSTALL_PLUGIN' ) ) {
 
 // TODO: Define uninstall functionality here.
 
-// Notices closed by users (eFaktúra announcement, failed documents).
+// Notices closed by users (announcements, failed documents) and downloaded announcements.
 global $wpdb;
 $wc_sf_site_ids = ( is_multisite() && function_exists( 'get_sites' ) ) ? get_sites( array( 'fields' => 'ids', 'number' => 0 ) ) : array( get_current_blog_id() );
 foreach ( $wc_sf_site_ids as $wc_sf_site_id ) {
@@ -25,6 +25,10 @@ foreach ( $wc_sf_site_ids as $wc_sf_site_id ) {
 		switch_to_blog( $wc_sf_site_id );
 	}
 	delete_transient( 'wc_sf_document_errors' );
+	// Downloaded announcements and their daily download.
+	delete_option( 'wc_sf_remote_messages' );
+	delete_option( 'wc_sf_remote_messages_error' );
+	wp_clear_scheduled_hook( 'wc_sf_fetch_messages' );
 	if ( is_multisite() ) {
 		restore_current_blog();
 	}

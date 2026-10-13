@@ -42,6 +42,7 @@ class WC_SF_Admin {
         add_action( 'woocommerce_settings_superfaktura', array( __CLASS__, 'order_number_notice' ) );
         add_action( 'admin_enqueue_scripts', array( $this, 'admin_enqueue_scripts' ) );
         add_action( 'add_meta_boxes', array( $this, 'add_meta_boxes' ) );
+        add_action( 'woocommerce_admin_order_data_after_billing_address', array( $this, 'render_oss_status' ) );
     }
 
     /**
@@ -365,6 +366,59 @@ class WC_SF_Admin {
 		do_action( 'sf_metabox_after_invoice_generate_button', $order, $invoice );
     }
 
+	/**
+	 * Under the billing address, next to the company IDs: whether documents of the order are One Stop Shop (OSS)
+	 * sales and why, decided by the same code as when a document is created. Only when OSS is on in the settings.
+	 *
+	 * @param WC_Order $order Order.
+	 */
+	public function render_oss_status( $order ) {
+		// Only real orders: not subscriptions (same hook) and not a new order before its first save.
+		if ( 'yes' !== get_option( 'woocommerce_sf_oss', 'no' ) || ! $order instanceof WC_Order || 'shop_order' !== $order->get_type() || 'auto-draft' === $order->get_status() ) {
+			return;
+		}
+
+		try {
+			$generator = $this->wc_sf->invoice_generator;
+			$status    = $generator->get_oss_status( $order, $generator->get_client_data( $order, false ) );
+		} catch ( Throwable $e ) {
+			// Third-party filters must never break the order screen.
+			return;
+		}
+
+		switch ( $status['reason'] ) {
+			case 'vat_id':
+				/* translators: %s: customer's VAT ID */
+				$reason = sprintf( __( 'Customer has a VAT ID (%s).', 'woocommerce-superfaktura' ), $status['ic_dph'] );
+				break;
+			case 'no_country':
+				$reason = __( 'The order has no tax country.', 'woocommerce-superfaktura' );
+				break;
+			case 'base_country':
+				/* translators: %s: country code */
+				$reason = sprintf( __( "The tax country is the shop's country (%s).", 'woocommerce-superfaktura' ), $status['tax_country'] );
+				break;
+			case 'not_eu':
+				/* translators: %s: country code */
+				$reason = sprintf( __( 'The tax country (%s) is not in the EU.', 'woocommerce-superfaktura' ), $status['tax_country'] );
+				break;
+			default:
+				/* translators: %s: country code */
+				$reason = sprintf( __( 'The tax country (%s) is another EU country and the customer has no VAT ID.', 'woocommerce-superfaktura' ), $status['tax_country'] );
+		}
+		if ( '' !== $status['tax_country'] && strtoupper( (string) $order->get_billing_country() ) !== $status['tax_country'] ) {
+			// The address shown above is not the one the order is taxed by.
+			$reason .= ' ' . __( 'WooCommerce sets the tax country by the "Calculate tax based on" setting, for local pickup usually by the shop\'s address.', 'woocommerce-superfaktura' );
+		}
+		if ( $status['filtered'] ) {
+			$reason .= ' ' . __( 'The result was changed by the sf_invoice_oss filter.', 'woocommerce-superfaktura' );
+		}
+
+		echo '<p class="wc-sf-oss-status"><strong>' . esc_html__( 'OSS', 'woocommerce-superfaktura' ) . ':</strong><br>'
+			. esc_html( ( $status['oss'] ? _x( 'Yes.', 'OSS status', 'woocommerce-superfaktura' ) : _x( 'No.', 'OSS status', 'woocommerce-superfaktura' ) ) . ' ' . $reason )
+			. '<br><span class="description">' . esc_html__( 'Applies to documents created now.', 'woocommerce-superfaktura' ) . '</span></p>';
+	}
+
     /**
      * Add custom order status actions button.
      */
@@ -430,6 +484,10 @@ class WC_SF_Admin {
 				}
 				table.wc-sf-api-log td .description {
 					color: #50575e;
+				}
+				.wc-sf-oss-status .description {
+					font-size: 12px;
+					font-style: italic;
 				}
 
 				#woocommerce_wi_invoice_creation1-description + .form-table tr:nth-child(odd) th,

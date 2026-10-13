@@ -1,5 +1,9 @@
 === SuperFaktura WooCommerce – Changelog ===
 
+= 1.58.0 =
+* Pri zapnutom OSS objednávka pod fakturačnou adresou ukazuje, či sa doklad vystaví v režime OSS a prečo.
+* Dôležité oznamy o SuperFaktúre a plugine, napríklad o eFaktúre, priamo v administrácii.
+
 = 1.57.0 =
 * Nastavenie Stavy objednávky pre automatické párovanie: úhrada spárovaná v SuperFaktúre označí objednávku ako zaplatenú aj v ďalších zvolených stavoch, nielen v stave Čaká na platbu. Predvolené správanie sa nemení.
 * Vysvetlenie častých chýb v API logu a v upozornení na neúspešné doklady. Nový filter sf_log_explanation.

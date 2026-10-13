@@ -1656,3 +1656,61 @@ msgstr ""
 #: includes/class-wc-sf-settings.php
 msgid "When a payment is paired to an invoice in SuperFaktura, orders in these statuses are marked as paid. If no status is selected, paired payments do not change any order."
 msgstr ""
+
+#: includes/class-wc-sf-settings.php
+msgid "Announcements"
+msgstr ""
+
+#: includes/class-wc-sf-settings.php
+msgid "Download announcements about SuperFaktura and this plugin once a day. No data about your shop or customers is sent."
+msgstr ""
+
+#. translators: %s: customer's VAT ID
+#: includes/class-wc-sf-admin.php
+#, php-format
+msgid "Customer has a VAT ID (%s)."
+msgstr ""
+
+#: includes/class-wc-sf-admin.php
+msgid "The order has no tax country."
+msgstr ""
+
+#. translators: %s: country code
+#: includes/class-wc-sf-admin.php
+#, php-format
+msgid "The tax country is the shop's country (%s)."
+msgstr ""
+
+#. translators: %s: country code
+#: includes/class-wc-sf-admin.php
+#, php-format
+msgid "The tax country (%s) is not in the EU."
+msgstr ""
+
+#. translators: %s: country code
+#: includes/class-wc-sf-admin.php
+#, php-format
+msgid "The tax country (%s) is another EU country and the customer has no VAT ID."
+msgstr ""
+
+#: includes/class-wc-sf-admin.php
+msgid "The result was changed by the sf_invoice_oss filter."
+msgstr ""
+
+#: includes/class-wc-sf-admin.php
+msgctxt "OSS status"
+msgid "Yes."
+msgstr ""
+
+#: includes/class-wc-sf-admin.php
+msgctxt "OSS status"
+msgid "No."
+msgstr ""
+
+#: includes/class-wc-sf-admin.php
+msgid "Applies to documents created now."
+msgstr ""
+
+#: includes/class-wc-sf-admin.php
+msgid "WooCommerce sets the tax country by the \"Calculate tax based on\" setting, for local pickup usually by the shop's address."
+msgstr ""

@@ -113,114 +113,7 @@ class WC_SF_Invoice {
 
 			/* CLIENT DATA */
 
-			if ( $this->wc_sf->wc_nastavenia_skcz_activated ) {
-				$plugin  = Webikon\Woocommerce_Plugin\WC_Nastavenia_SKCZ\Plugin::get_instance();
-				$details = $plugin->get_customer_details( $order->get_id() );
-				$ico     = $details->get_company_id();
-				$ic_dph  = $details->get_company_vat_id();
-				$dic     = $details->get_company_tax_id();
-			} else {
-				// Versions up to 1.53.2 could leave a block-checkout order without the plugin's
-				// company meta while WooCommerce kept the entered values under its own
-				// additional-field keys. Repair the order before reading, so the invoice
-				// (including a regeneration of an older document) carries the company data.
-				$this->wc_sf->checkout_block->repair_order_company_meta( $order );
-
-				$ico    = $order->get_meta( 'billing_company_wi_id', true );
-				$ic_dph = $order->get_meta( 'billing_company_wi_vat', true );
-				$dic    = $order->get_meta( 'billing_company_wi_tax', true );
-			}
-
-			if ( empty( $ic_dph ) ) {
-				include_once ABSPATH . 'wp-admin/includes/plugin.php';
-
-				// Compatibility with WooCommerce EU VAT Number plugin.
-				if ( is_plugin_active( 'woocommerce-eu-vat-number/woocommerce-eu-vat-number.php' ) && 'true' === $order->get_meta( '_vat_number_is_valid', true ) ) {
-					$ic_dph = $order->get_meta( '_vat_number', true );
-					if ( empty( $ic_dph ) ) {
-						$ic_dph = $order->get_meta( '_billing_vat_number', true );
-					}
-				}
-
-				// Compatibility with WooCommerce EU VAT Assistant plugin.
-				if ( is_plugin_active( 'woocommerce-eu-vat-assistant/woocommerce-eu-vat-assistant.php' ) && 'valid' === $order->get_meta( '_vat_number_validated', true ) ) {
-					$ic_dph = $order->get_meta( 'vat_number', true );
-				}
-
-				// Compatibility with WooCommerce EU/UK VAT Compliance (Premium).
-				if ( is_plugin_active( 'woocommerce-eu-vat-compliance-premium/eu-vat-compliance-premium.php' ) && 'true' === $order->get_meta( 'VAT number validated', true ) ) {
-					$ic_dph = $order->get_meta( 'VAT Number', true );
-				}
-
-				// Compatibility with EU/UK VAT Manager for WooCommerce.
-				if ( is_plugin_active( 'eu-vat-for-woocommerce/eu-vat-for-woocommerce.php' ) || is_plugin_active( 'eu-vat-for-woocommerce-pro/eu-vat-for-woocommerce-pro.php' ) ) {
-					$ic_dph = $order->get_meta( '_billing_eu_vat_number', true );
-				}
-
-				// Compatibility with WPify Woo Česko a Slovensko
-				if ( is_plugin_active( 'wpify-woo/wpify-woo.php' ) ) {
-					$wpify_settings = get_option( 'wpify-woo-settings-general', [] );
-					if ( $wpify_settings && in_array( 'ic_dic', $wpify_settings['enabled_modules'] ?? [] ) ) {
-						$ico    = $order->get_meta( '_billing_ic', true );
-						$ic_dph = $order->get_meta( ( $order->get_billing_country() === 'SK' ) ? '_billing_dic_dph' : '_billing_dic', true );
-						$dic    = $order->get_meta( '_billing_dic', true );
-					}
-				}
-			}
-
-			$client_data = array(
-				'name'               => ( $order->get_billing_company() ) ? $order->get_billing_company() : $order->get_billing_first_name() . ' ' . $order->get_billing_last_name(),
-				'ico'                => $ico,
-				'dic'                => $dic,
-				'ic_dph'             => $ic_dph,
-				'email'              => $order->get_billing_email(),
-				'address'            => $order->get_billing_address_1() . ( ( $order->get_billing_address_2() ) ? ' ' . $order->get_billing_address_2() : '' ),
-				'country_iso_id'     => $order->get_billing_country(),
-				'city'               => $order->get_billing_city(),
-				'zip'                => $order->get_billing_postcode(),
-				'phone'              => $order->get_billing_phone(),
-				'update_addressbook' => ( 'yes' === get_option( 'woocommerce_sf_invoice_update_addressbook', 'no' ) ),
-			);
-
-			$state = $order->get_billing_state();
-			if ( $state ) {
-				$client_data['state'] = $state;
-			}
-
-			if ( ( $order->get_formatted_billing_address() !== $order->get_formatted_shipping_address() ) || 'yes' === get_option( 'woocommerce_sf_invoice_delivery_name' ) ) {
-				if ( $order->get_shipping_company() ) {
-					if ( 'yes' === get_option( 'woocommerce_sf_invoice_delivery_name' ) ) {
-						$shipping_name = sprintf( '%s - %s %s', $order->get_shipping_company(), $order->get_shipping_first_name(), $order->get_shipping_last_name() );
-					} else {
-						$shipping_name = $order->get_shipping_company();
-					}
-				} else {
-					$shipping_name = $order->get_shipping_first_name() . ' ' . $order->get_shipping_last_name();
-				}
-
-				$client_data['delivery_address']        = $order->get_shipping_address_1() . ( ( $order->get_shipping_address_2() ) ? ' ' . $order->get_shipping_address_2() : '' );
-				$client_data['delivery_city']           = $order->get_shipping_city();
-				$client_data['delivery_country_iso_id'] = $order->get_shipping_country();
-				$client_data['delivery_name']           = $shipping_name;
-				$client_data['delivery_zip']            = $order->get_shipping_postcode();
-
-				$state = $order->get_shipping_state();
-				if ( $state ) {
-					$client_data['delivery_state'] = $state;
-				}
-			}
-
-			$shipping_phone = $order->get_shipping_phone();
-			if ( $shipping_phone ) {
-				$client_data['delivery_phone'] = $shipping_phone;
-			}
-
-			$client_id = $order->get_meta( 'wc_sf_client_id', true );
-			if ( $client_id ) {
-				$client_data['id'] = $client_id;
-			}
-
-			$client_data = apply_filters( 'sf_client_data', $client_data, $order );
+			$client_data = $this->get_client_data( $order );
 
 			$api->setClient( $client_data );
 
@@ -487,24 +380,8 @@ class WC_SF_Invoice {
 
 			$extras = array();
 
-			if ( 'yes' === get_option( 'woocommerce_sf_oss', 'no' ) ) {
-
-				// Pri vystavení faktúry s odberateľom z inej krajiny EÚ, ktorý je súkromná osoba (nepodnikateľ) alebo firma bez IČ DPH.
-				// The country is the one WooCommerce taxed the order by (shipping or billing address per the tax settings,
-				// the shop base for local pickup), so the OSS flag always matches the VAT rates on the invoice.
-				$tax_country = $this->get_order_tax_country( $order );
-				$is_oss      = empty( $client_data['ic_dph'] ) && '' !== $tax_country && WC()->countries->get_base_country() !== $tax_country && in_array( $tax_country, $this->wc_sf->eu_countries, true );
-
-				/**
-				 * Filter whether the document is flagged as a One Stop Shop (OSS) sale.
-				 *
-				 * @param bool     $is_oss      Whether to send the OSS flag.
-				 * @param WC_Order $order       Order.
-				 * @param string   $tax_country Country the order was taxed by.
-				 */
-				if ( apply_filters( 'sf_invoice_oss', $is_oss, $order, $tax_country ) ) {
-					$extras['oss'] = true;
-				}
+			if ( 'yes' === get_option( 'woocommerce_sf_oss', 'no' ) && $this->get_oss_status( $order, $client_data )['oss'] ) {
+				$extras['oss'] = true;
 			}
 
 			/* packeta */
@@ -1259,6 +1136,184 @@ class WC_SF_Invoice {
 
 		return true;
 
+	}
+
+	/**
+	 * Client of the document: name, company IDs, addresses. Company IDs come from the plugin's checkout fields
+	 * or from supported VAT plugins; the result goes through the sf_client_data filter.
+	 *
+	 * @param WC_Order $order  Order.
+	 * @param bool     $repair Repair company data of orders from versions up to 1.53.2 (writes order meta).
+	 * @return array Client data for the SuperFaktúra API.
+	 */
+	public function get_client_data( $order, $repair = true ) {
+		$missing = null;
+
+		if ( $this->wc_sf->wc_nastavenia_skcz_activated ) {
+			$plugin  = Webikon\Woocommerce_Plugin\WC_Nastavenia_SKCZ\Plugin::get_instance();
+			$details = $plugin->get_customer_details( $order->get_id() );
+			$ico     = $details->get_company_id();
+			$ic_dph  = $details->get_company_vat_id();
+			$dic     = $details->get_company_tax_id();
+		} else {
+			// Versions up to 1.53.2 could leave a block-checkout order without the plugin's
+			// company meta while WooCommerce kept the entered values under its own
+			// additional-field keys. Repair the order before reading, so the invoice
+			// (including a regeneration of an older document) carries the company data.
+			if ( $repair ) {
+				$this->wc_sf->checkout_block->repair_order_company_meta( $order );
+			} else {
+				// Only showing information: use the data the repair would save, without saving it.
+				$missing = $this->wc_sf->checkout_block->find_missing_company_data( $order );
+			}
+
+			$ico    = $missing ? $missing['id'] : $order->get_meta( 'billing_company_wi_id', true );
+			$ic_dph = $missing ? $missing['vat'] : $order->get_meta( 'billing_company_wi_vat', true );
+			$dic    = $missing ? $missing['tax'] : $order->get_meta( 'billing_company_wi_tax', true );
+		}
+
+		if ( empty( $ic_dph ) ) {
+			include_once ABSPATH . 'wp-admin/includes/plugin.php';
+
+			// Compatibility with WooCommerce EU VAT Number plugin.
+			if ( is_plugin_active( 'woocommerce-eu-vat-number/woocommerce-eu-vat-number.php' ) && 'true' === $order->get_meta( '_vat_number_is_valid', true ) ) {
+				$ic_dph = $order->get_meta( '_vat_number', true );
+				if ( empty( $ic_dph ) ) {
+					$ic_dph = $order->get_meta( '_billing_vat_number', true );
+				}
+			}
+
+			// Compatibility with WooCommerce EU VAT Assistant plugin.
+			if ( is_plugin_active( 'woocommerce-eu-vat-assistant/woocommerce-eu-vat-assistant.php' ) && 'valid' === $order->get_meta( '_vat_number_validated', true ) ) {
+				$ic_dph = $order->get_meta( 'vat_number', true );
+			}
+
+			// Compatibility with WooCommerce EU/UK VAT Compliance (Premium).
+			if ( is_plugin_active( 'woocommerce-eu-vat-compliance-premium/eu-vat-compliance-premium.php' ) && 'true' === $order->get_meta( 'VAT number validated', true ) ) {
+				$ic_dph = $order->get_meta( 'VAT Number', true );
+			}
+
+			// Compatibility with EU/UK VAT Manager for WooCommerce.
+			if ( is_plugin_active( 'eu-vat-for-woocommerce/eu-vat-for-woocommerce.php' ) || is_plugin_active( 'eu-vat-for-woocommerce-pro/eu-vat-for-woocommerce-pro.php' ) ) {
+				$ic_dph = $order->get_meta( '_billing_eu_vat_number', true );
+			}
+
+			// Compatibility with WPify Woo Česko a Slovensko
+			if ( is_plugin_active( 'wpify-woo/wpify-woo.php' ) ) {
+				$wpify_settings = get_option( 'wpify-woo-settings-general', [] );
+				if ( $wpify_settings && in_array( 'ic_dic', $wpify_settings['enabled_modules'] ?? [] ) ) {
+					$ico    = $order->get_meta( '_billing_ic', true );
+					$ic_dph = $order->get_meta( ( $order->get_billing_country() === 'SK' ) ? '_billing_dic_dph' : '_billing_dic', true );
+					$dic    = $order->get_meta( '_billing_dic', true );
+				}
+			}
+		}
+
+		$billing_company = $order->get_billing_company();
+		if ( '' === (string) $billing_company && ! empty( $missing['company'] ) ) {
+			// The repair also fills an empty billing company.
+			$billing_company = $missing['company'];
+		}
+
+		$client_data = array(
+			'name'               => ( $billing_company ) ? $billing_company : $order->get_billing_first_name() . ' ' . $order->get_billing_last_name(),
+			'ico'                => $ico,
+			'dic'                => $dic,
+			'ic_dph'             => $ic_dph,
+			'email'              => $order->get_billing_email(),
+			'address'            => $order->get_billing_address_1() . ( ( $order->get_billing_address_2() ) ? ' ' . $order->get_billing_address_2() : '' ),
+			'country_iso_id'     => $order->get_billing_country(),
+			'city'               => $order->get_billing_city(),
+			'zip'                => $order->get_billing_postcode(),
+			'phone'              => $order->get_billing_phone(),
+			'update_addressbook' => ( 'yes' === get_option( 'woocommerce_sf_invoice_update_addressbook', 'no' ) ),
+		);
+
+		$state = $order->get_billing_state();
+		if ( $state ) {
+			$client_data['state'] = $state;
+		}
+
+		if ( ( $order->get_formatted_billing_address() !== $order->get_formatted_shipping_address() ) || 'yes' === get_option( 'woocommerce_sf_invoice_delivery_name' ) ) {
+			if ( $order->get_shipping_company() ) {
+				if ( 'yes' === get_option( 'woocommerce_sf_invoice_delivery_name' ) ) {
+					$shipping_name = sprintf( '%s - %s %s', $order->get_shipping_company(), $order->get_shipping_first_name(), $order->get_shipping_last_name() );
+				} else {
+					$shipping_name = $order->get_shipping_company();
+				}
+			} else {
+				$shipping_name = $order->get_shipping_first_name() . ' ' . $order->get_shipping_last_name();
+			}
+
+			$client_data['delivery_address']        = $order->get_shipping_address_1() . ( ( $order->get_shipping_address_2() ) ? ' ' . $order->get_shipping_address_2() : '' );
+			$client_data['delivery_city']           = $order->get_shipping_city();
+			$client_data['delivery_country_iso_id'] = $order->get_shipping_country();
+			$client_data['delivery_name']           = $shipping_name;
+			$client_data['delivery_zip']            = $order->get_shipping_postcode();
+
+			$state = $order->get_shipping_state();
+			if ( $state ) {
+				$client_data['delivery_state'] = $state;
+			}
+		}
+
+		$shipping_phone = $order->get_shipping_phone();
+		if ( $shipping_phone ) {
+			$client_data['delivery_phone'] = $shipping_phone;
+		}
+
+		$client_id = $order->get_meta( 'wc_sf_client_id', true );
+		if ( $client_id ) {
+			$client_data['id'] = $client_id;
+		}
+
+		return apply_filters( 'sf_client_data', $client_data, $order );
+	}
+
+	/**
+	 * Whether a document of the order is a One Stop Shop (OSS) sale, and why.
+	 *
+	 * A customer from another EU country who is a private person or a company without IČ DPH. The country is the one
+	 * WooCommerce taxed the order by (shipping or billing address per the tax settings, the shop base for local
+	 * pickup), so the OSS flag always matches the VAT rates on the invoice.
+	 *
+	 * @param WC_Order $order       Order.
+	 * @param array    $client_data Client data (get_client_data()).
+	 * @return array 'oss' (bool, after the sf_invoice_oss filter), 'reason' (vat_id, no_country, base_country,
+	 *               not_eu or eu_without_vat_id), 'tax_country', 'ic_dph' and 'filtered' (the filter changed the result).
+	 */
+	public function get_oss_status( $order, $client_data ) {
+		$tax_country = $this->get_order_tax_country( $order );
+
+		if ( ! empty( $client_data['ic_dph'] ) ) {
+			$reason = 'vat_id';
+		} elseif ( '' === $tax_country ) {
+			$reason = 'no_country';
+		} elseif ( WC()->countries->get_base_country() === $tax_country ) {
+			$reason = 'base_country';
+		} elseif ( ! in_array( $tax_country, $this->wc_sf->eu_countries, true ) ) {
+			$reason = 'not_eu';
+		} else {
+			$reason = 'eu_without_vat_id';
+		}
+		$is_oss = 'eu_without_vat_id' === $reason;
+
+		/**
+		 * Filter whether the document is flagged as a One Stop Shop (OSS) sale.
+		 *
+		 * @param bool     $is_oss      Whether to send the OSS flag.
+		 * @param WC_Order $order       Order.
+		 * @param string   $tax_country Country the order was taxed by.
+		 */
+		$filtered = (bool) apply_filters( 'sf_invoice_oss', $is_oss, $order, $tax_country );
+
+		return array(
+			'oss'         => $filtered,
+			'reason'      => $reason,
+			'tax_country' => $tax_country,
+			'ic_dph'      => is_scalar( $client_data['ic_dph'] ?? null ) ? (string) $client_data['ic_dph'] : '',
+			'filtered'    => $filtered !== $is_oss,
+		);
 	}
 
 	/**
