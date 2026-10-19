@@ -688,6 +688,11 @@ class WC_SF_Settings extends WC_Settings_Page {
 					),
 				);
 
+				/**
+				 * Filters the settings fields of the Invoice section of the plugin settings.
+				 *
+				 * @param array $settings Settings fields in the WooCommerce settings API format.
+				 */
 				$settings = apply_filters( 'superfaktura_invoice_settings', $settings );
 				break;
 
@@ -875,6 +880,11 @@ class WC_SF_Settings extends WC_Settings_Page {
 					'id'   => 'woocommerce_wi_invoice_creation5',
 				);
 
+				/**
+				 * Filters the settings fields of the Invoice Creation section of the plugin settings.
+				 *
+				 * @param array $settings Settings fields in the WooCommerce settings API format.
+				 */
 				$settings = apply_filters( 'superfaktura_invoice_creation_settings', $settings );
 				break;
 
@@ -1127,6 +1137,11 @@ class WC_SF_Settings extends WC_Settings_Page {
 					),
 				);
 
+				/**
+				 * Filters the settings fields of the Integration section of the plugin settings.
+				 *
+				 * @param array $settings Settings fields in the WooCommerce settings API format.
+				 */
 				$settings = apply_filters( 'superfaktura_integration_settings', $settings );
 				break;
 
@@ -1138,6 +1153,13 @@ class WC_SF_Settings extends WC_Settings_Page {
 					'id'    => 'woocommerce_wi_invoice_title6',
 				);
 
+				/**
+				 * Filters the SuperFaktura payment types offered for mapping the shop's payment methods.
+				 *
+				 * @since 1.9.12
+				 *
+				 * @param array $gateway_mapping Payment types loaded from SuperFaktura, key => label, with '0' for not used.
+				 */
 				$gateway_mapping = apply_filters( 'sf_gateway_mapping', $this->get_sf_payment_methods() );
 
 				foreach ( $gateways as $gateway ) {
@@ -1177,10 +1199,20 @@ class WC_SF_Settings extends WC_Settings_Page {
 					'id'   => 'woocommerce_wi_invoice_title7',
 				);
 
+				/**
+				 * Filters the settings fields of the Payment section of the plugin settings.
+				 *
+				 * @param array $settings Settings fields in the WooCommerce settings API format.
+				 */
 				$settings = apply_filters( 'superfaktura_payment_settings', $settings );
 				break;
 
 			case 'shipping':
+				/**
+				 * Filters the SuperFaktura delivery types offered for mapping the shop's shipping methods.
+				 *
+				 * @param array $shipping_mapping Delivery types loaded from SuperFaktura, key => label, with '0' for not used.
+				 */
 				$shipping_mapping = apply_filters( 'sf_shipping_mapping', $this->get_sf_shipping_methods() );
 
 				if ( class_exists( 'WC_Shipping_Zones' ) ) {
@@ -1253,6 +1285,11 @@ class WC_SF_Settings extends WC_Settings_Page {
 					}
 				}
 
+				/**
+				 * Filters the settings fields of the Shipping section of the plugin settings.
+				 *
+				 * @param array $settings Settings fields in the WooCommerce settings API format.
+				 */
 				$settings = apply_filters( 'superfaktura_shipping_settings', $settings );
 				break;
 
@@ -1425,6 +1462,11 @@ class WC_SF_Settings extends WC_Settings_Page {
 					),
 				);
 
+				/**
+				 * Filters the settings fields of the Accounting section of the plugin settings.
+				 *
+				 * @param array $settings Settings fields in the WooCommerce settings API format.
+				 */
 				$settings = apply_filters( 'superfaktura_accounting_settings', $settings );
 				break;
 
@@ -1517,6 +1559,11 @@ class WC_SF_Settings extends WC_Settings_Page {
 					),
 				);
 
+				/**
+				 * Filters the settings fields of the API log section of the plugin settings.
+				 *
+				 * @param array $settings Settings fields in the WooCommerce settings API format.
+				 */
 				$settings = apply_filters( 'superfaktura_api_log_settings', $settings );
 				break;
 
@@ -1525,37 +1572,54 @@ class WC_SF_Settings extends WC_Settings_Page {
 				break;
 
 			case 'help':
+				$site  = 'https://superfaktura.2day.sk/';
+				$pages = array(
+					'funkcie/'       => __( 'Features', 'woocommerce-superfaktura' ),
+					'podpora/'       => __( 'Support and frequently asked questions', 'woocommerce-superfaktura' ),
+					'novinky/'       => __( 'News about new versions', 'woocommerce-superfaktura' ),
+					'zoznam-zmien/'  => __( 'Changelog', 'woocommerce-superfaktura' ),
+					'pre-vyvojarov/' => __( 'For developers: filters and actions', 'woocommerce-superfaktura' ),
+				);
+				$links = '';
+				foreach ( $pages as $path => $label ) {
+					$links .= '<li><a href="' . esc_url( $site . $path ) . '" target="_blank">' . esc_html( $label ) . '</a></li>';
+				}
+
 				$settings = array(
 					array(
 						'title' => __( 'Help', 'woocommerce-superfaktura' ),
 						'type'  => 'title',
 						'desc'  => '
-							<p>' . __( 'For more information about the plugin and its settings check the articles on SuperFaktura blog.', 'woocommerce-superfaktura' ) . '</p>
+							<p>' . esc_html__( 'Features, answers to frequently asked questions and news about the plugin are on its website.', 'woocommerce-superfaktura' ) . '</p>
+							<ul style="padding-left: 1em; list-style-type: disc;">' . $links . '</ul>
 
-							<h3>SuperFaktura.sk</strong></h3>
+							<h3>' . esc_html__( 'When something does not work', 'woocommerce-superfaktura' ) . '</h3>
 							<ul style="padding-left: 1em; list-style-type: disc;">
-								<li><a href="https://www.superfaktura.sk/blog/superfaktura-a-woocommerce-diel-1-instalacia-a-autorizacia/">Diel 1. – Inštalácia a autorizácia</a></li>
-								<li><a href="https://www.superfaktura.sk/blog/superfaktura-a-woocommerce-diel-2-vytvaranie-faktur/">Diel 2. – Vytváranie faktúr</a></li>
-								<li><a href="https://www.superfaktura.sk/blog/superfaktura-a-woocommerce-diel-3-cislovanie-dokladov/">Diel 3. – Číslovanie dokladov</a></li>
-								<li><a href="https://www.superfaktura.sk/blog/superfaktura-a-woocommerce-diel-4-pokrocile-nastavenia/">Diel 4. – Pokročilé nastavenia</a></li>
-								<li><a href="https://www.superfaktura.sk/blog/superfaktura-a-woocommerce-diel-5-platby-doprava-pokladne/">Diel 5. – Platby, doprava, pokladne</a></li>
-								<li><a href="https://www.superfaktura.sk/blog/superfaktura-a-woocommerce-faq/">FAQ</a></li>
+								<li>' . wp_kses(
+									sprintf(
+										// Translators: %s URL of the API log.
+										__( 'When a document is not created, the cause is in the <a href="%s">API log</a>.', 'woocommerce-superfaktura' ),
+										esc_url( admin_url( 'admin.php?page=wc-settings&tab=superfaktura&section=api_log' ) )
+									),
+									array( 'a' => array( 'href' => array() ) )
+								) . '</li>
+								<li>' . sprintf(
+									// Translators: %s Link to the setup wizard.
+									esc_html__( 'To go through the settings step by step: %s.', 'woocommerce-superfaktura' ),
+									'<a href="' . esc_url( WC_SF_Setup_Wizard::get_url() ) . '">' . esc_html__( 'Start the setup wizard', 'woocommerce-superfaktura' ) . '</a>'
+								) . '</li>
+								<li>' . sprintf(
+									// Translators: %s E-mail address of the support.
+									esc_html__( 'If that does not help, write to %s and paste the information for support from below.', 'woocommerce-superfaktura' ),
+									'<a href="mailto:superfaktura@2day.sk">superfaktura@2day.sk</a>'
+								) . '</li>
 							</ul>
-
-							<h3>SuperFaktura.cz</h3>
-							<ul style="padding-left: 1em; list-style-type: disc;">
-								<li><a href="https://www.superfaktura.cz/blog/superfaktura-a-woocommerce-dil-1-instalace-a-autorizace/">Díl 1. – Instalace a autorizace</a></li>
-								<li><a href="https://www.superfaktura.cz/blog/superfaktura-a-woocommerce-dil-2-vytvareni-faktur/">Díl 2. – Vytváření faktur</a></li>
-								<li><a href="https://www.superfaktura.cz/blog/superfaktura-a-woocommerce-dil-3-cislovani-dokladu/">Díl 3. – Číslování dokladů</a></li>
-								<li><a href="https://www.superfaktura.cz/blog/superfaktura-a-woocommerce-dil-4-pokrocila-nastaveni/">Díl 4. – Pokročilá nastavení</a></li>
-								<li><a href="https://www.superfaktura.cz/blog/superfaktura-a-woocommerce-dil-5-platby-doprava-pokladny-a-eet/">Díl 5. – Platby, doprava, pokladny a EET</a></li>
-								<li><a href="https://www.superfaktura.cz/blog/superfaktura-a-woocommerce-faq/">FAQ</a></li>
-							</ul>
-
-							<hr>
-							<p>' . __( 'Do you have a technical issue with the plugin? Contact us at <a href="mailto:superfaktura@2day.sk">superfaktura@2day.sk</a>', 'woocommerce-superfaktura' ) . '</p>
 						',
 						'id'    => 'woocommerce_sf_invoice_title99',
+					),
+					array(
+						'type' => 'wc_sf_support_info',
+						'id'   => 'woocommerce_sf_support_info',
 					),
 					array(
 						'type' => 'sectionend',
@@ -1563,6 +1627,13 @@ class WC_SF_Settings extends WC_Settings_Page {
 					),
 				);
 
+				/**
+				 * Filters the settings fields of the Help section of the plugin settings.
+				 *
+				 * @since 1.9.56
+				 *
+				 * @param array $settings Settings fields in the WooCommerce settings API format.
+				 */
 				$settings = apply_filters( 'superfaktura_help_settings', $settings );
 				break;
 
@@ -1638,6 +1709,11 @@ class WC_SF_Settings extends WC_Settings_Page {
 					),
 				);
 
+				/**
+				 * Filters the settings fields of the Authorization section of the plugin settings.
+				 *
+				 * @param array $settings Settings fields in the WooCommerce settings API format.
+				 */
 				$settings = apply_filters( 'superfaktura_authorization_settings', $settings );
 				break;
 		}
@@ -1712,6 +1788,15 @@ class WC_SF_Settings extends WC_Settings_Page {
 
 		if ($this->notice) {
 			echo wp_kses( '<div class="sf-notice-error">' . $this->notice . '</div>', $this->allowed_tags );
+		}
+
+		if ( '' === $current_section && $this->wc_sf->setup_wizard ) {
+			echo wp_kses( $this->wc_sf->setup_wizard->get_settings_notice(), $this->allowed_tags );
+		}
+
+		// The Help section has nothing to save.
+		if ( 'help' === $current_section ) {
+			$GLOBALS['hide_save_button'] = true;
 		}
 
 		if ( 'tools' === $current_section ) {

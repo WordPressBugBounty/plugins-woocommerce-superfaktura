@@ -1151,13 +1151,6 @@ msgstr ""
 "Další informace o pluginu a jeho nastaveních naleznete v článcích na blogu "
 "SuperFaktury."
 
-#: includes/class-wc-sf-settings.php:1405
-msgid ""
-"Do you have a technical issue with the plugin? Contact us at <a "
-"href=\"mailto:superfaktura@2day.sk\">superfaktura@2day.sk</a>"
-msgstr ""
-"Máte technický problém s pluginem? Kontaktujte nás na <a "
-"href=\"mailto:superfaktura@2day.sk\">superfaktura@2day.sk</a>"
 
 #: includes/class-wc-sf-settings.php:1424
 msgid ""
@@ -1773,3 +1766,928 @@ msgstr "Platí pro doklady vytvořené nyní."
 #: includes/class-wc-sf-admin.php
 msgid "WooCommerce sets the tax country by the \"Calculate tax based on\" setting, for local pickup usually by the shop's address."
 msgstr "WooCommerce určuje zemi zdanění podle nastavení „Spočítat daň v závislosti na“, u místního vyzvednutí obvykle podle adresy obchodu."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "SuperFaktúra WooCommerce"
+msgstr "SuperFaktura WooCommerce"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Connect your shop to SuperFaktúra. The setup wizard recommends settings for your payment and shipping methods, it takes about 5 minutes."
+msgstr "Propojte obchod se SuperFakturou. Průvodce nastavením doporučí nastavení pro vaše způsoby platby a dopravy, zabere to asi 5 minut."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Start the setup wizard"
+msgstr "Spustit průvodce nastavením"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "The setup wizard connects your shop to SuperFaktúra and recommends settings for your payment and shipping methods."
+msgstr "Průvodce nastavením propojí obchod se SuperFakturou a doporučí nastavení pro vaše způsoby platby a dopravy."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "The invoice is created when the order is shipped, so it matches what was actually sent."
+msgstr "Faktura se vystaví při vyřízení objednávky, aby odpovídala tomu, co skutečně odešlo."
+
+#. translators: %s: order status name.
+#: includes/class-wc-sf-setup-wizard.php
+#, php-format
+msgid "It is created as paid, because the setting \"Set invoice as paid in these order statuses\" contains %s."
+msgstr "Vytvoří se jako uhrazená, protože nastavení „Označit fakturu jako uhrazenou v těchto stavech objednávky“ obsahuje stav %s."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "We do not recognize this payment method, so no document is created automatically. You can create documents from the order, or choose when to create them here."
+msgstr "Tento způsob platby neznáme, proto se doklad nevytvoří automaticky. Doklady můžete vytvořit v objednávce nebo zde vybrat, kdy se mají vytvořit."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "SuperFaktúra setup wizard"
+msgstr "Průvodce nastavením SuperFaktury"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Sorry, you are not allowed to access this page."
+msgstr "K přístupu na tuto stránku nemáte oprávnění."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Verifying…"
+msgstr "Ověřuji…"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Loading data from SuperFaktúra…"
+msgstr "Načítám údaje ze SuperFaktury…"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Saving…"
+msgstr "Ukládám…"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "The request failed. Check your internet connection and try again."
+msgstr "Požadavek selhal. Zkontrolujte připojení k internetu a zkuste to znovu."
+
+#. translators: %s: name of the default item in SuperFaktúra.
+#: includes/class-wc-sf-setup-wizard.php
+#, php-format
+msgid "Default in SuperFaktúra (%s)"
+msgstr "Výchozí v SuperFaktuře (%s)"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Default in SuperFaktúra"
+msgstr "Výchozí v SuperFaktuře"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Changed"
+msgstr "Změněno"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Recommended"
+msgstr "Doporučeno"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Back"
+msgstr "Zpět"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Connection"
+msgstr "Připojení"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Documents"
+msgstr "Doklady"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Payments"
+msgstr "Platby"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Checkout and emails"
+msgstr "Pokladna a e-maily"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Summary"
+msgstr "Souhrn"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Setup wizard"
+msgstr "Průvodce nastavením"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Skip and set up manually"
+msgstr "Přeskočit a nastavit ručně"
+
+#. translators: %d: step number.
+#: includes/class-wc-sf-setup-wizard.php
+#, php-format
+msgid "Step %d"
+msgstr "Krok %d"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Set up invoicing for your shop"
+msgstr "Nastavme fakturaci pro váš obchod"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "The wizard connects your shop to SuperFaktúra and recommends settings for your payment and shipping methods. It takes about 5 minutes. Nothing is saved until you confirm the summary at the end."
+msgstr "Průvodce propojí obchod se SuperFakturou a doporučí nastavení pro vaše způsoby platby a dopravy. Trvá to asi 5 minut. Nic se neuloží, dokud na konci nepotvrdíte souhrn."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Connection."
+msgstr "Připojení."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "E-mail and API key from SuperFaktúra, choice of company."
+msgstr "E-mail a API klíč ze SuperFaktury, výběr firmy."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Documents."
+msgstr "Doklady."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Checkout and emails."
+msgstr "Pokladna a e-maily."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Company details at checkout, VAT number, OSS and the invoice in emails."
+msgstr "Údaje firmy v pokladně, DIČ, OSS a faktura v e-mailech."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "You can leave at any time, nothing is saved until the end."
+msgstr "Průvodce můžete kdykoli opustit, do konce se nic neuloží."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Start"
+msgstr "Začít"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Slovakia"
+msgstr "Slovensko"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Czech Republic"
+msgstr "Česko"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Austria"
+msgstr "Rakousko"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Connection to SuperFaktúra"
+msgstr "Připojení k SuperFaktuře"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "The plugin connects to your account through the API. You can find the details in SuperFaktúra under Tools > API."
+msgstr "Plugin se k vašemu účtu připojuje přes API. Údaje najdete v SuperFaktuře v části Nástroje > API."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Account"
+msgstr "Účet"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Where is your SuperFaktúra account?"
+msgstr "Kde máte účet v SuperFaktuře?"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "API e-mail"
+msgstr "API e-mail"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "API key"
+msgstr "API klíč"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Saved key stays unchanged"
+msgstr "Uložený klíč zůstane beze změny"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "For testing only. Use a test account from sandbox.superfaktura.sk or sandbox.superfaktura.cz, documents are not created in your real account."
+msgstr "Jen pro testování. Použijte testovací účet ze sandbox.superfaktura.sk nebo sandbox.superfaktura.cz, doklady nevznikají ve vašem ostrém účtu."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Needed when the account has several companies and its default company has no active subscription. You can find it in SuperFaktúra under Tools > API, in the company you want to use."
+msgstr "Potřebné, pokud má účet více firem a jeho výchozí firma nemá aktivní předplatné. Najdete ho v SuperFaktuře v části Nástroje > API ve firmě, kterou chcete použít."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Verify connection"
+msgstr "Ověřit připojení"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Connected to SuperFaktúra."
+msgstr "Připojeno k SuperFaktuře."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Choose the company that should receive the documents from this shop."
+msgstr "Vyberte firmu, do které mají přicházet doklady z tohoto obchodu."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Company"
+msgstr "Firma"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "If you run several shops in different companies, each shop uses its own company."
+msgstr "Pokud máte více eshopů v různých firmách, každý eshop používá svou firmu."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Verify the connection to continue."
+msgstr "Pokračovat můžete po ověření připojení."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Current setting"
+msgstr "Aktuální nastavení"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "These items were loaded from your company in SuperFaktúra. Choose which ones the documents from the shop use."
+msgstr "Tyto údaje jsme načetli z vaší firmy v SuperFaktuře. Vyberte, které se mají použít na dokladech z obchodu."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Invoice number sequence"
+msgstr "Číselník faktur"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Proforma invoices"
+msgstr "Zálohové faktury"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Proforma invoice number sequence"
+msgstr "Číselník zálohových faktur"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Credit notes"
+msgstr "Dobropisy"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Credit note number sequence"
+msgstr "Číselník dobropisů"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Logo"
+msgstr "Logo"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Bank account"
+msgstr "Bankovní účet"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Bank account on invoices"
+msgstr "Bankovní účet na fakturách"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Customers send payments for proforma invoices to this account. For automatic pairing, the account must be connected in SuperFaktúra."
+msgstr "Na tento účet budou zákazníci posílat platby za zálohové faktury. Pro automatické párování musí být účet připojený v SuperFaktuře."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "A customer from the Czech Republic gets the invoice in Czech, from Austria in German. For countries whose language SuperFaktúra does not support, the fallback language from the settings is used."
+msgstr "Zákazník z Česka dostane fakturu česky, z Rakouska německy. Pro země, jejichž jazyk SuperFaktura nemá, se použije náhradní jazyk z nastavení."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Proforma invoice, then invoice"
+msgstr "Zálohová faktura, potom faktura"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Manually only"
+msgstr "Jen ručně"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "For each payment method enabled in your shop, we recommend which document to create and when. You can change the recommendation."
+msgstr "U každého způsobu platby zapnutého v obchodě doporučujeme, jaký doklad a kdy vystavit. Doporučení můžete změnit."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "No payment method is enabled in your shop. Enable them in WooCommerce > Settings > Payments and set up the documents later in the plugin settings."
+msgstr "V obchodě není zapnutý žádný způsob platby. Zapněte je ve WooCommerce > Nastavení > Platby a doklady nastavte později v nastavení pluginu."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Document"
+msgstr "Doklad"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Create the proforma invoice in status"
+msgstr "Zálohovou fakturu vystavit ve stavu"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Create the invoice in status"
+msgstr "Fakturu vystavit ve stavu"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Payment type in SuperFaktúra"
+msgstr "Způsob platby v SuperFaktuře"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Create the invoice as paid"
+msgstr "Vytvořit fakturu jako uhrazenou"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Why:"
+msgstr "Proč:"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Automatic pairing of bank transfers"
+msgstr "Automatické párování plateb převodem"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "When SuperFaktúra pairs a payment with the proforma invoice, it notifies the shop and the order is marked as paid. For this, enter these two values in SuperFaktúra once."
+msgstr "Když SuperFaktura spáruje platbu se zálohovou fakturou, dá vědět obchodu a objednávka se označí jako zaplacená. K tomu je potřeba jednou vložit tyto dva údaje do SuperFaktury."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Callback URL"
+msgstr "Callback URL"
+
+#. translators: %1$s: link to SuperFaktúra settings, %2$s: field name, %3$s: field name.
+#: includes/class-wc-sf-setup-wizard.php
+#, php-format
+msgid "In SuperFaktúra, in the company you selected, open %1$s and enter them in the fields %2$s and %3$s."
+msgstr "V SuperFaktuře ve vybrané firmě otevřete %1$s a vložte je do polí %2$s a %3$s."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "the settings"
+msgstr "nastavení"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Callback for payment"
+msgstr "Callback při úhradách plateb"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "This is set up in SuperFaktúra"
+msgstr "V SuperFaktuře je to nastavené"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "If you do it later, the summary reminds you."
+msgstr "Pokud to uděláte později, připomeneme vám to v souhrnu."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Recognized as personal pickup."
+msgstr "Rozpoznáno jako osobní odběr."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Recognized as delivery to a pickup point or parcel locker."
+msgstr "Rozpoznáno jako doručení na výdejní místo nebo do boxu."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Recognized as delivery by courier."
+msgstr "Rozpoznáno jako doručení kurýrem."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Recognized as delivery by post."
+msgstr "Rozpoznáno jako doručení poštou."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "The delivery method appears on the invoice. We recommend it based on the shipping methods in your shop."
+msgstr "Způsob doručení se zobrazí na faktuře. Navrhujeme ho podle způsobů dopravy v obchodě."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "On the invoice"
+msgstr "Na faktuře"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Shipping item name"
+msgstr "Název poštovného"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Shipping item name on the invoice"
+msgstr "Název poštovného na faktuře"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "If it applies to you"
+msgstr "Pokud se vás týká"
+
+#. translators: %d: number of countries.
+#: includes/class-wc-sf-setup-wizard.php
+#, php-format
+msgid "Your shop also sells to %d other EU countries. Invoices to private customers there are created in the OSS scheme. Enable only if you are registered for OSS, or check with your accountant."
+msgstr "Obchod prodává i do %d dalších zemí EU. Faktury soukromým osobám v nich se vystaví v režimu OSS. Zapněte jen tehdy, pokud jste registrováni k OSS, případně to ověřte s účetním."
+
+#. translators: %s: list of countries.
+#: includes/class-wc-sf-setup-wizard.php
+#, php-format
+msgid "Your shop also sells to %s. Invoices to private customers there are created in the OSS scheme. Enable only if you are registered for OSS, or check with your accountant."
+msgstr "Obchod prodává i do zemí: %s. Faktury soukromým osobám v nich se vystaví v režimu OSS. Zapněte jen tehdy, pokud jste registrováni k OSS, případně to ověřte s účetním."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "What customers fill in at checkout and what they receive with the order."
+msgstr "Co zákazníci vyplní v pokladně a co dostanou s objednávkou."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Company details at checkout"
+msgstr "Údaje firmy v pokladně"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "The \"Buy as Business client\" checkbox with the company ID, tax ID and VAT number fields. The details appear on the invoice."
+msgstr "Políčko „Fakturovat na firmu“ a pole IČO a DIČ. Údaje se přenesou na fakturu."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Validate the VAT number in VIES"
+msgstr "Ověřovat DIČ ve VIES"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "No VAT for EU businesses with a valid VAT number"
+msgstr "Bez DPH pro firmy z EU s platným DIČ"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Reverse charge. Enable if you sell to businesses in other EU countries and you are a VAT payer."
+msgstr "Přenesení daňové povinnosti. Zapněte, pokud prodáváte firmám v jiných zemích EU a jste plátce DPH."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "OSS for sales to private customers in other EU countries"
+msgstr "OSS pro prodej soukromým osobám v jiných zemích EU"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Emails and order page"
+msgstr "E-maily a stránka objednávky"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Invoice as a PDF attachment"
+msgstr "Faktura jako PDF příloha"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "The document is attached to the emails the customer receives from the shop."
+msgstr "Doklad se přiloží k e-mailům, které zákazník dostane z obchodu."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Invoice link after the order"
+msgstr "Odkaz na fakturu po objednávce"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "On the \"Order received\" page."
+msgstr "Na stránce „Objednávka přijata“."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "QR code for payment on the invoice"
+msgstr "QR kód pro platbu na faktuře"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "The customer pays a proforma invoice by scanning the code in their banking app."
+msgstr "Zákazník zaplatí zálohovou fakturu naskenováním kódu v bankovní aplikaci."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "These settings will be saved. All other settings stay as they are, you can find them in WooCommerce > Settings > SuperFaktúra."
+msgstr "Tato nastavení se uloží. Ostatní nastavení zůstanou tak, jak jsou, najdete je ve WooCommerce > Nastavení > SuperFaktúra."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Automatic pairing is not set up in SuperFaktúra yet."
+msgstr "Automatické párování zatím není nastavené v SuperFaktuře."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Without it, orders paid by bank transfer are not marked as paid automatically. The details are in the Payments step."
+msgstr "Bez něj se objednávky zaplacené převodem samy neoznačí jako zaplacené. Údaje najdete v kroku Platby."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Download a backup of the current settings"
+msgstr "Stáhnout zálohu aktuálního nastavení"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Save settings"
+msgstr "Uložit nastavení"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Edit"
+msgstr "Upravit"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Done, invoicing is set up"
+msgstr "Hotovo, fakturace je nastavená"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "The next order gets its documents according to these settings."
+msgstr "Další objednávka už dostane doklady podle tohoto nastavení."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "What we recommend next"
+msgstr "Co ještě doporučujeme"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Set up automatic pairing in SuperFaktúra."
+msgstr "Nastavte automatické párování v SuperFaktuře."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Enter the Callback URL and Secret Key in the company settings, otherwise orders paid by bank transfer are not marked as paid automatically. You can find them in the plugin settings under Integration."
+msgstr "Vložte Callback URL a Secret Key do nastavení firmy, jinak se objednávky zaplacené převodem samy neoznačí jako zaplacené. Najdete je v nastavení pluginu v části Integrace."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Try one order."
+msgstr "Vyzkoušejte jednu objednávku."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Ideally with the payment method your customers use most. You can see the result in the order under Invoices and in the API log."
+msgstr "Nejlépe se způsobem platby, který zákazníci používají nejčastěji. Výsledek uvidíte v objednávce v části Faktury a v API logu."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Go through the other settings."
+msgstr "Projděte si další nastavení."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Accounting, cash registers and more options are in the plugin settings."
+msgstr "Účetnictví, pokladny a další možnosti najdete v nastavení pluginu."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Open the plugin settings"
+msgstr "Otevřít nastavení pluginu"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Sorry, you are not allowed to do this."
+msgstr "K této akci nemáte oprávnění."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Fill in the API e-mail and API key."
+msgstr "Vyplňte API e-mail a API klíč."
+
+#: includes/class-wc-sf-tools.php
+msgid "Goes through the connection, documents, payments, shipping and checkout, and recommends settings for your payment and shipping methods. It shows the current settings and saves only what you confirm in the summary."
+msgstr "Provede vás připojením, doklady, platbami, dopravou a pokladnou a doporučí nastavení pro vaše způsoby platby a dopravy. Zobrazí aktuální nastavení a uloží jen to, co potvrdíte v souhrnu."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "An invalid VAT number is not accepted."
+msgstr "Neplatné DIČ se nepřijme."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "When the VIES service is unavailable, the order goes through."
+msgstr "Pokud služba VIES není dostupná, objednávka projde."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "By customer country"
+msgstr "Podle země zákazníka"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Check automatic pairing in SuperFaktúra."
+msgstr "Zkontrolujte automatické párování v SuperFaktuře."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Check that automatic pairing is set up in SuperFaktúra."
+msgstr "Zkontrolujte, zda je v SuperFaktuře nastavené automatické párování."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Choose a company"
+msgstr "Vyberte firmu"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Close the wizard"
+msgstr "Zavřít průvodce"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Copy the Callback URL"
+msgstr "Kopírovat Callback URL"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Copy the Secret Key"
+msgstr "Kopírovat Secret Key"
+
+#. translators: %s: ID of an item in SuperFaktúra.
+#: includes/class-wc-sf-setup-wizard.php
+#, php-format
+msgid "Current setting (ID %s)"
+msgstr "Aktuální nastavení (ID %s)"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Default language of SuperFaktúra"
+msgstr "Výchozí jazyk SuperFaktury"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Documents are created in the test account. Before you start selling, turn the sandbox off in the plugin settings."
+msgstr "Doklady se vytvářejí v testovacím účtu. Než začnete prodávat, vypněte sandbox v nastavení pluginu."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Don't specify"
+msgstr "Neuvádět"
+
+#. translators: %s: link to the API page in SuperFaktúra.
+#: includes/class-wc-sf-setup-wizard.php
+#, php-format
+msgid "In SuperFaktúra under %s."
+msgstr "V SuperFaktuře v části %s."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Leave the wizard? Your choices will not be saved."
+msgstr "Opustit průvodce? Vaše volby se neuloží."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Proforma invoice only"
+msgstr "Jen zálohová faktura"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Site language, otherwise the default language of SuperFaktúra"
+msgstr "Jazyk webu, jinak výchozí jazyk SuperFaktury"
+
+#. translators: %1$d: step number, %2$d: number of steps, %3$s: step title.
+#: includes/class-wc-sf-setup-wizard.php
+#, php-format
+msgid "Step %1$d of %2$d: %3$s"
+msgstr "Krok %1$d z %2$d: %3$s"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "SuperFaktúra did not accept the request. Check the e-mail, the API key, the account country and the Sandbox setting."
+msgstr "SuperFaktura požadavek nepřijala. Zkontrolujte e-mail, API klíč, zemi účtu a nastavení Sandbox."
+
+#. translators: %s: order status name.
+#: includes/class-wc-sf-setup-wizard.php
+#, php-format
+msgid "The customer pays after placing the order. The proforma invoice gives them the payment details and SuperFaktúra pairs the incoming payment with it. With automatic pairing set up, the plugin then changes the order status to %s and creates the invoice."
+msgstr "Zákazník platí až po objednávce. Ze zálohové faktury má údaje k platbě a SuperFaktura s ní přijatou platbu spáruje. Když je automatické párování nastavené, plugin pak změní stav objednávky na %s a vystaví fakturu."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "The page has been open for too long. Reload it and try again."
+msgstr "Stránka je otevřená příliš dlouho. Obnovte ji a zkuste to znovu."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "The payment and delivery types could not be loaded from SuperFaktúra."
+msgstr "Způsoby platby a doručení se ze SuperFaktury nepodařilo načíst."
+
+#. translators: %s: order status name.
+#: includes/class-wc-sf-setup-wizard.php
+#, php-format
+msgid "The payment is made during checkout. The invoice is created when the paid order changes to %s, and it is marked as paid."
+msgstr "Platba proběhne už při objednávce. Faktura se vystaví, když se zaplacená objednávka změní na stav %s, a rovnou jako uhrazená."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "The plugin is already set up. Settings that will change are marked. If you might need the current settings again, download a backup first."
+msgstr "Plugin je už nastavený. Nastavení, která se změní, jsou označena. Pokud budete aktuální nastavení ještě potřebovat, nejprve si stáhněte zálohu."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "The proforma invoice and the invoice would be created in the same status."
+msgstr "Zálohová faktura i faktura by vznikly ve stejném stavu."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "The sandbox is on."
+msgstr "Sandbox je zapnutý."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Tools > API"
+msgstr "Nástroje > API"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Try again"
+msgstr "Zkusit znovu"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Use the recommendation"
+msgstr "Použít doporučení"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Verify again"
+msgstr "Ověřit znovu"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "We could not recognize this method. Choose which delivery type the invoice states. The shipping price is on the invoice either way."
+msgstr "Tento způsob jsme nerozpoznali. Vyberte, jaký způsob doručení bude uvedený na faktuře. Cena dopravy je na faktuře v každém případě."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "We recommend:"
+msgstr "Doporučujeme:"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Wizard steps"
+msgstr "Kroky průvodce"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Works only with the VAT number validation in VIES turned on."
+msgstr "Funguje jen se zapnutým ověřováním DIČ ve VIES."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Your shop does not sell to other EU countries, so OSS is not needed."
+msgstr "Obchod neprodává do jiných zemí EU, OSS proto není potřeba."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Your shop has no enabled shipping methods. You can add them in WooCommerce > Settings > Shipping and set them up later in the plugin settings."
+msgstr "Obchod nemá zapnuté žádné způsoby dopravy. Můžete je přidat ve WooCommerce > Nastavení > Doprava a nastavit později v nastavení pluginu."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "as paid"
+msgstr "jako uhrazená"
+
+#. translators: %s: order status name.
+#: includes/class-wc-sf-setup-wizard.php
+#, php-format
+msgid "invoice at %s"
+msgstr "faktura při stavu %s"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "manually only"
+msgstr "jen ručně"
+
+#. translators: %s: payment type in SuperFaktúra.
+#: includes/class-wc-sf-setup-wizard.php
+#, php-format
+msgid "payment type %s"
+msgstr "způsob platby %s"
+
+#. translators: %s: order status name.
+#: includes/class-wc-sf-setup-wizard.php
+#, php-format
+msgid "proforma invoice at %s"
+msgstr "zálohová faktura při stavu %s"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "The Secret Key is not set yet. You can create it in the plugin settings under Integration."
+msgstr "Secret Key zatím není nastavený. Vytvořit ho můžete v nastavení pluginu v části Integrace."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Choose a company to continue."
+msgstr "Pokračovat můžete po výběru firmy."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "New key"
+msgstr "Nový klíč"
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Number sequences, logo and bank account from SuperFaktúra, and the invoice language."
+msgstr "Číselníky, logo a bankovní účet ze SuperFaktury a jazyk faktur."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Payments."
+msgstr "Platby."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Shipping."
+msgstr "Doprava."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "When to create an invoice or a proforma invoice for each payment method."
+msgstr "Kdy vystavit fakturu nebo zálohovou fakturu u každého způsobu platby."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Which delivery type the invoice states for each shipping method."
+msgstr "Jaký způsob doručení bude na faktuře u každého způsobu dopravy."
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Creating documents manually in orders"
+msgstr "Ruční vytváření dokladů v objednávkách"
+
+#: includes/class-wc-sf-settings.php
+msgid "Features"
+msgstr "Funkce"
+
+#: includes/class-wc-sf-settings.php
+msgid "Support and frequently asked questions"
+msgstr "Podpora a časté dotazy"
+
+#: includes/class-wc-sf-settings.php
+msgid "News about new versions"
+msgstr "Novinky v nových verzích"
+
+#: includes/class-wc-sf-settings.php
+msgid "Changelog"
+msgstr "Seznam změn"
+
+#: includes/class-wc-sf-settings.php
+msgid "For developers: filters and actions"
+msgstr "Pro vývojáře: filtry a akce"
+
+#: includes/class-wc-sf-settings.php
+msgid "Features, answers to frequently asked questions and news about the plugin are on its website."
+msgstr "Funkce, odpovědi na časté dotazy a novinky o pluginu najdete na jeho webu."
+
+#: includes/class-wc-sf-settings.php
+msgid "When something does not work"
+msgstr "Když něco nefunguje"
+
+#: includes/class-wc-sf-settings.php
+#, php-format
+msgid "When a document is not created, the cause is in the <a href=\"%s\">API log</a>."
+msgstr "Když doklad nevznikne, příčinu najdete v <a href=\"%s\">API logu</a>."
+
+#: includes/class-wc-sf-settings.php
+#, php-format
+msgid "To go through the settings step by step: %s."
+msgstr "Nastavením projdete krok za krokem s průvodcem: %s."
+
+#: includes/class-wc-sf-support-info.php
+msgid "yes"
+msgstr "ano"
+
+#: includes/class-wc-sf-support-info.php
+msgid "no"
+msgstr "ne"
+
+#: includes/class-wc-sf-support-info.php
+msgid "filled in"
+msgstr "vyplněno"
+
+#: includes/class-wc-sf-support-info.php
+msgid "empty"
+msgstr "prázdné"
+
+#: includes/class-wc-sf-support-info.php
+#, php-format
+msgid "Site: %s"
+msgstr "Web: %s"
+
+#: includes/class-wc-sf-support-info.php
+#, php-format
+msgid "SuperFaktúra: %1$s, sandbox %2$s, API e-mail and key %3$s, Company ID %4$s"
+msgstr "SuperFaktura: %1$s, sandbox %2$s, API e-mail a klíč %3$s, Company ID %4$s"
+
+#: includes/class-wc-sf-support-info.php
+msgid "tax based on billing address"
+msgstr "daň podle fakturační adresy"
+
+#: includes/class-wc-sf-support-info.php
+msgid "tax based on shipping address"
+msgstr "daň podle dodací adresy"
+
+#: includes/class-wc-sf-support-info.php
+msgid "tax based on store address"
+msgstr "daň podle adresy obchodu"
+
+#: includes/class-wc-sf-support-info.php
+#, php-format
+msgid "Store: country %1$s, currency %2$s, %3$s, OSS %4$s"
+msgstr "Obchod: země %1$s, měna %2$s, %3$s, OSS %4$s"
+
+#: includes/class-wc-sf-support-info.php
+msgid "taxes off"
+msgstr "daně vypnuté"
+
+#: includes/class-wc-sf-support-info.php
+msgid "on"
+msgstr "zapnuto"
+
+#: includes/class-wc-sf-support-info.php
+msgid "off"
+msgstr "vypnuto"
+
+#: includes/class-wc-sf-support-info.php
+#, php-format
+msgid "Orders: HPOS %1$s, %2$s"
+msgstr "Objednávky: HPOS %1$s, %2$s"
+
+#: includes/class-wc-sf-support-info.php
+#, php-format
+msgid "Payment pairing: %1$s, statuses %2$s"
+msgstr "Párování plateb: %1$s, stavy %2$s"
+
+#: includes/class-wc-sf-support-info.php
+msgid "none"
+msgstr "žádné"
+
+#: includes/class-wc-sf-support-info.php
+#, php-format
+msgid "Plugins: %s"
+msgstr "Pluginy: %s"
+
+#: includes/class-wc-sf-support-info.php
+#, php-format
+msgid "MU plugins: %s"
+msgstr "MU pluginy: %s"
+
+#: includes/class-wc-sf-support-info.php
+#, php-format
+msgid "Theme: %s"
+msgstr "Šablona: %s"
+
+#: includes/class-wc-sf-support-info.php
+#, php-format
+msgid "child theme of %s"
+msgstr "podřízená šablona %s"
+
+#: includes/class-wc-sf-support-info.php
+#, php-format
+msgid "Site language %1$s, time zone %2$s"
+msgstr "Jazyk webu %1$s, časové pásmo %2$s"
+
+#: includes/class-wc-sf-support-info.php
+msgid "Information for support"
+msgstr "Údaje pro podporu"
+
+
+#: includes/class-wc-sf-support-info.php
+msgid "Copied."
+msgstr "Zkopírováno."
+
+#: includes/class-wc-sf-support-info.php
+msgid "Select the text and copy it with Ctrl+C or Cmd+C."
+msgstr "Označte text a zkopírujte ho klávesami Ctrl+C nebo Cmd+C."
+
+#: includes/class-wc-sf-support-info.php
+msgid "block checkout"
+msgstr "bloková pokladna"
+
+#: includes/class-wc-sf-support-info.php
+msgid "classic checkout"
+msgstr "klasická pokladna"
+
+#: includes/class-wc-sf-support-info.php
+msgid "other checkout"
+msgstr "jiná pokladna"
+
+#: includes/class-wc-sf-support-info.php
+msgid "checkout page not set"
+msgstr "stránka pokladny není nastavena"
+
+#: includes/class-wc-sf-support-info.php
+#, php-format
+msgid "Failed documents in the last %d days: none"
+msgstr "Neúspěšné doklady za posledních %d dní: žádné"
+
+#: includes/class-wc-sf-support-info.php
+#, php-format
+msgid "Failed documents in the last %1$d days: %2$s, newest %3$s, order ID %4$s: %5$s %6$s"
+msgstr "Neúspěšné doklady za posledních %1$d dní: %2$s, nejnovější %3$s, ID objednávky %4$s: %5$s %6$s"
+
+#: includes/class-wc-sf-support-info.php
+msgid "Secret Key filled in"
+msgstr "Secret Key vyplněný"
+
+#: includes/class-wc-sf-support-info.php
+msgid "Secret Key empty"
+msgstr "Secret Key prázdný"
+
+#: includes/class-wc-sf-support-info.php
+#, php-format
+msgid "It contains no API credentials. When we need the settings in detail, we will ask for an export from <a href=\"%s\">Tools</a>."
+msgstr "Neobsahují přístupové údaje k API. Když budeme potřebovat podrobné nastavení, požádáme vás o export z části <a href=\"%s\">Nástroje</a>."
+
+#: includes/class-wc-sf-settings.php
+#, php-format
+msgid "If that does not help, write to %s and paste the information for support from below."
+msgstr "Pokud to nepomůže, napište na %s a do e-mailu vložte údaje pro podporu níže."

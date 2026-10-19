@@ -4,7 +4,7 @@ Tags: superfaktura, invoice, faktura, proforma, woocommerce
 Requires at least: 4.4
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.58.0
+Stable tag: 1.59.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -16,9 +16,7 @@ SuperFaktura extension for WooCommerce enables you to create invoices using thir
 
 SuperFaktura is an online invoicing system for small business owners available in Slovakia ([superfaktura.sk](http://www.superfaktura.sk/)) and Czech Republic ([superfaktura.cz](http://www.superfaktura.cz/)).
 
-For more information about the plugin and its settings check the articles on SuperFaktura blog:
-[SuperFaktúra a WooCommerce: Diel 1. – Inštalácia a autorizácia](https://www.superfaktura.sk/blog/superfaktura-a-woocommerce-diel-1-instalacia-a-autorizacia/)
-[SuperFaktura a WooCommerce: Díl 1. – Instalace a autorizace](https://www.superfaktura.cz/blog/superfaktura-a-woocommerce-dil-1-instalace-a-autorizace/)
+Features, answers to frequently asked questions and news about the plugin (in Slovak) are on its website [superfaktura.2day.sk](https://superfaktura.2day.sk/).
 
 Main features of SuperFaktura WooCommerce include:
 
@@ -81,130 +79,140 @@ You can read more about SuperFaktura API integration at [superfaktura.sk/api](ht
 
 == Changelog ==
 
-= 1.58.0 =
-* Pri zapnutom OSS objednávka pod fakturačnou adresou ukazuje, či sa doklad vystaví v režime OSS a prečo.
-* Dôležité oznamy o SuperFaktúre a plugine, napríklad o eFaktúre, priamo v administrácii.
+= 1.59.2 (2026-10-19) =
+* Zmena: Časť Pomoc v nastaveniach pluginu odkazuje na web pluginu superfaktura.2day.sk s funkciami, častými otázkami a novinkami a obsahuje údaje pre podporu na skopírovanie do e-mailu.
 
-= 1.57.0 =
-* Nastavenie Stavy objednávky pre automatické párovanie: úhrada spárovaná v SuperFaktúre označí objednávku ako zaplatenú aj v ďalších zvolených stavoch, nielen v stave Čaká na platbu. Predvolené správanie sa nemení.
-* Vysvetlenie častých chýb v API logu a v upozornení na neúspešné doklady. Nový filter sf_log_explanation.
-* Test API pripojenia je dostupný len pre správcov obchodu. Odkazy na vytvorenie a pregenerovanie dokladov v objednávke sú chránené pred zneužitím z iných stránok.
+= 1.59.1 (2026-10-19) =
+* Oprava: Príznak prenesenia daňovej povinnosti sa na faktúru dostane aj pri vypnutom nastavení Povoliť vlastné poznámky, napríklad na e-shope nastavenom len sprievodcom.
 
-= 1.56.1 =
-* Informácia o povinnej eFaktúre od 1. 1. 2027 a o tom, ako sa na ňu pripraviť so SuperFaktúrou. Upravený text a obrázok.
+= 1.59.0 (2026-10-19) =
+* Nové: Sprievodca nastavením po inštalácii prepojí obchod so SuperFaktúrou a odporučí nastavenia pre spôsoby platby a dopravy.
+* Oprava: Vynechanie položky filtrom sf_item_data (vrátením null alebo false) už nevypíše varovanie PHP.
 
-= 1.56.0 =
-* Informácia o eFaktúre, ktorá bude pre platiteľov DPH povinná od 1. 1. 2027, a o tom, ako sa na ňu pripraviť so SuperFaktúrou. Nový filter sf_show_efaktura_banner.
-* Upozornenie v administrácii, keď sa doklad nepodarilo vytvoriť alebo aktualizovať v SuperFaktúre, s odkazmi na objednávky a API log. Nový filter sf_admin_document_errors.
-* Jazyk faktúry podľa krajiny zákazníka, s nastaviteľným jazykom pre krajiny, ktorých jazyk SuperFaktúra nepodporuje. Nový filter sf_invoice_language_country_map.
+= 1.58.0 (2026-10-13) =
+* Nové: Pri zapnutom OSS objednávka pod fakturačnou adresou ukazuje, či sa doklad vystaví v režime OSS a prečo.
+* Nové: Dôležité oznamy o SuperFaktúre a plugine, napríklad o eFaktúre, priamo v administrácii.
 
-= 1.55.3 =
-* Príznak OSS sa určuje podľa krajiny, podľa ktorej WooCommerce vypočítal DPH (dodacia alebo fakturačná adresa podľa nastavení dane, pri osobnom odbere krajina obchodu), namiesto vždy podľa fakturačnej adresy. Nový filter sf_invoice_oss.
+= 1.57.0 (2026-10-08) =
+* Nové: Nastavenie Stavy objednávky pre automatické párovanie: úhrada spárovaná v SuperFaktúre označí objednávku ako zaplatenú aj v ďalších zvolených stavoch, nielen v stave Čaká na platbu. Predvolené správanie sa nemení.
+* Nové: Vysvetlenie častých chýb v API logu a v upozornení na neúspešné doklady. Nový filter sf_log_explanation.
+* Bezpečnosť: Test API pripojenia je dostupný len pre správcov obchodu. Odkazy na vytvorenie a pregenerovanie dokladov v objednávke sú chránené pred zneužitím z iných stránok.
 
-= 1.55.2 =
-* Opravená strata názvu firmy a firemných údajov v predplatnom (WooCommerce Subscriptions) po zaplatení zlyhanej obnovy cez pokladňu. Pri úhrade obnovy sa firemné údaje predvyplnia z predplatného.
-* Zmena fakturačnej adresy v Môj účet s voľbou aktualizovať predplatné prenesie do predplatných aj IČO, DIČ a IČ DPH.
-* Firemné údaje z blokovej pokladne sa ukladajú aj do profilu zákazníka a zobrazujú sa v Môj účet.
-* Obnovovacia objednávka s firemnými údajmi, ale bez názvu firmy, doplní názov z predplatného alebo pôvodnej objednávky.
+= 1.56.1 (2026-10-06) =
+* Zmena: Informácia o povinnej eFaktúre od 1. 1. 2027 a o tom, ako sa na ňu pripraviť so SuperFaktúrou. Upravený text a obrázok.
 
-= 1.55.1 =
-* PDF faktúra v prílohe emailu má rovnaký názov ako pri stiahnutí zo SuperFaktúry, namiesto interného ID dokladu.
-* Pridaný filter sf_invoice_attachment_filename pre nastavenie vlastného názvu.
+= 1.56.0 (2026-10-06) =
+* Nové: Informácia o eFaktúre, ktorá bude pre platiteľov DPH povinná od 1. 1. 2027, a o tom, ako sa na ňu pripraviť so SuperFaktúrou. Nový filter sf_show_efaktura_banner.
+* Nové: Upozornenie v administrácii, keď sa doklad nepodarilo vytvoriť alebo aktualizovať v SuperFaktúre, s odkazmi na objednávky a API log. Nový filter sf_admin_document_errors.
+* Nové: Jazyk faktúry podľa krajiny zákazníka, s nastaviteľným jazykom pre krajiny, ktorých jazyk SuperFaktúra nepodporuje. Nový filter sf_invoice_language_country_map.
 
-= 1.55.0 =
-* Pridaná možnosť export, import a reset nastavení pluginu
+= 1.55.3 (2026-09-29) =
+* Zmena: Príznak OSS sa určuje podľa krajiny, podľa ktorej WooCommerce vypočítal DPH (dodacia alebo fakturačná adresa podľa nastavení dane, pri osobnom odbere krajina obchodu), namiesto vždy podľa fakturačnej adresy. Nový filter sf_invoice_oss.
 
-= 1.54.1 =
-* Opravená chyba "Invalid API credentials" pri chýbajúcom Company ID v nastaveniach.
+= 1.55.2 (2026-09-25) =
+* Oprava: Strata názvu firmy a firemných údajov v predplatnom (WooCommerce Subscriptions) po zaplatení zlyhanej obnovy cez pokladňu. Pri úhrade obnovy sa firemné údaje predvyplnia z predplatného.
+* Oprava: Zmena fakturačnej adresy v Môj účet s voľbou aktualizovať predplatné prenesie do predplatných aj IČO, DIČ a IČ DPH.
+* Oprava: Firemné údaje z blokovej pokladne sa ukladajú aj do profilu zákazníka a zobrazujú sa v Môj účet.
+* Oprava: Obnovovacia objednávka s firemnými údajmi, ale bez názvu firmy, doplní názov z predplatného alebo pôvodnej objednávky.
 
-= 1.54.0 =
-* Pridané hromadné akcie v zozname objednávok: vystavenie faktúr, vystavenie zálohových faktúr a pregenerovanie existujúcich dokladov pre vybrané objednávky, so zobrazením priebehu spracovania.
+= 1.55.1 (2026-09-23) =
+* Zmena: PDF faktúra v prílohe e-mailu má rovnaký názov ako pri stiahnutí zo SuperFaktúry, namiesto interného ID dokladu.
+* Nové: Filter sf_invoice_attachment_filename pre nastavenie vlastného názvu.
 
-= 1.53.8 =
+= 1.55.0 (2026-09-14) =
+* Nové: Export, import a reset nastavení pluginu.
+
+= 1.54.1 (2026-09-11) =
+* Oprava: Chyba "Invalid API credentials" pri chýbajúcom Company ID v nastaveniach.
+
+= 1.54.0 (2026-09-08) =
+* Nové: Hromadné akcie v zozname objednávok: vystavenie faktúr, vystavenie zálohových faktúr a pregenerovanie existujúcich dokladov pre vybrané objednávky, so zobrazením priebehu spracovania.
+
+= 1.53.8 (2026-08-19) =
 * Opravené duplicitné zobrazenie firemných údajov v e-mailoch objednávky pri blokovej pokladni.
 
-= 1.53.7 =
+= 1.53.7 (2026-07-23) =
 * Opravené ukladanie firemných údajov pri úprave WooCommerce Subscriptions predplatného v administrácii.
 * Opravené upozornenie _load_textdomain_just_in_time (WordPress 6.7+).
 
-= 1.53.6 =
+= 1.53.6 (2026-07-22) =
 * Opravená chyba v kompatibilite s pluginom WooCommerce Subscriptions.
 
-= 1.53.5 =
+= 1.53.5 (2026-07-21) =
 * Pridaná podpora pre plugin WooCommerce PDF Product Vouchers.
 
-= 1.53.4 =
+= 1.53.4 (2026-07-21) =
 * Automatické doplnenie firemných údajov (IČO, DIČ, IČ DPH a názov firmy) z polí uložených WooCommerce, ak ich staršia verzia pluginu pri blokovej pokladni do objednávky neuložila. Platí aj pre ručné pregenerovanie starších faktúr.
 * Objednávky obnovenia predplatného (WooCommerce Subscriptions) si firemné údaje doplnia z predplatného alebo z pôvodnej objednávky.
 
-= 1.53.3 =
+= 1.53.3 (2026-07-21) =
 * Opravené ukladanie firemných údajov (IČO, DIČ, IČ DPH a názov firmy) do objednávky a faktúry v blokovej pokladni pre prihlásených zákazníkov s predvyplnenými firemnými údajmi.
 
-= 1.53.2 =
-* Opravená chyba s odpočítaním DPH (prenos daňovej povinnosti) v klasickom WooCommerce Checkoute.
+= 1.53.2 (2026-07-07) =
+* Opravená chyba s odpočítaním DPH (prenesenie daňovej povinnosti) v klasickom WooCommerce Checkoute.
 
-= 1.53.1 =
-* Opravené automatické odpočítanie DPH (prenos daňovej povinnosti) na produkty a na dopravu vo WooCommerce Checkout blokoch, aj v reálnom čase počas vypĺňania objednávky. Za identifikovanie problému a doplnenie informácií, ktoré pomohli pri oprave, ďakujeme [@mattbosak](https://profiles.wordpress.org/mattbosak/).
+= 1.53.1 (2026-07-06) =
+* Opravené automatické odpočítanie DPH (prenesenie daňovej povinnosti) na produkty a na dopravu vo WooCommerce Checkout blokoch, aj v reálnom čase počas vypĺňania objednávky. Za identifikovanie problému a doplnenie informácií, ktoré pomohli pri oprave, ďakujeme [@mattbosak](https://profiles.wordpress.org/mattbosak/).
 
-= 1.53.0 =
-* Pridané nastavenie pre automatické odpočítanie DPH (prenos daňovej povinnosti) pri zadaní platného IČ DPH overeného cez VIES pre firemného zákazníka z inej krajiny EÚ.
+= 1.53.0 (2026-06-29) =
+* Pridané nastavenie pre automatické odpočítanie DPH (prenesenie daňovej povinnosti) pri zadaní platného IČ DPH overeného cez VIES pre firemného zákazníka z inej krajiny EÚ.
 * Opravené spojenie s VIES na serveroch, kde overenie IČ DPH zlyhávalo s chybou "cURL error 56".
 
-= 1.52.10 =
+= 1.52.10 (2026-06-22) =
 * Opravená chyba s prázdnym ID dokladu v prípade, ak API vráti odpoveď bez chyby, ale aj bez faktúry.
 
-= 1.52.9 =
+= 1.52.9 (2026-06-18) =
 * Overovanie IČ DPH cez VIES sa pri zlyhaní spojenia s ec.europa.eu automaticky zopakuje cez HTTP/1.1.
 * Nové nastavenie pre povolenie alebo zablokovanie objednávky pri nedostupnom VIES.
 
-= 1.52.8 =
+= 1.52.8 (2026-06-15) =
 * Overovanie IČ DPH cez VIES neblokuje dokončenie objednávky, ak je služba VIES dočasne nedostupná. Blokuje sa iba potvrdené neplatné IČ DPH.
 
-= 1.52.7 =
+= 1.52.7 (2026-06-05) =
 * Opravené zobrazenie voľby nákupu na firmu pri objednávkach z WooCommerce Checkout blokov v potvrdení objednávky, v e-mailoch a v zákazníckom účte
 
-= 1.52.6 =
+= 1.52.6 (2026-05-28) =
 * Dodacia adresa sa odosiela aj v prípade, že sa zhoduje s fakturačnou adresou, ak je zapnutá možnosť Delivery Name "CompanyName - FirstName LastName"
 
-= 1.52.5 =
+= 1.52.5 (2026-05-27) =
 * Citlivé hodnoty API Key a Secret Key sa už nevracajú cez WooCommerce settings REST API.
 * API Key a Secret Key sa v administrácii zobrazujú ako password polia s možnosťou zobrazenia a kopírovania.
 
-= 1.52.4 =
+= 1.52.4 (2026-05-27) =
 * Pridaný parameter $item do filtra sf_item_data pre prístup k aktuálnej položke objednávky
 
-= 1.52.3 =
+= 1.52.3 (2026-05-07) =
 * Opravené ukladania firemných údajov v classic checkoute
 * Doplnená kompatibilita s podtriedami WC_Order_Item_Tax pri spracovaní sadzieb DPH
 
-= 1.52.2 =
+= 1.52.2 (2026-05-05) =
 * Opravené spracovanie firemných údajov pri classic aj block checkoute
 * Upravené poradie firemných polí na IČO, DIČ a IČ DPH
 
-= 1.52.1 =
+= 1.52.1 (2026-04-15) =
 * Kompatibilita s WordPress 7.0
 
-= 1.52.0 =
+= 1.52.0 (2026-03-16) =
 * Opravené generovanie položiek faktúry pre zmazané produkty (bez SKU a popisu produktu, ktoré nie je možné zrekonštruovať z údajov objednávky)
 
-= 1.51.0 =
+= 1.51.0 (2026-03-16) =
 * Pridaný filter sf_invoice_extras
 * Pridaný action hook sf_before_invoice_create (spustí sa pred odoslaním faktúry cez API)
 * Pridaný action hook sf_after_invoice_create (spustí sa po úspešnom vytvorení faktúry cez API)
 
-= 1.50.4 =
+= 1.50.4 (2026-03-12) =
 * Opravená kontrola odlišnej dodacej adresy zákazníka
 
-= 1.50.3 =
+= 1.50.3 (2026-02-12) =
 * Doplnené spracovanie štátu (state, nie country) vo fakturačnej a dodacej adrese zákazníka
 
-= 1.50.2 =
+= 1.50.2 (2026-02-10) =
 * Opravené preklady do čestiny
 
-= 1.50.1 =
+= 1.50.1 (2026-01-20) =
 * Doplnený filter sf_fee_data
 
-= 1.50.0 =
+= 1.50.0 (2026-01-13) =
 * Pridaná podpora fakturácie na firmu pre WooCommerce Checkout blok
 
 Kompletný zoznam zmien nájdete v súbore [changelog.txt](https://plugins.svn.wordpress.org/woocommerce-superfaktura/trunk/changelog.txt).

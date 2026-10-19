@@ -109,7 +109,14 @@ class WC_SF_Email {
      * @param boolean  $sent_to_admin True if sent to admin.
      */
     public function sf_invoice_link_email($order, $sent_to_admin = false) {
-        // Filter allows to cancel invoice link.
+        /**
+         * Filters whether to leave the document link out of the order e-mail.
+         *
+         * @since 1.9.64
+         *
+         * @param bool     $skip_link Whether to leave the link out. Default false.
+         * @param WC_Order $order     Order.
+         */
         $skip_link = apply_filters('sf_skip_email_link', false, $order);
         if ($skip_link) {
             return;
@@ -164,7 +171,14 @@ class WC_SF_Email {
      * @param WC_Order $order Order.
      */
     public function sf_invoice_attachment_email($attachments, $email_id, $order) {
-        // Filter allows to cancel pdf attachment.
+        /**
+         * Filters whether to leave the PDF document out of the order e-mail attachments.
+         *
+         * @since 1.9.64
+         *
+         * @param bool     $skip_attachment Whether to leave the attachment out. Default false.
+         * @param WC_Order $order           Order.
+         */
         $skip_attachment = apply_filters('sf_skip_email_attachment', false, $order);
         if ($skip_attachment) {
             return $attachments;
@@ -248,6 +262,8 @@ class WC_SF_Email {
 
         /**
          * Filter the file name of the invoice PDF attached to WooCommerce emails.
+         *
+         * @since 1.55.1
          *
          * @param string   $filename     File name, by default the one SuperFaktura uses for the download.
          * @param WC_Order $order        Order.

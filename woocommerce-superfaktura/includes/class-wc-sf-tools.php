@@ -189,6 +189,13 @@ class WC_SF_Tools {
 	public function output_field() {
 		?>
 		<tr valign="top">
+			<th scope="row" class="titledesc"><?php esc_html_e( 'Setup wizard', 'woocommerce-superfaktura' ); ?></th>
+			<td class="forminp">
+				<p><a class="button" href="<?php echo esc_url( WC_SF_Setup_Wizard::get_url() ); ?>"><?php esc_html_e( 'Start the setup wizard', 'woocommerce-superfaktura' ); ?></a></p>
+				<p class="description"><?php esc_html_e( 'Goes through the connection, documents, payments, shipping and checkout, and recommends settings for your payment and shipping methods. It shows the current settings and saves only what you confirm in the summary.', 'woocommerce-superfaktura' ); ?></p>
+			</td>
+		</tr>
+		<tr valign="top">
 			<th scope="row" class="titledesc"><?php esc_html_e( 'Export', 'woocommerce-superfaktura' ); ?></th>
 			<td class="forminp">
 				<p>

@@ -29,7 +29,7 @@ class WC_SuperFaktura {
 	 *
 	 * @var string
 	 */
-	public $version = '1.58.0';
+	public $version = '1.59.2';
 
 	/**
 	 * Database version.
@@ -139,6 +139,13 @@ class WC_SuperFaktura {
 	public $tools;
 
 	/**
+	 * Support information on the Help section (admin only).
+	 *
+	 * @var WC_SF_Support_Info
+	 */
+	public $support_info;
+
+	/**
 	 * WooCommerce Subscriptions company data sync.
 	 *
 	 * @var WC_SF_Subscriptions
@@ -151,6 +158,13 @@ class WC_SuperFaktura {
 	 * @var WC_SF_Notices
 	 */
 	public $notices;
+
+	/**
+	 * Setup wizard, only in the administration.
+	 *
+	 * @var WC_SF_Setup_Wizard|null
+	 */
+	public $setup_wizard;
 
 
 
@@ -232,6 +246,8 @@ class WC_SuperFaktura {
 
         if ( is_admin() ) {
 			$this->admin = new WC_SF_Admin($this);
+			$this->setup_wizard = new WC_SF_Setup_Wizard($this);
+			$this->support_info = new WC_SF_Support_Info($this);
         }
 		$this->email = new WC_SF_Email($this);
 		$this->invoice_generator = new WC_SF_Invoice($this);
@@ -270,6 +286,9 @@ class WC_SuperFaktura {
 			deactivate_plugins( plugin_basename( WC_SF_FILE_PATH ) );
 			wp_die( __( 'Please install WooCommerce before activating SuperFaktura WooCommerce plugin.', 'woocommerce-superfaktura' ), 'Plugin dependency check', array( 'back_link' => true ) );
 		}
+
+		// Offer the setup wizard on sites without API credentials. Updates do not run this hook.
+		WC_SF_Setup_Wizard::flag_new_activation( $network_wide );
 	}
 
 
@@ -937,6 +956,8 @@ class WC_SuperFaktura {
 				/**
 				 * Last chance to refuse replacing the document's items, now that their number is known.
 				 *
+				 * @since 1.54.0
+				 *
 				 * @param bool  $allowed         Whether to delete the items and continue regenerating.
 				 * @param int   $invoice_id      Invoice ID.
 				 * @param array $delete_item_ids IDs of the items on the document.
@@ -1014,6 +1035,13 @@ class WC_SuperFaktura {
 			 *     return $generate_invoice;
 			 * }
 			 * add_filter( 'sf_generate_invoice', 'custom_generate_invoice', 10, 4 );
+			 *
+			 * @since 1.10.11
+			 *
+			 * @param bool     $generate_invoice Whether to create the document now, from the order status settings.
+			 * @param WC_Order $order            Order.
+			 * @param string   $type             Document type: 'proforma', 'regular' or 'cancel'.
+			 * @param string   $payment_method   Payment method ID of the order.
 			 */
 			$generate_invoice = apply_filters( 'sf_generate_invoice', $generate_invoice, $order, $type, $payment_method );
 
@@ -1145,6 +1173,14 @@ class WC_SuperFaktura {
 			);
 		}
 
+		/**
+		 * Filters the explanation shown with an API log entry and in the failed document notice.
+		 *
+		 * @since 1.57.0
+		 *
+		 * @param string $explanation Explanation, may contain a link. Empty when there is nothing to add.
+		 * @param array  $row         Log row with request_type, response_status and response_message.
+		 */
 		$explanation = apply_filters( 'sf_log_explanation', $explanation, $row );
 
 		return is_string( $explanation ) ? $explanation : '';
@@ -1296,6 +1332,13 @@ class WC_SuperFaktura {
 			$result[] = sprintf( '%s: %s', wc_attribute_label( $attribute, $product ), $value );
 		}
 
+		/**
+		 * Filters the separator between product attributes in the item description on the document.
+		 *
+		 * @since 1.20.5
+		 *
+		 * @param string $separator Separator. Default ', '.
+		 */
 		$separator = apply_filters( 'sf_attr_separator', ', ' );
 		return implode( $separator, $result );
 	}
@@ -1474,6 +1517,15 @@ class WC_SuperFaktura {
 			}
 		}
 
+		/**
+		 * Filters the language of the document.
+		 *
+		 * @since 1.20.6
+		 *
+		 * @param string $language                        SuperFaktura language code, such as 'slo', 'cze' or 'eng'.
+		 * @param int    $order_id                        Order ID.
+		 * @param string $woocommerce_sf_invoice_language Invoice language setting of the plugin.
+		 */
 		$language = apply_filters( 'sf_invoice_language', $language, $order_id, $woocommerce_sf_invoice_language );
 
 		return $language;
@@ -1504,6 +1556,7 @@ class WC_SuperFaktura {
 			}
 		}
 
+		/** This filter is documented in includes/class-wc-superfaktura.php */
 		$separator = apply_filters( 'sf_attr_separator', ', ' );
 		return implode( $separator, $result );
 	}
@@ -2369,6 +2422,15 @@ class WC_SuperFaktura {
 		);
 		$invoice_id    = strtr( $invoice_id_template, $template_tags );
 
+		/**
+		 * Filters the document number made from the number template in the plugin settings.
+		 *
+		 * Used when the plugin numbers the documents itself instead of SuperFaktura.
+		 *
+		 * @param string $invoice_id    Document number.
+		 * @param array  $template_tags Values of the template tags, such as [YEAR], [MONTH], [COUNT] and [ORDER_NUMBER].
+		 * @param string $key           Document type: 'proforma', 'regular' or 'cancel'.
+		 */
 		$invoice_id = apply_filters( 'superfaktura_invoice_id', $invoice_id, $template_tags, $key );
 
 		$order->update_meta_data( 'wc_sf_invoice_' . $key . '_id', $invoice_id );
@@ -2557,6 +2619,14 @@ class WC_SuperFaktura {
 			}
 		}
 
+		/**
+		 * Filters whether the order counts as paid, so that its invoice is created as paid.
+		 *
+		 * @since 1.6.36
+		 *
+		 * @param bool     $is_paid Whether the order is paid.
+		 * @param WC_Order $order   Order.
+		 */
 		return apply_filters( 'woocommerce_sf_order_is_paid', $is_paid, $order );
 	}
 

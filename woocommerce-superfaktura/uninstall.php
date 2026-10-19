@@ -28,6 +28,8 @@ foreach ( $wc_sf_site_ids as $wc_sf_site_id ) {
 	// Downloaded announcements and their daily download.
 	delete_option( 'wc_sf_remote_messages' );
 	delete_option( 'wc_sf_remote_messages_error' );
+	// Offer of the setup wizard after a new activation.
+	delete_option( 'wc_sf_setup_wizard' );
 	wp_clear_scheduled_hook( 'wc_sf_fetch_messages' );
 	if ( is_multisite() ) {
 		restore_current_blog();

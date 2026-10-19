@@ -23,7 +23,8 @@ class WC_SF_Api {
         $timeout = 30,
         $last_error = array(),
         $checksum = null,
-        $use_sandbox = false;
+        $use_sandbox = false,
+        $save_usage = true;
 
     public
         $data = array(
@@ -43,6 +44,14 @@ class WC_SF_Api {
     public function useSandBox()
     {
         $this->use_sandbox = true;
+    }
+
+    /**
+     * Do not store the API usage of the requests, e.g. when checking credentials that are not saved.
+     */
+    public function skipUsageInfo()
+    {
+        $this->save_usage = false;
     }
 
     public function __construct($email, $apikey, $apptitle = '', $module = 'API', $company_id = '')
@@ -1287,6 +1296,10 @@ class WC_SF_Api {
      * @return bool
      */
     private function saveApiUsageInfo($response_headers) {
+        if (!$this->save_usage) {
+            return false;
+        }
+
         return update_option('woocommerce_sf_api_usage', [
             'dailylimit'     => $response_headers['x-ratelimit-dailylimit'] ?? 1000,
             'dailyremaining' => $response_headers['x-ratelimit-dailyremaining'] ?? 1000,

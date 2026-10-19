@@ -362,7 +362,14 @@ class WC_SF_Admin {
 			echo wp_kses( '<p><a href="' . esc_url( $this->document_action_url( 'sf_regen', $order->get_id() ) ) . '" class="sf-prevent-duplicity">' . __( 'Regenerate existing invoices', 'woocommerce-superfaktura' ) . '</a></p>', $this->wc_sf->allowed_tags );
 		}
 
-		// 2020/07/01 webikon: Added an action that allows to add content after the invoice button
+		/**
+		 * Fires at the end of the SuperFaktura box in the order edit screen, after the document buttons and links.
+		 *
+		 * @since 1.9.59
+		 *
+		 * @param WC_Order $order   Order.
+		 * @param string   $invoice Link to the invoice PDF, empty when the order has no invoice.
+		 */
 		do_action( 'sf_metabox_after_invoice_generate_button', $order, $invoice );
     }
 

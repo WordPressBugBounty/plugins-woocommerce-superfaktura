@@ -46,6 +46,17 @@ class WC_SF_Invoice {
 			$can_regenerate = false;
 		}
 
+		/**
+		 * Filters whether the documents of an order can be regenerated.
+		 *
+		 * By default they cannot once the order is completed, or processing with another payment method than cash on delivery.
+		 * When this returns false, an existing document is not replaced and the regenerate link is hidden.
+		 *
+		 * @since 1.11.9
+		 *
+		 * @param bool     $can_regenerate Whether the documents can be regenerated.
+		 * @param WC_Order $order          Order.
+		 */
 		return apply_filters( 'sf_can_regenerate', $can_regenerate, $order );
 	}
 
@@ -61,7 +72,16 @@ class WC_SF_Invoice {
 	 */
 	public function generate_invoice( $order, $type, $force_create = false ) {
 
-		// Filter to allow skipping invoice creation.
+		/**
+		 * Filters whether to skip creating or updating a document of the order.
+		 *
+		 * Return true to create no document of any type for this order.
+		 *
+		 * @since 1.9.63
+		 *
+		 * @param bool     $skip_invoice Whether to skip the document. Default false.
+		 * @param WC_Order $order        Order.
+		 */
 		$skip_invoice = apply_filters( 'sf_skip_invoice', false, $order );
 		if ( $skip_invoice ) {
 			return false;
@@ -69,6 +89,19 @@ class WC_SF_Invoice {
 
 		try {
 
+			/**
+			 * Filters the SuperFaktura API credentials used for the documents of an order.
+			 *
+			 * Lets one shop invoice into more SuperFaktura accounts or companies. Each key that is missing is taken
+			 * from the plugin settings.
+			 *
+			 * @since 1.10.4
+			 *
+			 * @param array    $credentials API credentials, empty by default. Keys: woocommerce_sf_email,
+			 *                              woocommerce_sf_apikey, woocommerce_sf_company_id, woocommerce_sf_lang
+			 *                              ('sk', 'cz' or 'at') and woocommerce_sf_sandbox ('yes' or 'no').
+			 * @param WC_Order $order       Order.
+			 */
 			$credentials = apply_filters( 'sf_order_api_credentials', array(), $order );
 			$api         = $this->wc_sf->sf_api( $credentials );
 
@@ -248,6 +281,15 @@ class WC_SF_Invoice {
 
 			}
 
+			/* reverse charge */
+			// The flag is tax data, so it does not depend on the comments setting below. Only its text is a comment.
+			$vat_transfer = ( $client_data['ic_dph'] && WC()->countries->get_base_country() !== $order->get_billing_country() ) || ( in_array( WC()->countries->get_base_country(), array( 'SK', 'CZ' ), true ) && $order->get_billing_country() && ! in_array( $order->get_billing_country(), $this->wc_sf->eu_countries, true ) );
+			if ( $vat_transfer ) {
+				$set_invoice_data['vat_transfer'] = 1;
+			} elseif ( $edit ) {
+				$set_invoice_data['vat_transfer'] = 0;
+			}
+
 			/* comment */
 			if ( 'yes' === get_option( 'woocommerce_sf_comments' ) ) {
 				$comment_parts = array();
@@ -261,16 +303,11 @@ class WC_SF_Invoice {
 					);
 				}
 
-				if ( ( $client_data['ic_dph'] && WC()->countries->get_base_country() !== $order->get_billing_country() ) || ( in_array( WC()->countries->get_base_country(), array( 'SK', 'CZ' ), true ) && $order->get_billing_country() && ! in_array( $order->get_billing_country(), $this->wc_sf->eu_countries, true ) ) ) {
-					$set_invoice_data['vat_transfer'] = 1;
-
+				if ( $vat_transfer ) {
 					$sf_tax_liability = get_option( 'woocommerce_sf_tax_liability' );
 					if ( $sf_tax_liability ) {
 						$comment_parts[] = $sf_tax_liability;
 					}
-				}
-				elseif ( $edit ) {
-					$set_invoice_data['vat_transfer'] = 0;
 				}
 
 				$sf_comment = get_option( 'woocommerce_sf_comment' );
@@ -320,6 +357,16 @@ class WC_SF_Invoice {
 					}
 
 					// Webikon, 20201001: Added a filter that allows to modify client data based on country.
+					/**
+					 * Filters the shop's own company data overridden for the customer's country.
+					 *
+					 * Applies only when the plugin settings for countries override the VAT ID or the tax ID for the customer's country.
+					 *
+					 * @since 1.9.65
+					 *
+					 * @param array    $client_country_data Company data to override, such as ic_dph, dic and tax_payer.
+					 * @param WC_Order $order               Order.
+					 */
 					$client_country_data = apply_filters( 'sf_client_country_data', $client_country_data, $order );
 
 					if ( ! empty( $client_country_data ) ) {
@@ -359,6 +406,16 @@ class WC_SF_Invoice {
 			}
 
 			// Webikon, 20200521: added extra attribute $type to be able to identify credit note in the hook.
+			/**
+			 * Filters the document data sent to SuperFaktura, such as the currency, payment and delivery type, order number,
+			 * sequence and bank account.
+			 *
+			 * @since 1.6.21
+			 *
+			 * @param array    $set_invoice_data Document data for the SuperFaktura API.
+			 * @param WC_Order $order            Order.
+			 * @param string   $type             Document type: 'proforma', 'regular' or 'cancel'.
+			 */
 			$set_invoice_data = apply_filters( 'sf_invoice_data', $set_invoice_data, $order, $type );
 
 			$api->setInvoice( $set_invoice_data );
@@ -398,6 +455,15 @@ class WC_SF_Invoice {
 				$extras['weight'] = $weight;
 			}
 
+			/**
+			 * Filters the extra document data sent to SuperFaktura, such as the OSS flag, the pickup point and the weight.
+			 *
+			 * @since 1.51.0
+			 *
+			 * @param array    $extras Extra data for the SuperFaktura API (InvoiceExtra).
+			 * @param WC_Order $order  Order.
+			 * @param string   $type   Document type: 'proforma', 'regular' or 'cancel'.
+			 */
 			$extras = apply_filters( 'sf_invoice_extras', $extras, $order, $type );
 
 			$api->setInvoiceExtras( $extras );
@@ -470,6 +536,15 @@ class WC_SF_Invoice {
 								'tax'        => $item_tax,
 							);
 
+							/**
+							 * Filters a credit note item created from a refund.
+							 *
+							 * Called for each refunded order item, and once more for the refunded amount not tied to any item.
+							 * Return null or false to leave the item out of the credit note.
+							 *
+							 * @param array|null|false $refund_data Credit note item data for the SuperFaktura API.
+							 * @param WC_Order         $order       Order.
+							 */
 							$refund_data = apply_filters( 'sf_refund_data', $refund_data, $order );
 
 							if ( $refund_data ) {
@@ -502,6 +577,7 @@ class WC_SF_Invoice {
 							'tax'         => $item_tax,
 						);
 
+						/** This filter is documented in includes/class-wc-sf-invoice.php */
 						$refund_data = apply_filters( 'sf_refund_data', $refund_data, $order );
 
 						if ( $refund_data ) {
@@ -632,12 +708,21 @@ class WC_SF_Invoice {
 					/**
 					 * Filters SuperFaktura invoice item data.
 					 *
-					 * @param array                 $item_data Invoice item data.
+					 * Return null or false to leave the item out of the document.
+					 *
+					 * @since 1.8.21
+					 *
+					 * @param array|null|false      $item_data Invoice item data.
 					 * @param WC_Order              $order     Order.
 					 * @param WC_Product|false      $product   Product.
 					 * @param WC_Order_Item_Product $item      Current order item.
 					 */
 					$item_data = apply_filters( 'sf_item_data', $item_data, $order, $product, $item );
+
+					// The filter left the item out.
+					if ( ! $item_data ) {
+						continue;
+					}
 
 					// skip free products
 					if ( empty( $item_data['unit_price'] ) && 'yes' === get_option( 'woocommerce_sf_skip_free_products', 'no' ) ) {
@@ -649,9 +734,7 @@ class WC_SF_Invoice {
 						$possible_discount_tax_rates['item_' . $item_id] = $item_data['tax'];
 					}
 
-					if ( $item_data ) {
-						$api->addItem( $item_data );
-					}
+					$api->addItem( $item_data );
 				}
 
 				// Compatibility with WooCommerce Gift Cards (https://woocommerce.com/products/gift-cards/) plugin.
@@ -685,6 +768,15 @@ class WC_SF_Invoice {
 								'description' => $giftcard->get_code(),
 							);
 
+							/**
+							 * Filters the invoice item of a gift card applied to the order (WooCommerce Gift Cards).
+							 *
+							 * @since 1.45.4
+							 *
+							 * @param array                 $item_data Invoice item data for the SuperFaktura API.
+							 * @param WC_Order              $order     Order.
+							 * @param WC_Order_Item_Product $gc_item   Order item the gift card was bought with.
+							 */
 							$item_data = apply_filters( 'sf_giftcard_data', $item_data, $order, $gc_item );
 
 							$api->addItem( $item_data );
@@ -744,6 +836,17 @@ class WC_SF_Invoice {
 							$item_data['unit_price'] *= -1;
 						}
 
+						/**
+						 * Filters the invoice item of the credit used from a multi-purpose voucher (WooCommerce PDF Product Vouchers).
+						 *
+						 * Return null or false to leave the item out of the document.
+						 *
+						 * @since 1.53.5
+						 *
+						 * @param array|null|false     $item_data   Invoice item data for the SuperFaktura API.
+						 * @param WC_Order             $order       Order.
+						 * @param WC_Order_Item_Coupon $coupon_item Coupon item of the voucher.
+						 */
 						$item_data = apply_filters( 'sf_voucher_credit_data', $item_data, $order, $coupon_item );
 
 						if ( $item_data ) {
@@ -806,6 +909,15 @@ class WC_SF_Invoice {
 							$item_data['AccountingDetail']['preconfidence'] = $preconfidence_fees;
 						}
 
+						/**
+						 * Filters the invoice item of an order fee.
+						 *
+						 * @since 1.50.1
+						 *
+						 * @param array             $item_data Invoice item data for the SuperFaktura API.
+						 * @param WC_Order          $order     Order.
+						 * @param WC_Order_Item_Fee $fee       Fee item.
+						 */
 						$item_data = apply_filters( 'sf_fee_data', $item_data, $order, $fee );
 
 						$api->addItem( $item_data );
@@ -862,6 +974,16 @@ class WC_SF_Invoice {
 						$item_data['AccountingDetail']['preconfidence'] = $preconfidence_shipping;
 					}
 
+					/**
+					 * Filters the invoice item of the shipping.
+					 *
+					 * Return null or false to leave the shipping out of the document.
+					 *
+					 * @since 1.9.72
+					 *
+					 * @param array|null|false $item_data Invoice item data for the SuperFaktura API.
+					 * @param WC_Order         $order     Order.
+					 */
 					$item_data = apply_filters( 'sf_shipping_data', $item_data, $order );
 
 					if ( $item_data ) {
@@ -909,6 +1031,16 @@ class WC_SF_Invoice {
 							$discount_data['AccountingDetail']['preconfidence'] = $preconfidence_discount;
 						}
 
+						/**
+						 * Filters the invoice item of a discount.
+						 *
+						 * Return null or false to leave the discount out of the document.
+						 *
+						 * @since 1.8.21
+						 *
+						 * @param array|null|false $discount_data Invoice item data for the SuperFaktura API.
+						 * @param WC_Order         $order         Order.
+						 */
 						$discount_data = apply_filters( 'sf_discount_data', $discount_data, $order );
 
 						if ( $discount_data ) {
@@ -939,6 +1071,16 @@ class WC_SF_Invoice {
 
 			// 2019/05/31 webikon: added invoice items as an extra argument
 			// 2020/05/07 webikon: added document type as an extra argument
+			/**
+			 * Filters the extra items added at the end of the document.
+			 *
+			 * @since 1.6.48
+			 *
+			 * @param array    $extra_items Extra items, each an array of item data for the SuperFaktura API. Default empty.
+			 * @param WC_Order $order       Order.
+			 * @param array    $items       Items already on the document.
+			 * @param string   $type        Document type: 'proforma', 'regular' or 'cancel'.
+			 */
 			foreach ( apply_filters( 'woocommerce_sf_invoice_extra_items', array(), $order, $api->data['InvoiceItem'], $type ) as $extra_item ) {
 				$api->addItem( $extra_item );
 			}
@@ -972,6 +1114,14 @@ class WC_SF_Invoice {
 		if ( $edit ) {
 			$api->setInvoice(
 				array(
+					/**
+					 * Filters the document type sent to SuperFaktura.
+					 *
+					 * @since 1.6.14
+					 *
+					 * @param string $type   Document type: 'proforma', 'regular' or 'cancel'.
+					 * @param string $action 'create' for a new document, 'edit' when an existing document is regenerated.
+					 */
 					'type' => apply_filters( 'woocommerce_sf_invoice_type', $type, 'edit' ),
 					'id'   => $sf_id,
 				)
@@ -980,9 +1130,21 @@ class WC_SF_Invoice {
 			$response = $api->edit();
 		} else {
 			$args = array(
+				/** This filter is documented in includes/class-wc-sf-invoice.php */
 				'type' => apply_filters( 'woocommerce_sf_invoice_type', $type, 'create' ),
 			);
 
+			/**
+			 * Filters the SuperFaktura sequence used for numbering a new document.
+			 *
+			 * Return a sequence ID to number the document by that sequence instead of the plugin settings.
+			 *
+			 * @since 1.5.12
+			 *
+			 * @param int|false $sequence_id Sequence ID. Default false.
+			 * @param string    $type        Document type: 'proforma', 'regular' or 'cancel'.
+			 * @param WC_Order  $order       Order.
+			 */
 			$sequence_id = apply_filters( 'wc_sf_sequence_id', false, $type, $order );
 
 			if ( ! $sequence_id ) {
@@ -992,6 +1154,17 @@ class WC_SF_Invoice {
 			if ( $sequence_id ) {
 				$args['sequence_id'] = $sequence_id;
 			} else {
+				/**
+				 * Filters the number of a new document.
+				 *
+				 * Used when no sequence is set by the wc_sf_sequence_id filter. Return a number to use it as the document number.
+				 *
+				 * @since 1.5.7
+				 *
+				 * @param string|false $invoice_id Document number. Default false.
+				 * @param string       $type       Document type: 'proforma', 'regular' or 'cancel'.
+				 * @param WC_Order     $order      Order.
+				 */
 				$invoice_id = apply_filters( 'wc_sf_invoice_id', false, $type, $order );
 
 				if ( ! $invoice_id ) {
@@ -1267,6 +1440,14 @@ class WC_SF_Invoice {
 			$client_data['id'] = $client_id;
 		}
 
+		/**
+		 * Filters the customer data sent to SuperFaktura, such as the name, company IDs and addresses.
+		 *
+		 * @since 1.6.21
+		 *
+		 * @param array    $client_data Client data for the SuperFaktura API.
+		 * @param WC_Order $order       Order.
+		 */
 		return apply_filters( 'sf_client_data', $client_data, $order );
 	}
 
@@ -1300,6 +1481,8 @@ class WC_SF_Invoice {
 
 		/**
 		 * Filter whether the document is flagged as a One Stop Shop (OSS) sale.
+		 *
+		 * @since 1.55.3
 		 *
 		 * @param bool     $is_oss      Whether to send the OSS flag.
 		 * @param WC_Order $order       Order.

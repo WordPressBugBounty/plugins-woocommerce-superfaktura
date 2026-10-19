@@ -1055,6 +1055,15 @@ class WC_SF_Notices {
 	 *               response_message and time), 'more' (whether more failures exist than kept) and 'max_id'
 	 *               (the newest log entry id).
 	 */
+	public function get_document_errors() {
+		return $this->get_errors();
+	}
+
+	/**
+	 * Unresolved failures of the last days, cached for an hour.
+	 *
+	 * @return array See get_document_errors().
+	 */
 	private function get_errors() {
 		$cached = get_transient( self::ERRORS_TRANSIENT );
 		if ( is_array( $cached ) && isset( $cached['errors'], $cached['max_id'], $cached['more'] ) ) {

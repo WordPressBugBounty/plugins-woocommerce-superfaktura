@@ -719,6 +719,15 @@ class WC_SF_Bulk {
 	 * @return int
 	 */
 	private function quota_reserve() {
+		/**
+		 * Filters how many daily API requests the bulk actions leave unused for the shop's own invoicing.
+		 *
+		 * A batch pauses when the remaining daily limit would drop below this reserve.
+		 *
+		 * @since 1.54.0
+		 *
+		 * @param int $reserve Number of requests. Default 100.
+		 */
 		return max( 0, (int) apply_filters( 'sf_bulk_quota_reserve', self::QUOTA_RESERVE ) );
 	}
 
@@ -983,6 +992,8 @@ class WC_SF_Bulk {
 		/**
 		 * Filters how long a bulk step lock may go without renewal before another request
 		 * may take it over.
+		 *
+		 * @since 1.54.0
 		 *
 		 * @param int $ttl Seconds.
 		 */
