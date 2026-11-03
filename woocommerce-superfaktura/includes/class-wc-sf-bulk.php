@@ -521,7 +521,7 @@ class WC_SF_Bulk {
 	 */
 	private function regenerate_documents( $order ) {
 		$types = array();
-		foreach ( array( 'proforma', 'regular', 'cancel' ) as $type ) {
+		foreach ( $this->wc_sf->regenerated_document_types( $order ) as $type ) {
 			if ( '' !== (string) $order->get_meta( 'wc_sf_internal_' . $type . '_id', true ) ) {
 				$types[] = $type;
 			}
@@ -656,7 +656,7 @@ class WC_SF_Bulk {
 				continue;
 			}
 
-			foreach ( array( 'proforma', 'regular', 'cancel' ) as $doc_type ) {
+			foreach ( $this->wc_sf->regenerated_document_types( $order ) as $doc_type ) {
 				if ( '' !== (string) $order->get_meta( 'wc_sf_internal_' . $doc_type . '_id', true ) ) {
 					$requests += $this->estimate_regen_document( $order, $doc_type );
 				}

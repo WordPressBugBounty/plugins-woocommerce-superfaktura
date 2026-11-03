@@ -86,8 +86,16 @@ class WC_SF_Admin {
 				$result      = $this->wc_sf->invoice_generator->generate_invoice( $order, 'regular', isset( $_GET['force_create'] ) );
 				$result_msg .= 'regular';
 			} elseif ( isset( $_GET['sf_invoice_cancel_create'] ) ) {
-				$order       = wc_get_order( $order_id );
-				$result      = $this->wc_sf->invoice_generator->generate_invoice( $order, 'cancel', isset( $_GET['force_create'] ) );
+				$order  = wc_get_order( $order_id );
+				$refund = null;
+				if ( isset( $_GET['sf_refund'] ) ) {
+					// Credit note of one refund of this order.
+					$refund = wc_get_order( (int) $_GET['sf_refund'] );
+					if ( ! ( $refund instanceof WC_Order_Refund ) || (int) $refund->get_parent_id() !== $order_id ) {
+						wp_die( 'Unauthorized' );
+					}
+				}
+				$result      = $this->wc_sf->invoice_generator->generate_invoice( $order, 'cancel', isset( $_GET['force_create'] ), $refund );
 				$result_msg .= 'cancel';
 			}
 
@@ -141,14 +149,18 @@ class WC_SF_Admin {
      * @param string $action       Action query argument, e.g. sf_invoice_regular_create.
      * @param int    $order_id     Order ID.
      * @param bool   $force_create Create a new document even if the order already has one.
+     * @param int    $refund_id    Refund for the credit note of one refund, 0 for none.
      * @return string
      */
-    private function document_action_url( $action, $order_id, $force_create = false ) {
+    private function document_action_url( $action, $order_id, $force_create = false, $refund_id = 0 ) {
 		$args = array( $action => 1 );
 		if ( $force_create ) {
 			$args['force_create'] = 1;
 		}
 		$args['sf_order'] = $order_id;
+		if ( $refund_id ) {
+			$args['sf_refund'] = $refund_id;
+		}
 
 		return wp_nonce_url( add_query_arg( $args, admin_url( 'admin.php' ) ), 'wc_sf_document_action_' . $order_id );
     }
@@ -354,9 +366,12 @@ class WC_SF_Admin {
 		if ( ! empty( $cancel ) ) {
 			$error_html = sprintf( '%s<br><a href="%s">%s</a>', __( 'Credit note could not be found in SuperFaktura.', 'woocommerce-superfaktura' ), $this->document_action_url( 'sf_invoice_cancel_create', $order->get_id(), true ), __( 'Create new credit note', 'woocommerce-superfaktura' ) );
 			echo wp_kses( '<p><a href="' . $cancel . '" class="button sf-url-check" data-error="' . htmlentities( $error_html ) . '" target="_blank">' . __( 'Credit note', 'woocommerce-superfaktura' ) . '</a></p>', $this->wc_sf->allowed_tags );
-		} elseif ( ! empty( $invoice ) && ( $order->get_refunds() || in_array( $order->get_status(), array( 'cancelled', 'refunded', 'failed' ), true ) ) ) {
+		} elseif ( ! empty( $invoice ) && ( $this->wc_sf->auto_credit_notes() ? ! $order->get_refunds() && in_array( $order->get_status(), array( 'cancelled', 'failed' ), true ) : ( $order->get_refunds() || in_array( $order->get_status(), array( 'cancelled', 'refunded', 'failed' ), true ) ) ) ) {
+			// With credit notes for refunds, a refunded order gets them per refund below.
 			echo wp_kses( '<p><a href="' . $this->document_action_url( 'sf_invoice_cancel_create', $order->get_id() ) . '" class="sf-prevent-duplicity">' . __( 'Create credit note', 'woocommerce-superfaktura' ) . '</a></p>', $this->wc_sf->allowed_tags );
 		}
+
+		$this->refund_credit_notes_box( $order, $invoice );
 
 		if ( ( ! empty( $proforma ) || ! empty( $invoice ) ) && $this->wc_sf->invoice_generator->sf_can_regenerate( $order ) ) {
 			echo wp_kses( '<p><a href="' . esc_url( $this->document_action_url( 'sf_regen', $order->get_id() ) ) . '" class="sf-prevent-duplicity">' . __( 'Regenerate existing invoices', 'woocommerce-superfaktura' ) . '</a></p>', $this->wc_sf->allowed_tags );
@@ -372,6 +387,38 @@ class WC_SF_Admin {
 		 */
 		do_action( 'sf_metabox_after_invoice_generate_button', $order, $invoice );
     }
+
+	/**
+	 * Credit notes of the order's refunds in the SuperFaktura box: a button for each, and a link to create the missing ones.
+	 *
+	 * Credit notes of deleted refunds stay listed, they exist in SuperFaktura.
+	 *
+	 * @param WC_Order $order   Order.
+	 * @param string   $invoice Link to the invoice PDF, empty when the order has no invoice.
+	 */
+	private function refund_credit_notes_box( $order, $invoice ) {
+		foreach ( WC_SF_Invoice::get_refund_credit_notes( $order ) as $refund_id => $credit_note ) {
+			$error_html = sprintf( '%s<br><a href="%s">%s</a>', __( 'Credit note could not be found in SuperFaktura.', 'woocommerce-superfaktura' ), $this->document_action_url( 'sf_invoice_cancel_create', $order->get_id(), true, $refund_id ), __( 'Create new credit note', 'woocommerce-superfaktura' ) );
+			if ( ! wc_get_order( $refund_id ) ) {
+				// The refund was deleted, a new credit note cannot be created for it.
+				$error_html = __( 'Credit note could not be found in SuperFaktura.', 'woocommerce-superfaktura' );
+			}
+
+			// Translators: %s Credit note number.
+			$label = sprintf( __( 'Credit note %s', 'woocommerce-superfaktura' ), $credit_note['number'] );
+			echo wp_kses( '<p><a href="' . esc_url( $credit_note['pdf'] ) . '" class="button sf-url-check" data-error="' . htmlentities( $error_html ) . '" target="_blank">' . esc_html( $label ) . '</a></p>', $this->wc_sf->allowed_tags );
+		}
+
+		if ( empty( $invoice ) || ! $this->wc_sf->auto_credit_notes() ) {
+			return;
+		}
+
+		foreach ( array_reverse( WC_SF_Invoice::get_refunds_without_credit_note( $order ) ) as $refund ) {
+			// Translators: %1$d Refund ID, %2$s Refunded amount.
+			$label = sprintf( __( 'Create credit note for refund #%1$d (%2$s)', 'woocommerce-superfaktura' ), $refund->get_id(), wp_strip_all_tags( wc_price( $refund->get_amount(), array( 'currency' => $order->get_currency() ) ) ) );
+			echo wp_kses( '<p><a href="' . $this->document_action_url( 'sf_invoice_cancel_create', $order->get_id(), false, $refund->get_id() ) . '" class="sf-prevent-duplicity">' . esc_html( $label ) . '</a></p>', $this->wc_sf->allowed_tags );
+		}
+	}
 
 	/**
 	 * Under the billing address, next to the company IDs: whether documents of the order are One Stop Shop (OSS)

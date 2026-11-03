@@ -771,6 +771,15 @@ class WC_SF_Settings extends WC_Settings_Page {
 				);
 
 				$settings[] = array(
+					'title'    => __( 'Credit notes', 'woocommerce-superfaktura' ),
+					'id'       => 'woocommerce_sf_cancel_auto',
+					'default'  => 'no',
+					'type'     => 'checkbox',
+					'desc'     => __( 'Create a credit note automatically for every refund and when an order with an invoice is cancelled', 'woocommerce-superfaktura' ),
+					'desc_tip' => __( 'Each refund gets its own credit note with the date and reason of the refund. The customer finds it in the WooCommerce refund e-mail instead of the invoice. A cancelled order without a refund gets a credit note for the whole invoice. Issued credit notes are never changed, not even by regeneration.', 'woocommerce-superfaktura' ),
+				);
+
+				$settings[] = array(
 					'title'   => __( 'Client Data', 'woocommerce-superfaktura' ),
 					'id'      => 'woocommerce_sf_invoice_update_addressbook',
 					'default' => 'no',

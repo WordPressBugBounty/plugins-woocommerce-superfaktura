@@ -33,8 +33,8 @@ class WC_SF_Email {
     public function init() {
         add_action('woocommerce_email_customer_details', array($this, 'sf_invoice_business_data_email'), 30, 3);
         add_action('woocommerce_email_order_meta', array($this, 'sf_payment_link_email'), 10, 2);
-        add_action('woocommerce_email_order_meta', array($this, 'sf_invoice_link_email'), 10, 2);
-        add_filter('woocommerce_email_attachments', array($this, 'sf_invoice_attachment_email'), 10, 3);
+        add_action('woocommerce_email_order_meta', array($this, 'sf_invoice_link_email'), 10, 4);
+        add_filter('woocommerce_email_attachments', array($this, 'sf_invoice_attachment_email'), 10, 4);
     }
 
     /**
@@ -107,8 +107,10 @@ class WC_SF_Email {
      *
      * @param WC_Order $order Order.
      * @param boolean  $sent_to_admin True if sent to admin.
+     * @param boolean  $plain_text True if email is in plain text format.
+     * @param WC_Email $email Email.
      */
-    public function sf_invoice_link_email($order, $sent_to_admin = false) {
+    public function sf_invoice_link_email($order, $sent_to_admin = false, $plain_text = false, $email = null) {
         /**
          * Filters whether to leave the document link out of the order e-mail.
          *
@@ -122,21 +124,30 @@ class WC_SF_Email {
             return;
         }
 
-        if (in_array($order->get_status(), array('cancelled', 'refunded', 'failed'), true)) {
-            return;
-        }
+        $credit_note_data = $this->get_refund_email_credit_note($email);
+        if (false !== $credit_note_data) {
+            // The refund e-mail carries the credit note of its refund, never the invoice.
+            if (!$credit_note_data) {
+                return;
+            }
+            $invoice_data = $credit_note_data;
+        } else {
+            if (in_array($order->get_status(), array('cancelled', 'refunded', 'failed'), true)) {
+                return;
+            }
 
-        if ('completed' === $order->get_status() && 'yes' === get_option('woocommerce_sf_completed_email_skip_invoice', 'no')) {
-            return;
-        }
+            if ('completed' === $order->get_status() && 'yes' === get_option('woocommerce_sf_completed_email_skip_invoice', 'no')) {
+                return;
+            }
 
-        if ('cod' === $order->get_payment_method() && 'yes' === get_option('woocommerce_sf_cod_email_skip_invoice', 'no')) {
-            return;
-        }
+            if ('cod' === $order->get_payment_method() && 'yes' === get_option('woocommerce_sf_cod_email_skip_invoice', 'no')) {
+                return;
+            }
 
-        $invoice_data = $this->wc_sf->get_invoice_data($order->get_id());
-        if (!$invoice_data) {
-            return;
+            $invoice_data = $this->wc_sf->get_invoice_data($order->get_id());
+            if (!$invoice_data) {
+                return;
+            }
         }
 
         // Check if proforma was already paid.
@@ -148,7 +159,12 @@ class WC_SF_Email {
         }
 
         if ('yes' === get_option('woocommerce_sf_email_invoice_link', 'yes')) {
-            echo wp_kses('<h2>' . (('regular' === $invoice_data['type']) ? __('Download invoice', 'woocommerce-superfaktura') : __('Download proforma invoice', 'woocommerce-superfaktura')) . "</h2>\n\n", $this->wc_sf->allowed_tags);
+            $headings = array(
+                'regular'  => __('Download invoice', 'woocommerce-superfaktura'),
+                'proforma' => __('Download proforma invoice', 'woocommerce-superfaktura'),
+                'cancel'   => __('Download credit note', 'woocommerce-superfaktura'),
+            );
+            echo wp_kses('<h2>' . $headings[$invoice_data['type']] . "</h2>\n\n", $this->wc_sf->allowed_tags);
             echo wp_kses('<p><a href="' . esc_url($invoice_data['pdf']) . '">' . $invoice_data['pdf'] . "</a></p>\n\n", $this->wc_sf->allowed_tags);
 
             // Mark invoice as sent only if email is sent to the customer.
@@ -169,8 +185,9 @@ class WC_SF_Email {
      * @param array    $attachments Attachments.
      * @param int      $email_id Email ID.
      * @param WC_Order $order Order.
+     * @param WC_Email $email Email.
      */
-    public function sf_invoice_attachment_email($attachments, $email_id, $order) {
+    public function sf_invoice_attachment_email($attachments, $email_id, $order, $email = null) {
         /**
          * Filters whether to leave the PDF document out of the order e-mail attachments.
          *
@@ -188,21 +205,30 @@ class WC_SF_Email {
             return $attachments;
         }
 
-        if (in_array($order->get_status(), array('cancelled', 'refunded', 'failed'), true)) {
-            return $attachments;
-        }
+        $credit_note_data = $this->get_refund_email_credit_note($email);
+        if (false !== $credit_note_data) {
+            // The refund e-mail carries the credit note of its refund, never the invoice.
+            if (!$credit_note_data) {
+                return $attachments;
+            }
+            $invoice_data = $credit_note_data;
+        } else {
+            if (in_array($order->get_status(), array('cancelled', 'refunded', 'failed'), true)) {
+                return $attachments;
+            }
 
-        if ('completed' === $order->get_status() && 'yes' === get_option('woocommerce_sf_completed_email_skip_invoice', 'no')) {
-            return $attachments;
-        }
+            if ('completed' === $order->get_status() && 'yes' === get_option('woocommerce_sf_completed_email_skip_invoice', 'no')) {
+                return $attachments;
+            }
 
-        if ('cod' === $order->get_payment_method() && 'yes' === get_option('woocommerce_sf_cod_email_skip_invoice', 'no')) {
-            return $attachments;
-        }
+            if ('cod' === $order->get_payment_method() && 'yes' === get_option('woocommerce_sf_cod_email_skip_invoice', 'no')) {
+                return $attachments;
+            }
 
-        $invoice_data = $this->wc_sf->get_invoice_data($order->get_id());
-        if (!$invoice_data) {
-            return $attachments;
+            $invoice_data = $this->wc_sf->get_invoice_data($order->get_id());
+            if (!$invoice_data) {
+                return $attachments;
+            }
         }
 
         // Check if proforma was already paid.
@@ -238,6 +264,35 @@ class WC_SF_Email {
         }
 
         return $attachments;
+    }
+
+    /**
+     * Credit note for the WooCommerce refund e-mail, when credit notes for refunds are on.
+     *
+     * @param WC_Email|null $email Email.
+     * @return array|null|false Credit note data (type, pdf, invoice_id) for a refund e-mail, null for a refund e-mail
+     *                          whose refund has no credit note, false for any other e-mail.
+     */
+    private function get_refund_email_credit_note($email) {
+        if (!($email instanceof WC_Email) || !in_array($email->id, array('customer_refunded_order', 'customer_partially_refunded_order'), true) || !$this->wc_sf->auto_credit_notes()) {
+            return false;
+        }
+
+        if (empty($email->refund) || !($email->refund instanceof WC_Order_Refund) || !($email->object instanceof WC_Order)) {
+            return null;
+        }
+
+        $credit_notes = WC_SF_Invoice::get_refund_credit_notes($email->object);
+        $credit_note  = $credit_notes[$email->refund->get_id()] ?? null;
+        if (!$credit_note) {
+            return null;
+        }
+
+        return array(
+            'type'       => 'cancel',
+            'pdf'        => $credit_note['pdf'],
+            'invoice_id' => $credit_note['id'],
+        );
     }
 
     /**

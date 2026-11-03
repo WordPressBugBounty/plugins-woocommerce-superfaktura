@@ -29,7 +29,7 @@ class WC_SuperFaktura {
 	 *
 	 * @var string
 	 */
-	public $version = '1.59.2';
+	public $version = '1.60.0';
 
 	/**
 	 * Database version.
@@ -426,6 +426,12 @@ class WC_SuperFaktura {
 		}
 
 		add_action( 'woocommerce_checkout_order_processed', array( $this, 'sf_new_invoice' ), 5 );
+
+		// Credit notes for refunds. Priority 5, before WooCommerce sends the refund e-mail (priority 10), so it can carry the credit note.
+		add_action( 'woocommerce_order_partially_refunded', array( $this, 'sf_refund_credit_note' ), 5, 2 );
+		add_action( 'woocommerce_order_fully_refunded', array( $this, 'sf_refund_credit_note' ), 5, 2 );
+		add_action( 'woocommerce_order_status_cancelled', array( $this, 'sf_cancelled_order_credit_note' ), 5 );
+		add_action( 'woocommerce_refund_deleted', array( $this, 'sf_refund_deleted' ), 10, 2 );
 
 		add_action( 'woocommerce_thankyou', array( $this, 'sf_invoice_link_page' ) );
 		add_action( 'wp_loaded', array( $this, 'set_order_as_paid' ) );
@@ -1063,7 +1069,7 @@ class WC_SuperFaktura {
 
 		$result = true;
 
-		foreach ( array( 'proforma', 'regular', 'cancel' ) as $type ) {
+		foreach ( $this->regenerated_document_types( $order ) as $type ) {
 			$sf_id = $order->get_meta( 'wc_sf_internal_' . $type . '_id', true );
 			if ( ! empty( $sf_id ) ) {
 				$result = $result && $this->invoice_generator->generate_invoice( $order, $type );
@@ -1071,6 +1077,145 @@ class WC_SuperFaktura {
 		}
 
 		return $result;
+	}
+
+
+
+	/**
+	 * Document types of an order that regeneration edits.
+	 *
+	 * When credit notes for refunds are on, an issued credit note stays as it is, and so does the invoice once
+	 * a credit note corrects it.
+	 *
+	 * @param WC_Order $order Order.
+	 * @return string[]
+	 */
+	public function regenerated_document_types( $order ) {
+		if ( ! $this->auto_credit_notes() ) {
+			return array( 'proforma', 'regular', 'cancel' );
+		}
+
+		if ( $order->get_meta( 'wc_sf_internal_cancel_id', true ) || WC_SF_Invoice::get_refund_credit_notes( $order ) ) {
+			return array( 'proforma' );
+		}
+
+		return array( 'proforma', 'regular' );
+	}
+
+
+
+	/**
+	 * Whether a credit note is created automatically for every refund and for a cancelled order with an invoice.
+	 *
+	 * @return bool
+	 */
+	public function auto_credit_notes() {
+		return 'yes' === get_option( 'woocommerce_sf_cancel_auto', 'no' );
+	}
+
+
+
+	/**
+	 * Create the credit note of a refund.
+	 *
+	 * Runs before WooCommerce sends the refund e-mail, so the e-mail can carry the credit note.
+	 *
+	 * @param int $order_id  Order ID.
+	 * @param int $refund_id Refund ID.
+	 */
+	public function sf_refund_credit_note( $order_id, $refund_id ) {
+		if ( ! $this->auto_credit_notes() ) {
+			return;
+		}
+
+		$order  = wc_get_order( $order_id );
+		$refund = wc_get_order( $refund_id );
+		if ( ! $order || ! ( $refund instanceof WC_Order_Refund ) || (int) $refund->get_parent_id() !== (int) $order->get_id() ) {
+			return;
+		}
+
+		// A credit note corrects an invoice; a proforma invoice is not a tax document.
+		if ( ! $order->get_meta( 'wc_sf_internal_regular_id', true ) ) {
+			// Translators: %d Refund ID.
+			$order->add_order_note( sprintf( __( 'No credit note was created for refund #%d, because the order has no invoice.', 'woocommerce-superfaktura' ), $refund_id ) );
+			return;
+		}
+
+		// The whole invoice is already credited, for example after the order was cancelled.
+		if ( $order->get_meta( 'wc_sf_internal_cancel_id', true ) ) {
+			// Translators: %d Refund ID.
+			$order->add_order_note( sprintf( __( 'No credit note was created for refund #%d, because the order already has a credit note for the whole invoice.', 'woocommerce-superfaktura' ), $refund_id ) );
+			return;
+		}
+
+		/**
+		 * Filters whether to create a credit note automatically, for a refund or for a cancelled order with an invoice.
+		 *
+		 * @since 1.60.0
+		 *
+		 * @param bool                 $create Whether to create the credit note. Default true.
+		 * @param WC_Order             $order  Order.
+		 * @param WC_Order_Refund|null $refund Refund, or null for the credit note of a cancelled order.
+		 */
+		if ( ! apply_filters( 'sf_auto_credit_note', true, $order, $refund ) ) {
+			return;
+		}
+
+		$result = $this->invoice_generator->generate_invoice( $order, 'cancel', false, $refund );
+		if ( true !== $result ) {
+			// Translators: %d Refund ID.
+			$order->add_order_note( sprintf( __( 'Credit note for refund #%d was not created. You can create it in the Invoices box.', 'woocommerce-superfaktura' ), $refund_id ) );
+		}
+	}
+
+
+
+	/**
+	 * Create a credit note for the whole invoice when an order with an invoice is cancelled without a refund.
+	 *
+	 * @param int $order_id Order ID.
+	 */
+	public function sf_cancelled_order_credit_note( $order_id ) {
+		if ( ! $this->auto_credit_notes() ) {
+			return;
+		}
+
+		$order = wc_get_order( $order_id );
+		if ( ! $order || ! $order->get_meta( 'wc_sf_internal_regular_id', true ) || $order->get_meta( 'wc_sf_internal_cancel_id', true ) || $order->get_refunds() ) {
+			return;
+		}
+
+		/** This filter is documented in includes/class-wc-superfaktura.php */
+		if ( ! apply_filters( 'sf_auto_credit_note', true, $order, null ) ) {
+			return;
+		}
+
+		if ( true !== $this->invoice_generator->generate_invoice( $order, 'cancel' ) ) {
+			$order->add_order_note( __( 'Credit note for the cancelled order was not created. You can create it in the Invoices box.', 'woocommerce-superfaktura' ) );
+		}
+	}
+
+
+
+	/**
+	 * Note in the order that the credit note of a deleted refund stays in SuperFaktura.
+	 *
+	 * @param int $refund_id Refund ID.
+	 * @param int $order_id  Order ID.
+	 */
+	public function sf_refund_deleted( $refund_id, $order_id ) {
+		$order = wc_get_order( $order_id );
+		if ( ! $order ) {
+			return;
+		}
+
+		$credit_notes = WC_SF_Invoice::get_refund_credit_notes( $order );
+		if ( empty( $credit_notes[ $refund_id ] ) ) {
+			return;
+		}
+
+		// Translators: %1$d Refund ID, %2$s Credit note number.
+		$order->add_order_note( sprintf( __( 'Refund #%1$d was deleted. Its credit note %2$s stays in SuperFaktura.', 'woocommerce-superfaktura' ), $refund_id, $credit_notes[ $refund_id ]['number'] ) );
 	}
 
 
@@ -2377,6 +2522,25 @@ class WC_SuperFaktura {
 				'url'  => $pdf,
 				'name' => __( 'Invoice', 'woocommerce-superfaktura' ),
 			);
+		}
+
+		// Credit notes, when they are created automatically for refunds and cancelled orders.
+		if ( $this->auto_credit_notes() ) {
+			$pdf = $order->get_meta( 'wc_sf_invoice_cancel', true );
+			if ( $pdf ) {
+				$actions['wc_sf_invoice_cancel'] = array(
+					'url'  => $pdf,
+					'name' => __( 'Credit note', 'woocommerce-superfaktura' ),
+				);
+			}
+
+			foreach ( WC_SF_Invoice::get_refund_credit_notes( $order ) as $refund_id => $credit_note ) {
+				$actions[ 'wc_sf_invoice_cancel_' . $refund_id ] = array(
+					'url'  => $credit_note['pdf'],
+					// Translators: %s Credit note number.
+					'name' => sprintf( __( 'Credit note %s', 'woocommerce-superfaktura' ), $credit_note['number'] ),
+				);
+			}
 		}
 
 		return $actions;

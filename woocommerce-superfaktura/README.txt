@@ -4,7 +4,7 @@ Tags: superfaktura, invoice, faktura, proforma, woocommerce
 Requires at least: 4.4
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.59.2
+Stable tag: 1.60.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -27,6 +27,7 @@ Main features of SuperFaktura WooCommerce include:
 	* Order detail
 	* WooCommerce My Account page
 * Set your own rules, when proforma or real invoice should be generated. Want to send proforma invoice on order creation and real invoice after payment? We got that covered.
+* Automatically create a credit note for every refund.
 * Custom invoice numbering.
 
 This plugin is not directly associated with superfaktura.sk, s.r.o. or with superfaktura cz, s.r.o. or oficially supported by their developers.
@@ -39,7 +40,7 @@ This plugin connects to the following external services.
 
 **SuperFaktúra API** (moja.superfaktura.sk, moje.superfaktura.cz, meine.superfaktura.at, or the sandbox at sandbox.superfaktura.sk and sandbox.superfaktura.cz)
 
-The plugin creates, updates and reads invoices, proforma invoices and credit notes in your SuperFaktúra account. It sends your API credentials and the order data needed for the document: the customer's billing and shipping details (including company IDs and VAT number), ordered items, prices, payment and shipping method. With every request it also sends the WordPress, WooCommerce, plugin and PHP versions and your shop's domain name. It connects when a document is created or regenerated (automatically on an order status change or manually), when SuperFaktúra reports a paid invoice to your shop, when the PDF is attached to an email, and when you test the connection or open the plugin settings. Terms of use: [superfaktura.sk](https://www.superfaktura.sk/podmienky-pouzivania/), [superfaktura.cz](https://www.superfaktura.cz/podminky-uzivani/). Privacy policy: [superfaktura.sk](https://www.superfaktura.sk/ochrana-sukromia/), [superfaktura.cz](https://www.superfaktura.cz/ochrana-soukromi/).
+The plugin creates, updates and reads invoices, proforma invoices and credit notes in your SuperFaktúra account. It sends your API credentials and the order data needed for the document: the customer's billing and shipping details (including company IDs and VAT number), ordered items, prices, payment and shipping method. With every request it also sends the WordPress, WooCommerce, plugin and PHP versions and your shop's domain name. It connects when a document is created or regenerated (automatically on an order status change or a refund, or manually), when SuperFaktúra reports a paid invoice to your shop, when the PDF is attached to an email, and when you test the connection or open the plugin settings. Terms of use: [superfaktura.sk](https://www.superfaktura.sk/podmienky-pouzivania/), [superfaktura.cz](https://www.superfaktura.cz/podminky-uzivani/). Privacy policy: [superfaktura.sk](https://www.superfaktura.sk/ochrana-sukromia/), [superfaktura.cz](https://www.superfaktura.cz/ochrana-soukromi/).
 
 **VIES VAT number validation by the European Commission** (ec.europa.eu)
 
@@ -78,6 +79,10 @@ This usually happens when you change your login email address. The email address
 You can read more about SuperFaktura API integration at [superfaktura.sk/api](http://www.superfaktura.sk/api/)
 
 == Changelog ==
+
+= 1.60.0 (2026-11-03) =
+* Nové: Dobropis automaticky pri každom vrátení platby. Po zapnutí nastavenia Dobropisy v časti Vytvorenie faktúry dostane každé vrátenie platby vo WooCommerce vlastný dobropis s dátumom a dôvodom vrátenia, so sumou presne podľa vrátenia a so sadzbami DPH z objednávky. Zákazník ho dostane v e-maile o vrátení platby namiesto faktúry a nájde ho aj v časti Môj účet. Zrušená objednávka s faktúrou bez vrátenia platby dostane dobropis na celú faktúru.
+* Oprava: Na dobropise na celú objednávku majú zľava a darčeková karta správne znamienko, takže jeho suma sedí s faktúrou.
 
 = 1.59.2 (2026-10-19) =
 * Zmena: Časť Pomoc v nastaveniach pluginu odkazuje na web pluginu superfaktura.2day.sk s funkciami, častými otázkami a novinkami a obsahuje údaje pre podporu na skopírovanie do e-mailu.

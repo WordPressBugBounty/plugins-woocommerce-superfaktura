@@ -63,14 +63,59 @@ class WC_SF_Invoice {
 
 
 	/**
-	 * Generate or update an invoice.
+	 * Credit notes of the order's refunds, created when credit notes for refunds are on.
+	 *
+	 * Kept in the order, not in the refund, so a credit note stays listed when its refund is deleted.
 	 *
 	 * @param WC_Order $order Order.
-	 * @param string   $type Invoice type.
-	 * @param bool     $force_create Force creation of new invoice.
+	 * @return array Refund ID => array with 'id' (SuperFaktura ID), 'number' and 'pdf'.
+	 */
+	public static function get_refund_credit_notes( $order ) {
+		$credit_notes = $order->get_meta( 'wc_sf_refund_credit_notes', true );
+
+		return is_array( $credit_notes ) ? $credit_notes : array();
+	}
+
+	/**
+	 * Refunds of the order that still need a credit note: those without one, none once the whole invoice is credited.
+	 *
+	 * @param WC_Order $order Order.
+	 * @return WC_Order_Refund[]
+	 */
+	public static function get_refunds_without_credit_note( $order ) {
+		if ( $order->get_meta( 'wc_sf_internal_cancel_id', true ) ) {
+			return array();
+		}
+
+		$credit_notes = self::get_refund_credit_notes( $order );
+
+		return array_filter(
+			$order->get_refunds(),
+			function( $refund ) use ( $credit_notes ) {
+				return ! isset( $credit_notes[ $refund->get_id() ] );
+			}
+		);
+	}
+
+
+
+	/**
+	 * Generate or update an invoice.
+	 *
+	 * @param WC_Order             $order        Order.
+	 * @param string               $type         Invoice type.
+	 * @param bool                 $force_create Force creation of new invoice.
+	 * @param WC_Order_Refund|null $refund       Refund for a credit note of one refund only (type 'cancel').
 	 * @return bool|WP_Error True on success, WP_Error on failure.
 	 */
-	public function generate_invoice( $order, $type, $force_create = false ) {
+	public function generate_invoice( $order, $type, $force_create = false, $refund = null ) {
+
+		if ( 'cancel' !== $type ) {
+			$refund = null;
+		}
+
+		// When credit notes for refunds are on, an issued credit note is never edited: each change gets a new one.
+		$auto_credit_notes = 'cancel' === $type && $this->wc_sf->auto_credit_notes();
 
 		/**
 		 * Filters whether to skip creating or updating a document of the order.
@@ -105,7 +150,14 @@ class WC_SF_Invoice {
 			$credentials = apply_filters( 'sf_order_api_credentials', array(), $order );
 			$api         = $this->wc_sf->sf_api( $credentials );
 
-			if ( $force_create ) {
+			if ( $refund ) {
+				if ( ! $force_create && isset( self::get_refund_credit_notes( $order )[ $refund->get_id() ] ) ) {
+					return new WP_Error( 'duplicate_document', __( 'Document was not created, because it already exists.', 'woocommerce-superfaktura' ) );
+				}
+
+				$sf_id = null;
+				$edit  = false;
+			} elseif ( $force_create ) {
 				$sf_id = null;
 				$edit = false;
 			} else {
@@ -124,7 +176,7 @@ class WC_SF_Invoice {
 					}
 
 					if ( $old_invoice_exists ) {
-						if ( ! $this->sf_can_regenerate( $order ) ) {
+						if ( $auto_credit_notes || ! $this->sf_can_regenerate( $order ) ) {
 							return new WP_Error( 'duplicate_document', __( 'Document was not created, because it already exists.', 'woocommerce-superfaktura' ) );
 						}
 
@@ -137,7 +189,7 @@ class WC_SF_Invoice {
 			}
 
 			if ( 'yes' === get_option( 'woocommerce_sf_prevent_concurrency', 'no' ) ) {
-				$lock_file = get_temp_dir() . sprintf( 'lock_%s_%s_%s', $order->get_id(), $type, date( 'YmdHi' ) );
+				$lock_file = get_temp_dir() . sprintf( 'lock_%s_%s_%s', $order->get_id(), $type . ( $refund ? '_' . $refund->get_id() : '' ), date( 'YmdHi' ) );
 				$fp = fopen( $lock_file, 'x' );
 				if ( ! $fp ) {
 					throw new Exception( __( 'Request failed because of concurrency check.', 'woocommerce-superfaktura' ) );
@@ -176,7 +228,8 @@ class WC_SF_Invoice {
 				'order_no'         => $order->get_order_number(),
 			);
 
-			if ( 'cod' === $set_invoice_data['payment_type'] && 'yes' === get_option( 'woocommerce_sf_cod_add_rounding_item', 'no' ) ) {
+			// A refund's credit note totals exactly the refunded amount, so it gets no rounding item.
+			if ( ! $refund && 'cod' === $set_invoice_data['payment_type'] && 'yes' === get_option( 'woocommerce_sf_cod_add_rounding_item', 'no' ) ) {
 				$set_invoice_data['add_rounding_item'] = true;
 			}
 
@@ -281,6 +334,14 @@ class WC_SF_Invoice {
 
 			}
 
+			// A credit note is issued today and its delivery date is the day of the correction (the refund), whatever
+			// the order dates settings say: the date decides the tax period of the correction.
+			if ( $auto_credit_notes ) {
+				$correction_date              = $refund ? $refund->get_date_created() : null;
+				$set_invoice_data['created']  = current_time( 'Y-m-d' );
+				$set_invoice_data['delivery'] = $correction_date ? $correction_date->date( 'Y-m-d' ) : current_time( 'Y-m-d' );
+			}
+
 			/* reverse charge */
 			// The flag is tax data, so it does not depend on the comments setting below. Only its text is a comment.
 			$vat_transfer = ( $client_data['ic_dph'] && WC()->countries->get_base_country() !== $order->get_billing_country() ) || ( in_array( WC()->countries->get_base_country(), array( 'SK', 'CZ' ), true ) && $order->get_billing_country() && ! in_array( $order->get_billing_country(), $this->wc_sf->eu_countries, true ) );
@@ -323,6 +384,19 @@ class WC_SF_Invoice {
 				}
 
 				$set_invoice_data['comment'] = implode( "\r\n\r\n", $comment_parts );
+			}
+
+			// The reason for the correction belongs on the credit note (required in the Czech Republic).
+			if ( $auto_credit_notes ) {
+				$reason = $refund ? trim( (string) $refund->get_reason() ) : '';
+				if ( '' === $reason ) {
+					$reason = ( ! $refund && 'cancelled' === $order->get_status() ) ? __( 'Order cancellation', 'woocommerce-superfaktura' ) : __( 'Refund to the customer', 'woocommerce-superfaktura' );
+				}
+
+				// Translators: %s Reason for the correction.
+				$reason_text = sprintf( __( 'Reason for correction: %s', 'woocommerce-superfaktura' ), $reason );
+
+				$set_invoice_data['comment'] = empty( $set_invoice_data['comment'] ) ? $reason_text : $reason_text . "\r\n\r\n" . $set_invoice_data['comment'];
 			}
 
 			// Override invoice settings for specific countries based on customer billing address.
@@ -470,7 +544,11 @@ class WC_SF_Invoice {
 
 			/* PAYMENT STATUS */
 
-			if ( $this->wc_sf->order_is_paid( $order ) || 'yes' === get_option( 'woocommerce_sf_invoice_' . $type . '_' . $order->get_payment_method() . '_set_as_paid', 'no' ) ) {
+			// A refund returns money the customer paid, so its credit note is paid whenever the order was paid,
+			// whatever status the order has at the moment.
+			$is_paid = $refund ? ( $order->get_date_paid() || $refund->get_refunded_payment() ) : ( $this->wc_sf->order_is_paid( $order ) || 'yes' === get_option( 'woocommerce_sf_invoice_' . $type . '_' . $order->get_payment_method() . '_set_as_paid', 'no' ) );
+
+			if ( $is_paid ) {
 
 				// Check if proforma was already paid.
 				$proforma_already_paid = false;
@@ -503,16 +581,22 @@ class WC_SF_Invoice {
 			}
 
 			$refunds = $order->get_refunds();
-			if ( 'cancel' === $type && $refunds ) {
+			if ( $refund ) {
+
+				/* ONE REFUND */
+
+				$this->add_refund_items( $api, $order, $refund, $tax_rates );
+
+			} elseif ( 'cancel' === $type && $refunds ) {
 
 				/* REFUNDS */
 
-				foreach ( $refunds as $refund ) {
+				foreach ( $refunds as $order_refund ) {
 
-					$refund_left = $refund->get_total();
-					$refund_tax_left = $refund->get_total_tax();
+					$refund_left = $order_refund->get_total();
+					$refund_tax_left = $order_refund->get_total_tax();
 
-					$refunded_items = $refund->get_items();
+					$refunded_items = $order_refund->get_items();
 					if ($refunded_items) {
 
 						foreach ( $refunded_items as $item_id => $item ) {
@@ -558,7 +642,7 @@ class WC_SF_Invoice {
 
 					$refund_left = round($refund_left, 4);
 					if ($refund_left) {
-						$refund_description = $refund->get_reason();
+						$refund_description = $order_refund->get_reason();
 
 						$item_unit_price = ($refund_left - $refund_tax_left);
 						$item_tax = abs( round( ( $refund_tax_left ) / ($refund_left - $refund_tax_left) * 100 ) );
@@ -767,6 +851,10 @@ class WC_SF_Invoice {
 								'tax'         => $gc_item_tax,
 								'description' => $giftcard->get_code(),
 							);
+
+							if ( 'cancel' === $type ) {
+								$item_data['unit_price'] *= -1;
+							}
 
 							/**
 							 * Filters the invoice item of a gift card applied to the order (WooCommerce Gift Cards).
@@ -1010,6 +1098,10 @@ class WC_SF_Invoice {
 							'tax'         => $discount_tax,
 						);
 
+						if ( 'cancel' === $type ) {
+							$discount_data['unit_price'] *= -1;
+						}
+
 						/* accounting */
 						$item_type_discount = get_option( 'woocommerce_sf_item_type_discount' );
 						if ( $item_type_discount ) {
@@ -1168,6 +1260,10 @@ class WC_SF_Invoice {
 				$invoice_id = apply_filters( 'wc_sf_invoice_id', false, $type, $order );
 
 				if ( ! $invoice_id ) {
+					if ( $refund ) {
+						// The custom number is kept per order and type, and every refund's credit note needs its own.
+						$order->delete_meta_data( 'wc_sf_invoice_cancel_id' );
+					}
 					$invoice_id = 'yes' === get_option( 'woocommerce_sf_invoice_custom_num' ) ? $this->wc_sf->generate_invoice_id( $order, $type ) : '';
 				}
 
@@ -1203,6 +1299,7 @@ class WC_SF_Invoice {
 
 			// If request to create the document failed because SF API did not respond, we'll try again later
 			if ( ! $edit &&                                                              // only for creating a new document
+				! $refund &&                                                             // not for a refund's credit note, the order box offers it again
 				! isset( $_GET['sf_invoice_' . $type . '_create'] ) &&                   // not for manual document creation
 				'yes' === get_option( 'woocommerce_sf_retry_failed_api_calls', 'no' ) && // only if "Retry failed API calls" is enabled in plugin settings
 				isset( $error['code'] ) && 'http_request_failed' == $error['code']       // only if the API call failed with "http_request_failed"
@@ -1249,6 +1346,31 @@ class WC_SF_Invoice {
 			// Treat a response without a real invoice id as a failure, so we do not
 			// save empty meta or add a "created" note for an invoice that does not exist.
 			return false;
+		}
+
+		if ( $refund ) {
+			$internal_id    = $response->data->Invoice->id;
+			$invoice_number = $response->data->Invoice->invoice_no_formatted;
+			$language       = $this->wc_sf->get_language( $order->get_id(), get_option( 'woocommerce_sf_invoice_language' ), true );
+
+			$credit_notes                       = self::get_refund_credit_notes( $order );
+			$credit_notes[ $refund->get_id() ] = array(
+				'id'     => $internal_id,
+				'number' => $invoice_number,
+				'pdf'    => ( ( 'yes' === get_option( 'woocommerce_sf_sandbox', 'no' ) ) ? $api::SANDBOX_URL : $api::SFAPI_URL ) . '/' . $language . '/invoices/pdf/' . $internal_id . '/token:' . $response->data->Invoice->token,
+			);
+			$order->update_meta_data( 'wc_sf_refund_credit_notes', $credit_notes );
+
+			// Translators: %1$s Credit note number, %2$d Refund ID.
+			$order->add_order_note( sprintf( __( 'Credit note %1$s created for refund #%2$d.', 'woocommerce-superfaktura' ), $invoice_number, $refund->get_id() ) );
+
+			$order->update_meta_data( 'wc_sf_client_id', $response->data->Client->id );
+			$order->save();
+
+			/** This action is documented in includes/class-wc-sf-invoice.php */
+			do_action( 'sf_after_invoice_create', $response, $order, $type );
+
+			return true;
 		}
 
 		if ( isset( $response->data->PaymentLink ) && 3 != $response->data->Invoice->status ) {
@@ -1550,6 +1672,177 @@ class WC_SF_Invoice {
 		}
 
 		return $item_tax;
+	}
+
+	/**
+	 * Add the items of one refund to its credit note.
+	 *
+	 * Each refunded product, shipping and fee keeps the tax rate of the order, and its price without tax is
+	 * worked out from the refunded amount with tax, so the credit note totals exactly what was refunded.
+	 * An amount refunded without items is split by the tax rates of the order in the ratio of their amounts.
+	 *
+	 * @param WC_SF_Api       $api       API client.
+	 * @param WC_Order        $order     Order.
+	 * @param WC_Order_Refund $refund    Refund.
+	 * @param array           $tax_rates Tax rate ID => rate in percent, from the order.
+	 */
+	private function add_refund_items( $api, $order, $refund, $tax_rates ) {
+		$decimals = wc_get_price_decimals();
+		$left     = round( (float) $refund->get_amount(), $decimals );
+
+		foreach ( $refund->get_items( array( 'line_item', 'shipping', 'fee' ) ) as $item ) {
+			// Refund items are negative; a refunded item of negative value (e.g. a discount fee) comes out negative here.
+			$gross = round( -1 * ( (float) $item->get_total() + (float) $item->get_total_tax() ), $decimals );
+			if ( 0.0 === $gross ) {
+				continue;
+			}
+
+			$rate     = $this->get_refund_item_tax_rate( $item, $order, $tax_rates );
+			$quantity = $item->is_type( 'line_item' ) ? abs( (float) $item->get_quantity() ) : 0;
+
+			switch ( $item->get_type() ) {
+				case 'shipping':
+					$name = __( get_option( 'woocommerce_sf_shipping_item_name', 'Poštovné' ), 'woocommerce-superfaktura' );
+					$kind = 'shipping';
+					break;
+
+				case 'fee':
+					$name = $item->get_name();
+					$kind = 'fees';
+					break;
+
+				default:
+					$name = wp_strip_all_tags( html_entity_decode( $item->get_name() ) );
+					$kind = 'product';
+					break;
+			}
+
+			$item_data = array(
+				'name'       => $name,
+				// Without a quantity (an amount refunded on a line) the whole amount is one line without a unit.
+				'quantity'   => $quantity ? $quantity : '',
+				'unit'       => $quantity ? 'ks' : '',
+				'unit_price' => $gross / ( $quantity ? $quantity : 1 ) / ( 1 + $rate / 100 ) * -1,
+				'tax'        => $rate,
+			);
+
+			if ( 'product' === $kind ) {
+				$product          = $item->get_product();
+				$item_data['sku'] = $product ? $product->get_sku() : '';
+			}
+
+			$this->add_credit_note_item( $api, $order, $item_data, $kind );
+
+			$left -= $gross;
+		}
+
+		$left = round( $left, $decimals );
+		if ( 0.0 === $left ) {
+			return;
+		}
+
+		// Amount refunded without items: split by the tax rates of the order, the last rate takes the rounding.
+		$amounts_by_rate = array();
+		foreach ( $order->get_items( array( 'line_item', 'shipping', 'fee' ) ) as $item ) {
+			$rate = (string) $this->get_refund_item_tax_rate( $item, $order, $tax_rates );
+
+			$amounts_by_rate[ $rate ] = ( $amounts_by_rate[ $rate ] ?? 0 ) + (float) $item->get_total() + (float) $item->get_total_tax();
+		}
+		$amounts_by_rate = array_filter(
+			$amounts_by_rate,
+			function( $amount ) {
+				return $amount > 0;
+			}
+		);
+		if ( empty( $amounts_by_rate ) ) {
+			$amounts_by_rate = array( '0' => 1 );
+		}
+
+		$order_amount = array_sum( $amounts_by_rate );
+		$rest         = $left;
+		$last_rate    = array_key_last( $amounts_by_rate );
+		foreach ( $amounts_by_rate as $rate => $amount ) {
+			$part  = ( (string) $rate === (string) $last_rate ) ? $rest : round( $left * $amount / $order_amount, $decimals );
+			$rest -= $part;
+
+			if ( 0.0 === round( $part, $decimals ) ) {
+				continue;
+			}
+
+			$this->add_credit_note_item(
+				$api,
+				$order,
+				array(
+					'name'        => __( 'Refund', 'woocommerce-superfaktura' ),
+					'description' => (string) $refund->get_reason(),
+					'quantity'    => '',
+					'unit'        => '',
+					'unit_price'  => $part / ( 1 + (float) $rate / 100 ) * -1,
+					'tax'         => (float) $rate,
+				),
+				''
+			);
+		}
+	}
+
+	/**
+	 * Add an item of a refund's credit note, with the accounting details of its kind.
+	 *
+	 * @param WC_SF_Api $api       API client.
+	 * @param WC_Order  $order     Order.
+	 * @param array     $item_data Item data for the SuperFaktura API.
+	 * @param string    $kind      'product', 'shipping', 'fees', or empty for no accounting details.
+	 */
+	private function add_credit_note_item( $api, $order, $item_data, $kind ) {
+		if ( $kind ) {
+			$accounting = array(
+				'type'              => get_option( 'woocommerce_sf_item_type_' . $kind ),
+				'analytics_account' => get_option( 'woocommerce_sf_analytics_account_' . $kind ),
+				'synthetic_account' => get_option( 'woocommerce_sf_synthetic_account_' . $kind ),
+				'preconfidence'     => get_option( 'woocommerce_sf_preconfidence_' . $kind ),
+			);
+			$accounting = array_filter( $accounting );
+			if ( $accounting ) {
+				$item_data['AccountingDetail'] = $accounting;
+			}
+		}
+
+		/** This filter is documented in includes/class-wc-sf-invoice.php */
+		$item_data = apply_filters( 'sf_refund_data', $item_data, $order );
+
+		if ( $item_data ) {
+			$api->addItem( $item_data );
+		}
+	}
+
+	/**
+	 * Tax rate of an order or refund item in percent.
+	 *
+	 * A refund item refunded without its tax takes the rate of the original order item, because the refunded
+	 * amount of a taxed sale includes the tax.
+	 *
+	 * @param WC_Order_Item $item      Item of the order or of a refund.
+	 * @param WC_Order      $order     Order.
+	 * @param array         $tax_rates Tax rate ID => rate in percent, from the order.
+	 * @return float
+	 */
+	private function get_refund_item_tax_rate( $item, $order, $tax_rates ) {
+		$taxes = $item->get_taxes();
+		foreach ( array( 'total', 'subtotal' ) as $key ) {
+			foreach ( (array) ( $taxes[ $key ] ?? array() ) as $rate_id => $tax ) {
+				if ( '' !== $tax && 0.0 !== (float) $tax && isset( $tax_rates[ $rate_id ] ) ) {
+					return (float) $tax_rates[ $rate_id ];
+				}
+			}
+		}
+
+		$original_id = (int) $item->get_meta( '_refunded_item_id', true );
+		$original    = $original_id ? $order->get_item( $original_id ) : false;
+		if ( $original ) {
+			return $this->get_refund_item_tax_rate( $original, $order, $tax_rates );
+		}
+
+		return 0.0;
 	}
 
 }

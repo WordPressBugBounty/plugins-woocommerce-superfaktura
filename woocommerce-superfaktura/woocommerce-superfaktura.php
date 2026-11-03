@@ -12,7 +12,7 @@
  * Plugin Name: SuperFaktúra WooCommerce
  * Plugin URI:  https://superfaktura.2day.sk/
  * Description: Integrácia služby <a href="http://www.superfaktura.sk/api/">SuperFaktúra.sk</a> pre WooCommerce. Máte s modulom technický problém? Napíšte nám na <a href="mailto:superfaktura@2day.sk">superfaktura@2day.sk</a>
- * Version:     1.59.2
+ * Version:     1.60.0
  * Author:      2day.sk
  * Author URI:  https://www.2day.sk/
  * Requires Plugins: woocommerce

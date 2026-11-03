@@ -1100,20 +1100,36 @@ class WC_SF_Notices {
 				// A newer entry for this document already decided it.
 				continue;
 			}
-			$seen[ $key ] = true;
 
 			if ( empty( $row['response_status'] ) ) {
-				// The newest attempt succeeded.
+				// The newest attempt succeeded. Credit notes for refunds share one key per order, so while another
+				// refund of the order still has no credit note, an older failed entry decides instead.
+				if ( 'cancel' === $row['document_type'] && WC_SuperFaktura::get_instance()->auto_credit_notes() ) {
+					$order = $row['order_id'] ? wc_get_order( $row['order_id'] ) : false;
+					if ( $order && WC_SF_Invoice::get_refunds_without_credit_note( $order ) ) {
+						continue;
+					}
+				}
+
+				$seen[ $key ] = true;
 				continue;
 			}
+			$seen[ $key ] = true;
 
 			$order = $row['order_id'] ? wc_get_order( $row['order_id'] ) : false;
-			if ( ! $order || in_array( $order->get_status(), array( 'trash', 'cancelled', 'failed' ), true ) ) {
+			// A cancelled order still needs its credit note when credit notes are created automatically.
+			$needs_credit_note = 'cancel' === $row['document_type'] && 'cancelled' === ( $order ? $order->get_status() : '' ) && WC_SuperFaktura::get_instance()->auto_credit_notes();
+			if ( ! $order || ( in_array( $order->get_status(), array( 'trash', 'cancelled', 'failed' ), true ) && ! $needs_credit_note ) ) {
 				continue;
 			}
 
 			// A retry or the related invoice from SuperFaktúra can attach the document without a log entry.
 			if ( 'create' === $row['request_type'] && $order->get_meta( 'wc_sf_internal_' . $row['document_type'] . '_id', true ) ) {
+				continue;
+			}
+
+			// Credit notes for refunds: resolved once every refund has its credit note.
+			if ( 'cancel' === $row['document_type'] && WC_SuperFaktura::get_instance()->auto_credit_notes() && $order->get_refunds() && ! WC_SF_Invoice::get_refunds_without_credit_note( $order ) ) {
 				continue;
 			}
 

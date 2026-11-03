@@ -2634,3 +2634,71 @@ msgstr ""
 #, php-format
 msgid "If that does not help, write to %s and paste the information for support from below."
 msgstr ""
+
+#: includes/class-wc-sf-invoice.php
+#, php-format
+msgid "Reason for correction: %s"
+msgstr ""
+
+#: includes/class-wc-sf-invoice.php
+msgid "Order cancellation"
+msgstr ""
+
+#: includes/class-wc-sf-invoice.php
+msgid "Refund to the customer"
+msgstr ""
+
+#: includes/class-wc-sf-invoice.php
+#, php-format
+msgid "Credit note %1$s created for refund #%2$d."
+msgstr ""
+
+#: includes/class-wc-superfaktura.php
+#, php-format
+msgid "No credit note was created for refund #%d, because the order has no invoice."
+msgstr ""
+
+#: includes/class-wc-superfaktura.php
+#, php-format
+msgid "Refund #%1$d was deleted. Its credit note %2$s stays in SuperFaktura."
+msgstr ""
+
+#: includes/class-wc-sf-admin.php
+#, php-format
+msgid "Credit note %s"
+msgstr ""
+
+#: includes/class-wc-sf-admin.php
+#, php-format
+msgid "Create credit note for refund #%1$d (%2$s)"
+msgstr ""
+
+#: includes/class-wc-sf-email.php
+msgid "Download credit note"
+msgstr ""
+
+#: includes/class-wc-sf-settings.php
+msgid "Create a credit note automatically for every refund and when an order with an invoice is cancelled"
+msgstr ""
+
+#: includes/class-wc-sf-settings.php
+msgid "Each refund gets its own credit note with the date and reason of the refund. The customer finds it in the WooCommerce refund e-mail instead of the invoice. A cancelled order without a refund gets a credit note for the whole invoice. Issued credit notes are never changed, not even by regeneration."
+msgstr ""
+
+#: includes/class-wc-superfaktura.php
+#, php-format
+msgid "No credit note was created for refund #%d, because the order already has a credit note for the whole invoice."
+msgstr ""
+
+#: includes/class-wc-superfaktura.php
+#, php-format
+msgid "Credit note for refund #%d was not created. You can create it in the Invoices box."
+msgstr ""
+
+#: includes/class-wc-sf-invoice.php
+msgid "Refund"
+msgstr ""
+
+#: includes/class-wc-superfaktura.php
+msgid "Credit note for the cancelled order was not created. You can create it in the Invoices box."
+msgstr ""
