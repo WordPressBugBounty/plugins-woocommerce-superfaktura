@@ -29,7 +29,7 @@ class WC_SuperFaktura {
 	 *
 	 * @var string
 	 */
-	public $version = '1.60.0';
+	public $version = '1.60.1';
 
 	/**
 	 * Database version.
@@ -88,6 +88,21 @@ class WC_SuperFaktura {
 	 * @var array
 	 */
 	public $eu_vat_countries;
+
+	/**
+	 * VAT numbers checked in this request: normalized number => 'valid', 'invalid', 'verified_earlier' or 'unreachable'.
+	 *
+	 * @var array
+	 */
+	private $vies_states = array();
+
+	/**
+	 * Why the last validate_eu_vat_number() returned null: 'busy' (VIES busy for a moment), 'outage' (VIES did not
+	 * answer or is down) or '' (no answer was needed, or the number itself was the problem).
+	 *
+	 * @var string
+	 */
+	private $vies_failure = '';
 
 	/**
 	 * Allowed tags in HTML output.
@@ -424,6 +439,10 @@ class WC_SuperFaktura {
 		foreach ( $wc_get_order_statuses as $key => $status ) {
 			add_action( 'woocommerce_order_status_' . $key, array( $this, 'sf_new_invoice' ), 5 );
 		}
+
+		// Note a VAT number VIES could not verify at checkout. Priority 4, before the invoice created at checkout (priority 5).
+		add_action( 'woocommerce_checkout_order_processed', array( $this, 'note_unverified_vat_number' ), 4 );
+		add_action( 'woocommerce_store_api_checkout_order_processed', array( $this, 'note_unverified_vat_number' ), 4 );
 
 		add_action( 'woocommerce_checkout_order_processed', array( $this, 'sf_new_invoice' ), 5 );
 
@@ -1877,10 +1896,22 @@ class WC_SuperFaktura {
 
 
 
+	/**
+	 * VIES answers that mean the member state is busy for a moment. The check is asked again after a short pause.
+	 */
+	const VIES_BUSY_ERRORS = array( 'MS_MAX_CONCURRENT_REQ', 'GLOBAL_MAX_CONCURRENT_REQ' );
+
+	/**
+	 * VIES answers that mean the service or the member state is down. Not asked again for two minutes.
+	 */
+	const VIES_OUTAGE_ERRORS = array( 'MS_UNAVAILABLE', 'SERVICE_UNAVAILABLE', 'TIMEOUT' );
+
 	/*
 	 * Validate EU VAT Number
 	 */
 	public function validate_eu_vat_number( $vat_number ) {
+		$this->vies_failure = '';
+
 		$sanitized_vat_number = preg_replace( '/[^A-Z0-9]/i', '', sanitize_text_field( $vat_number ) );
 		$country = substr( $sanitized_vat_number, 0, 2 );
 		$vatno = substr( $sanitized_vat_number, 2 );
@@ -1891,123 +1922,287 @@ class WC_SuperFaktura {
 
 		$url = "https://ec.europa.eu/taxation_customs/vies/rest-api/ms/{$country}/vat/{$vatno}";
 
-		try {
-			// First attempt: let cURL negotiate the protocol (usually HTTP/2).
-			$response = $this->vies_remote_get( $url );
+		// A busy member state answers at once and usually accepts the request a moment later, so these
+		// answers are asked again after a short pause. A connection that fails is not, it already took its timeout.
+		$retry_delays = array( 1, 2 );
+		$httpversion  = null;
 
-			// Many hosting setups fail to talk to ec.europa.eu over HTTP/2 and abort the
-			// connection ("cURL error 56: Connection closed abruptly"). Retry once over
-			// HTTP/1.1, which is far more tolerant of strict firewalls and proxies.
-			if ( is_wp_error( $response ) ) {
-				$response = $this->vies_remote_get( $url, '1.1' );
-			}
+		for ( $attempt = 0; ; $attempt++ ) {
+			try {
+				// First attempt: let cURL negotiate the protocol (usually HTTP/2).
+				$response = $this->vies_remote_get( $url, $httpversion );
 
-			if ( is_wp_error( $response ) ) {
+				// Many hosting setups fail to talk to ec.europa.eu over HTTP/2 and abort the
+				// connection ("cURL error 56: Connection closed abruptly"). Retry once over
+				// HTTP/1.1, which is far more tolerant of strict firewalls and proxies.
+				// A busy answer is then asked again over HTTP/1.1 straight away.
+				if ( is_wp_error( $response ) && null === $httpversion ) {
+					$httpversion = '1.1';
+					$response    = $this->vies_remote_get( $url, $httpversion );
+				}
+
+				if ( is_wp_error( $response ) ) {
+					$this->wc_sf_log(
+						array(
+							'request_type'     => 'eu_vat_number',
+							'response_status'  => $response->get_error_code(),
+							'response_message' => $response->get_error_message(),
+						)
+					);
+
+					$this->vies_failure = 'outage';
+
+					return null;
+				}
+
+				$http_response_code = wp_remote_retrieve_response_code( $response );
+				if ( substr( (string) $http_response_code, 0, 1 ) !== '2' ) {
+					$this->wc_sf_log(
+						array(
+							'request_type'     => 'eu_vat_number',
+							'response_status'  => $http_response_code,
+							'response_message' => get_status_header_desc( $http_response_code ),
+						)
+					);
+
+					// A server error or too many requests is VIES. Another 4xx is the request, e.g. a number without digits.
+					if ( 500 <= (int) $http_response_code || 429 === (int) $http_response_code ) {
+						$this->vies_failure = 'outage';
+					}
+
+					return null;
+				}
+
+				$result = json_decode( wp_remote_retrieve_body( $response ) );
+
+			} catch ( Exception $e ) {
 				$this->wc_sf_log(
 					array(
 						'request_type'     => 'eu_vat_number',
-						'response_status'  => $response->get_error_code(),
-						'response_message' => $response->get_error_message(),
+						'response_status'  => 911,
+						'response_message' => $this->exceptionHandling($e),
 					)
 				);
+
+				$this->vies_failure = 'outage';
 
 				return null;
 			}
 
-			$http_response_code = wp_remote_retrieve_response_code( $response );
-			if ( substr( (string) $http_response_code, 0, 1 ) !== '2' ) {
+			// Treat an unexpected/unparseable response as "could not validate" rather than invalid.
+			if ( ! is_object( $result ) || ! isset( $result->userError ) ) {
 				$this->wc_sf_log(
 					array(
 						'request_type'     => 'eu_vat_number',
 						'response_status'  => $http_response_code,
-						'response_message' => get_status_header_desc( $http_response_code ),
+						'response_message' => 'Unexpected VIES response',
 					)
 				);
+
+				$this->vies_failure = 'outage';
 
 				return null;
 			}
 
-			$result = json_decode( wp_remote_retrieve_body( $response ) );
+			if ( 'VALID' === $result->userError ) {
+				return true;
+			}
 
-		} catch ( Exception $e ) {
-			$this->wc_sf_log(
-				array(
-					'request_type'     => 'eu_vat_number',
-					'response_status'  => 911,
-					'response_message' => $this->exceptionHandling($e),
-				)
-			);
+			// Only a genuine "INVALID" verdict means the VAT # is not valid.
+			// Every other userError (MS_MAX_CONCURRENT_REQ, GLOBAL_MAX_CONCURRENT_REQ, MS_UNAVAILABLE, SERVICE_UNAVAILABLE, TIMEOUT) must not be mistaken for an invalid number.
+			if ( 'INVALID' === $result->userError ) {
+				return false;
+			}
 
-			return null;
-		}
+			if ( isset( $retry_delays[ $attempt ] ) && in_array( $result->userError, self::VIES_BUSY_ERRORS, true ) ) {
+				sleep( $retry_delays[ $attempt ] );
+				continue;
+			}
 
-		// Treat an unexpected/unparseable response as "could not validate" rather than invalid.
-		if ( ! is_object( $result ) || ! isset( $result->userError ) ) {
 			$this->wc_sf_log(
 				array(
 					'request_type'     => 'eu_vat_number',
 					'response_status'  => $http_response_code,
-					'response_message' => 'Unexpected VIES response',
+					'response_message' => 'VIES could not validate (userError: ' . $result->userError . ')' . ( $attempt > 0 ? ' after ' . ( $attempt + 1 ) . ' attempts' : '' ),
 				)
 			);
 
+			// A busy or unavailable service, not a problem with the number (INVALID_INPUT and similar).
+			if ( in_array( $result->userError, self::VIES_BUSY_ERRORS, true ) ) {
+				$this->vies_failure = 'busy';
+			} elseif ( in_array( $result->userError, self::VIES_OUTAGE_ERRORS, true ) ) {
+				$this->vies_failure = 'outage';
+			}
+
 			return null;
 		}
-
-		if ( 'VALID' === $result->userError ) {
-			return true;
-		}
-
-		// Only a genuine "INVALID" verdict means the VAT # is not valid.
-		// Every other userError (MS_MAX_CONCURRENT_REQ, GLOBAL_MAX_CONCURRENT_REQ, MS_UNAVAILABLE, SERVICE_UNAVAILABLE, TIMEOUT) must be mistaken for an invalid number.
-		if ( 'INVALID' === $result->userError ) {
-			return false;
-		}
-
-		$this->wc_sf_log(
-			array(
-				'request_type'     => 'eu_vat_number',
-				'response_status'  => $http_response_code,
-				'response_message' => 'VIES could not validate (userError: ' . $result->userError . ')',
-			)
-		);
-
-		return null;
 	}
 
 
 
 	/**
-	 * Validate an EU VAT number through VIES with a short-lived transient cache.
+	 * Validate an EU VAT number through VIES with a transient cache.
 	 *
-	 * Only definitive results (valid/invalid) are cached, other results are never cached.
+	 * A valid or invalid result is remembered for a day. When VIES is unavailable, a number VIES confirmed
+	 * as valid in the last 30 days is accepted (the order gets a note with the date of that check). When VIES
+	 * is down for a country, it is not asked again for that country for two minutes, so one checkout does not
+	 * wait for the timeout on every update.
 	 *
 	 * @param string $vat_number VAT number to validate.
 	 * @return bool|null True if valid, false if invalid, null if it could not be validated.
 	 */
 	public function is_eu_vat_number_valid_cached( $vat_number ) {
-		$normalized = strtoupper( preg_replace( '/[^A-Z0-9]/i', '', (string) $vat_number ) );
+		$normalized = $this->normalize_vat_number( $vat_number );
 		if ( '' === $normalized ) {
 			return null;
 		}
 
-		$cache_key = 'wc_sf_vies_' . md5( $normalized );
-		$cached    = get_transient( $cache_key );
-		if ( 'valid' === $cached ) {
+		$state = $this->get_vat_number_check_state( $normalized );
+		if ( 'valid' === $state || 'verified_earlier' === $state ) {
 			return true;
 		}
-		if ( 'invalid' === $cached ) {
+		if ( 'invalid' === $state ) {
 			return false;
 		}
 
-		$result = $this->validate_eu_vat_number( $normalized );
+		$result = null;
+		if ( 'unreachable' !== $state ) {
+			$result = $this->validate_eu_vat_number( $normalized );
+		}
+
 		if ( true === $result ) {
-			set_transient( $cache_key, 'valid', DAY_IN_SECONDS );
+			set_transient( $this->vat_number_cache_key( 'wc_sf_vies_', $normalized ), 'valid', DAY_IN_SECONDS );
+			set_transient( $this->vat_number_cache_key( 'wc_sf_vies_verified_', $normalized ), current_time( 'Y-m-d' ), 30 * DAY_IN_SECONDS );
+			$this->vies_states[ $normalized ] = 'valid';
 		} elseif ( false === $result ) {
-			set_transient( $cache_key, 'invalid', DAY_IN_SECONDS );
+			set_transient( $this->vat_number_cache_key( 'wc_sf_vies_', $normalized ), 'invalid', DAY_IN_SECONDS );
+			delete_transient( $this->vat_number_cache_key( 'wc_sf_vies_verified_', $normalized ) );
+			$this->vies_states[ $normalized ] = 'invalid';
+		} elseif ( 'unreachable' === $state || '' !== $this->vies_failure ) {
+			// VIES did not answer or was busy. A problem with the number itself (or a number without an EU country code) is not remembered.
+			if ( 'outage' === $this->vies_failure ) {
+				set_transient( 'wc_sf_vies_unreachable_' . substr( $normalized, 0, 2 ), 1, 2 * MINUTE_IN_SECONDS );
+			}
+
+			if ( get_transient( $this->vat_number_cache_key( 'wc_sf_vies_verified_', $normalized ) ) ) {
+				$this->vies_states[ $normalized ] = 'verified_earlier';
+				return true;
+			}
+
+			$this->vies_states[ $normalized ] = 'unreachable';
 		}
 
 		return $result;
+	}
+
+	/**
+	 * What the plugin knows about a VAT number from this request and the cache, without asking VIES.
+	 *
+	 * @param string $vat_number VAT number.
+	 * @return string 'valid', 'invalid', 'verified_earlier' (VIES unavailable, accepted by a check from the last
+	 *                30 days), 'unreachable' (VIES unavailable) or '' (not known).
+	 */
+	public function get_vat_number_check_state( $vat_number ) {
+		$normalized = $this->normalize_vat_number( $vat_number );
+		if ( '' === $normalized ) {
+			return '';
+		}
+
+		if ( isset( $this->vies_states[ $normalized ] ) ) {
+			return $this->vies_states[ $normalized ];
+		}
+
+		$cached = get_transient( $this->vat_number_cache_key( 'wc_sf_vies_', $normalized ) );
+		if ( 'valid' === $cached || 'invalid' === $cached ) {
+			return $cached;
+		}
+
+		if ( get_transient( 'wc_sf_vies_unreachable_' . substr( $normalized, 0, 2 ) ) ) {
+			return get_transient( $this->vat_number_cache_key( 'wc_sf_vies_verified_', $normalized ) ) ? 'verified_earlier' : 'unreachable';
+		}
+
+		return '';
+	}
+
+	/**
+	 * VAT number without spaces and punctuation, in upper case.
+	 *
+	 * @param string $vat_number VAT number.
+	 * @return string
+	 */
+	private function normalize_vat_number( $vat_number ) {
+		return strtoupper( preg_replace( '/[^A-Z0-9]/i', '', (string) $vat_number ) );
+	}
+
+	/**
+	 * Transient name for a normalized VAT number.
+	 *
+	 * @param string $prefix     Transient prefix.
+	 * @param string $normalized Normalized VAT number.
+	 * @return string
+	 */
+	private function vat_number_cache_key( $prefix, $normalized ) {
+		return $prefix . md5( $normalized );
+	}
+
+	/**
+	 * Add an order note when VIES was unavailable at checkout: the VAT number could not be verified, or it was
+	 * accepted by an earlier check.
+	 *
+	 * @param int|WC_Order $order Order or its ID.
+	 */
+	public function note_unverified_vat_number( $order ) {
+		if ( 'yes' !== get_option( 'woocommerce_sf_validate_eu_vat_number', 'no' ) ) {
+			return;
+		}
+
+		$order = $order instanceof WC_Order ? $order : wc_get_order( $order );
+		if ( ! $order ) {
+			return;
+		}
+
+		// The block checkout stores the business checkbox; the classic one keeps the VAT number only for a business.
+		$checkbox = $order->get_meta( '_wc_other/superfaktura/wi-as-company', true );
+		if ( '' !== $checkbox && ! in_array( $checkbox, array( true, 1, '1', 'true', 'yes' ), true ) ) {
+			return;
+		}
+
+		$vat_number = trim( (string) $order->get_meta( 'billing_company_wi_vat', true ) );
+		if ( '' === $vat_number ) {
+			return;
+		}
+
+		$state = $this->get_vat_number_check_state( $vat_number );
+		if ( 'verified_earlier' === $state ) {
+			$verified = (string) get_transient( $this->vat_number_cache_key( 'wc_sf_vies_verified_', $this->normalize_vat_number( $vat_number ) ) );
+			$note     = sprintf(
+				// Translators: %1$s VAT number, %2$s Date of the last successful check.
+				__( 'VIES was unavailable, so the VAT number %1$s was accepted based on its verification on %2$s.', 'woocommerce-superfaktura' ),
+				$vat_number,
+				$verified ? date_i18n( get_option( 'date_format' ), strtotime( $verified ) ) : '?'
+			);
+		} elseif ( 'unreachable' === $state ) {
+			// Translators: %s VAT number.
+			$note = sprintf( __( 'The VAT number %s could not be verified, because VIES was unavailable.', 'woocommerce-superfaktura' ), $vat_number );
+
+			// Only when a verified number would have removed VAT (see should_exempt_vat()).
+			$billing_country = strtoupper( (string) $order->get_billing_country() );
+			if ( 'yes' === get_option( 'woocommerce_sf_exempt_vat_on_valid_vat_number', 'no' ) && 0 < (float) $order->get_total_tax() && $billing_country !== WC()->countries->get_base_country() && in_array( $billing_country, $this->eu_countries, true ) ) {
+				$note .= ' ' . __( 'VAT was therefore not removed from the order.', 'woocommerce-superfaktura' );
+			}
+			$note .= ' ' . __( 'Details are in the API log.', 'woocommerce-superfaktura' );
+		} else {
+			return;
+		}
+
+		// A checkout submitted again for the same order (e.g. after a failed payment) does not repeat the note.
+		if ( $order->get_meta( '_wc_sf_vies_note', true ) === $note ) {
+			return;
+		}
+		$order->update_meta_data( '_wc_sf_vies_note', $note );
+		$order->save();
+
+		$order->add_order_note( $note );
 	}
 
 
@@ -2016,7 +2211,8 @@ class WC_SuperFaktura {
 	 * Decide whether an order should be exempted from VAT (intra-EU B2B reverse charge).
 	 *
 	 * Returns true only for a business purchase with a VIES-verified VAT number billing to an EU country other than the shop base country.
-	 * A VAT number that could not be validated (VIES unreachable) never exempts. Charging VAT is the safe default.
+	 * A VAT number that could not be validated (VIES unreachable) exempts only when VIES confirmed it in the last 30 days.
+	 * Otherwise VAT is charged, the safe default.
 	 *
 	 * @param bool   $is_company      Whether the customer is buying as a business.
 	 * @param string $vat_number      Entered VAT number.

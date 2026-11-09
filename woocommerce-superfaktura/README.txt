@@ -4,7 +4,7 @@ Tags: superfaktura, invoice, faktura, proforma, woocommerce
 Requires at least: 4.4
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.60.0
+Stable tag: 1.60.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -29,8 +29,6 @@ Main features of SuperFaktura WooCommerce include:
 * Set your own rules, when proforma or real invoice should be generated. Want to send proforma invoice on order creation and real invoice after payment? We got that covered.
 * Automatically create a credit note for every refund.
 * Custom invoice numbering.
-
-This plugin is not directly associated with superfaktura.sk, s.r.o. or with superfaktura cz, s.r.o. or oficially supported by their developers.
 
 Created by [Ján Bočínec](http://bocinec.sk/) with the support of [Slovak WordPress community](http://wp.sk/) and [WordPress agency Webikon](http://www.webikon.sk/). Since 2017 maintained by [2day.sk](https://www.2day.sk/).
 
@@ -61,24 +59,53 @@ Coming soon.
 
 == Frequently Asked Questions ==
 
-= Invoice is not created automatically =
+Answers to more questions, with the exact settings, are on the plugin website in Slovak: [superfaktura.2day.sk/podpora](https://superfaktura.2day.sk/podpora/).
 
-Check the settings in *WooCommerce -> Settings -> SuperFaktura*
-You should fill your Account Email, API key and set the Order status in which you would like to create the invoice.
+= An invoice was not created. How do I find out why? =
 
-= Invoice is marked as paid =
+Open *WooCommerce > Settings > SuperFaktura > API log*. Every attempt shows the answer of SuperFaktura, and the common errors come with an explanation of what to do. The plugin also warns you in the admin about documents it could not create. [More](https://superfaktura.2day.sk/podpora/#faktura-sa-nevytvorila)
 
-Status of the payment is related to Order status. When an invoice is created with the status “On-Hold”, it will not be marked as paid. When an invoice is created with the status “Completed”, it will be marked as paid.
+= When is an invoice created? =
 
-= The plugin stopped working and I don’t know why! =
+When the order reaches the status you choose for its payment method in *Invoice Creation*. Proforma invoices are set the same way. The setup wizard in *Tools* recommends a document and a status for each payment method. [More](https://superfaktura.2day.sk/podpora/#kedy-sa-faktura-vystavi)
 
-This usually happens when you change your login email address. The email address in *WooCommerce -> Settings -> SuperFaktura* must be the same as the one you use to log in to SuperFaktura.
+= The customer paid by card, but the invoice is not marked as paid =
+
+Whether an invoice is paid is decided only when the invoice is created. An invoice created in the Pending payment status stays unpaid after the payment. For card and payment gateway payments, create the invoice in the Processing status and add Processing to *Set invoice as paid in these order statuses*. [More](https://superfaktura.2day.sk/podpora/#neuhradena-po-platbe)
+
+= The invoice is marked as paid although the customer has not paid yet =
+
+An invoice is created as paid when the order is in one of the statuses in *Set invoice as paid in these order statuses*, or when *Create as paid* is checked for its payment method in *Invoice Creation*. [More](https://superfaktura.2day.sk/podpora/#uhradena-bez-platby)
+
+= The company ID, tax ID and VAT number fields are missing in the checkout =
+
+Enable *Add company billing fields to checkout* in *Integration*. The fields appear when the customer checks the option to buy as a company. In the classic checkout they are attached to the Company name field, so they are hidden when that field is hidden. [More](https://superfaktura.2day.sk/podpora/#firemne-polia)
+
+= Reverse charge is not applied for a business from another EU country =
+
+Enable *Validate VAT #* and *Remove VAT for EU businesses with a valid VAT #* in *Integration*. VAT is removed when the customer buys as a company, VIES confirms the VAT number and the billing country is another EU country than the store's. [More](https://superfaktura.2day.sk/podpora/#prenesenie-danovej-povinnosti)
+
+= The invoice has no OSS flag =
+
+Enable *OSS* in the *Invoice* section. A document is an OSS sale when the customer has no VAT number and the taxable country is another EU country than the store's. With OSS enabled, the order shows below the billing address whether its documents will be OSS sales and why. [More](https://superfaktura.2day.sk/podpora/#oss)
+
+= How do I create a credit note? =
+
+Enable *Credit notes* in *Invoice Creation*. Every refund then gets its own credit note automatically, and the customer gets it in the WooCommerce refund e-mail. Without the setting, create a credit note with the link in the SuperFaktura box of the order. [More](https://superfaktura.2day.sk/podpora/#dobropis)
+
+= The plugin stopped working and shows error 401 =
+
+Check the API e-mail, API key and Company ID in *Authorization* and use *Test API connection*. The API e-mail must be the one you use to log in to SuperFaktura, the user must be an administrator there, and the SuperFaktura subscription must be active. [More](https://superfaktura.2day.sk/podpora/#chyba-401)
 
 = Where can I find more information about SuperFaktura API? =
 
-You can read more about SuperFaktura API integration at [superfaktura.sk/api](http://www.superfaktura.sk/api/)
+You can read more about SuperFaktura API integration at [superfaktura.sk/api](https://www.superfaktura.sk/api/).
 
 == Changelog ==
+
+= 1.60.1 (2026-11-09) =
+* Zmena: Spoľahlivejšie overenie IČ DPH vo VIES. Keď je VIES krátko preťažený, plugin overenie zopakuje a pri výpadku VIES pokladňa na overenie opakovane nečaká.
+* Nové: Keď VIES nie je dostupný, plugin uzná IČ DPH, ktoré VIES potvrdil v posledných 30 dňoch. Ak také overenie nie je, IČ DPH zostane neoverené. Oba prípady plugin zapíše do poznámky objednávky.
 
 = 1.60.0 (2026-11-03) =
 * Nové: Dobropis automaticky pri každom vrátení platby. Po zapnutí nastavenia Dobropisy v časti Vytvorenie faktúry dostane každé vrátenie platby vo WooCommerce vlastný dobropis s dátumom a dôvodom vrátenia, so sumou presne podľa vrátenia a so sadzbami DPH z objednávky. Zákazník ho dostane v e-maile o vrátení platby namiesto faktúry a nájde ho aj v časti Môj účet. Zrušená objednávka s faktúrou bez vrátenia platby dostane dobropis na celú faktúru.

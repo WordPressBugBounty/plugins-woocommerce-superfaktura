@@ -1,5 +1,9 @@
 === SuperFaktura WooCommerce – Changelog ===
 
+= 1.60.1 (2026-11-09) =
+* Zmena: Spoľahlivejšie overenie IČ DPH vo VIES. Keď je VIES krátko preťažený, plugin overenie zopakuje a pri výpadku VIES pokladňa na overenie opakovane nečaká.
+* Nové: Keď VIES nie je dostupný, plugin uzná IČ DPH, ktoré VIES potvrdil v posledných 30 dňoch. Ak také overenie nie je, IČ DPH zostane neoverené. Oba prípady plugin zapíše do poznámky objednávky.
+
 = 1.60.0 (2026-11-03) =
 * Nové: Dobropis automaticky pri každom vrátení platby. Po zapnutí nastavenia Dobropisy v časti Vytvorenie faktúry dostane každé vrátenie platby vo WooCommerce vlastný dobropis s dátumom a dôvodom vrátenia, so sumou presne podľa vrátenia a so sadzbami DPH z objednávky. Zákazník ho dostane v e-maile o vrátení platby namiesto faktúry a nájde ho aj v časti Môj účet. Zrušená objednávka s faktúrou bez vrátenia platby dostane dobropis na celú faktúru.
 * Oprava: Na dobropise na celú objednávku majú zľava a darčeková karta správne znamienko, takže jeho suma sedí s faktúrou.

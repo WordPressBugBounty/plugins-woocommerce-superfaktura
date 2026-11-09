@@ -2702,3 +2702,23 @@ msgstr ""
 #: includes/class-wc-superfaktura.php
 msgid "Credit note for the cancelled order was not created. You can create it in the Invoices box."
 msgstr ""
+
+#. Translators: %s VAT number.
+#: includes/class-wc-superfaktura.php
+#, php-format
+msgid "The VAT number %s could not be verified, because VIES was unavailable."
+msgstr ""
+
+#: includes/class-wc-superfaktura.php
+msgid "VAT was therefore not removed from the order."
+msgstr ""
+
+#: includes/class-wc-superfaktura.php
+msgid "Details are in the API log."
+msgstr ""
+
+#. Translators: %1$s VAT number, %2$s Date of the last successful check.
+#: includes/class-wc-superfaktura.php
+#, php-format
+msgid "VIES was unavailable, so the VAT number %1$s was accepted based on its verification on %2$s."
+msgstr ""

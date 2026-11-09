@@ -2759,3 +2759,23 @@ msgstr "Vrácení platby"
 #: includes/class-wc-superfaktura.php
 msgid "Credit note for the cancelled order was not created. You can create it in the Invoices box."
 msgstr "Dobropis ke zrušené objednávce nebyl vytvořen. Můžete ho vytvořit v boxu Faktury."
+
+#. Translators: %s VAT number.
+#: includes/class-wc-superfaktura.php
+#, php-format
+msgid "The VAT number %s could not be verified, because VIES was unavailable."
+msgstr "DIČ %s se nepodařilo ověřit, protože VIES nebyl dostupný."
+
+#: includes/class-wc-superfaktura.php
+msgid "VAT was therefore not removed from the order."
+msgstr "DPH proto nebyla z objednávky odečtena."
+
+#: includes/class-wc-superfaktura.php
+msgid "Details are in the API log."
+msgstr "Podrobnosti najdete v API logu."
+
+#. Translators: %1$s VAT number, %2$s Date of the last successful check.
+#: includes/class-wc-superfaktura.php
+#, php-format
+msgid "VIES was unavailable, so the VAT number %1$s was accepted based on its verification on %2$s."
+msgstr "VIES nebyl dostupný, proto bylo DIČ %1$s uznáno podle ověření z %2$s."
