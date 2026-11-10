@@ -136,6 +136,12 @@ jQuery(document).ready(function($) {
 	});
 	wc_sf_toggle_settings('.custom-invoice-numbering-item', $('input[name=woocommerce_sf_invoice_custom_num]').prop('checked'));
 
+	// eFaktúra: the status and the PDF option apply only when sending via Peppol is on
+	$('input[name=woocommerce_sf_peppol]').on('click', function(e) {
+		wc_sf_toggle_settings('.wc-sf-peppol-item', $(this).prop('checked'));
+	});
+	wc_sf_toggle_settings('.wc-sf-peppol-item', $('input[name=woocommerce_sf_peppol]').prop('checked'));
+
 	// custom comment
 	$('input[name=woocommerce_sf_comments]').on('click', function(e) {
 		wc_sf_toggle_settings('.custom-comment-item', $(this).prop('checked'));

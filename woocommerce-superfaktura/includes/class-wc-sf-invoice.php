@@ -46,10 +46,16 @@ class WC_SF_Invoice {
 			$can_regenerate = false;
 		}
 
+		// An invoice sent via Peppol (eFaktúra) is corrected by a credit note only.
+		if ( $this->wc_sf->peppol->is_locked( $order, $order->get_meta( 'wc_sf_internal_regular_id', true ) ) ) {
+			$can_regenerate = false;
+		}
+
 		/**
 		 * Filters whether the documents of an order can be regenerated.
 		 *
-		 * By default they cannot once the order is completed, or processing with another payment method than cash on delivery.
+		 * By default they cannot once the order is completed, or processing with another payment method than cash on delivery,
+		 * or once the invoice was sent via Peppol (eFaktúra). A document sent via Peppol is never edited, whatever this returns.
 		 * When this returns false, an existing document is not replaced and the regenerate link is hidden.
 		 *
 		 * @since 1.11.9
@@ -100,6 +106,33 @@ class WC_SF_Invoice {
 
 
 	/**
+	 * SuperFaktura API credentials for the documents of an order.
+	 *
+	 * @param WC_Order $order Order.
+	 * @return array Credentials, empty when the plugin settings apply.
+	 */
+	public function get_order_api_credentials( $order ) {
+		/**
+		 * Filters the SuperFaktura API credentials used for the documents of an order.
+		 *
+		 * Lets one shop invoice into more SuperFaktura accounts or companies. Each key that is missing is taken
+		 * from the plugin settings.
+		 *
+		 * @since 1.10.4
+		 *
+		 * @param array    $credentials API credentials, empty by default. Keys: woocommerce_sf_email,
+		 *                              woocommerce_sf_apikey, woocommerce_sf_company_id, woocommerce_sf_lang
+		 *                              ('sk', 'cz' or 'at') and woocommerce_sf_sandbox ('yes' or 'no').
+		 * @param WC_Order $order       Order.
+		 */
+		$credentials = apply_filters( 'sf_order_api_credentials', array(), $order );
+
+		return is_array( $credentials ) ? $credentials : array();
+	}
+
+
+
+	/**
 	 * Generate or update an invoice.
 	 *
 	 * @param WC_Order             $order        Order.
@@ -134,21 +167,7 @@ class WC_SF_Invoice {
 
 		try {
 
-			/**
-			 * Filters the SuperFaktura API credentials used for the documents of an order.
-			 *
-			 * Lets one shop invoice into more SuperFaktura accounts or companies. Each key that is missing is taken
-			 * from the plugin settings.
-			 *
-			 * @since 1.10.4
-			 *
-			 * @param array    $credentials API credentials, empty by default. Keys: woocommerce_sf_email,
-			 *                              woocommerce_sf_apikey, woocommerce_sf_company_id, woocommerce_sf_lang
-			 *                              ('sk', 'cz' or 'at') and woocommerce_sf_sandbox ('yes' or 'no').
-			 * @param WC_Order $order       Order.
-			 */
-			$credentials = apply_filters( 'sf_order_api_credentials', array(), $order );
-			$api         = $this->wc_sf->sf_api( $credentials );
+			$api = $this->wc_sf->sf_api( $this->get_order_api_credentials( $order ) );
 
 			if ( $refund ) {
 				if ( ! $force_create && isset( self::get_refund_credit_notes( $order )[ $refund->get_id() ] ) ) {
@@ -166,6 +185,10 @@ class WC_SF_Invoice {
 				$edit = false;
 				if ( ! empty( $sf_id ) ) {
 
+					if ( $this->wc_sf->peppol->is_locked( $order, $sf_id ) ) {
+						return new WP_Error( 'peppol_sent', __( 'Document was not changed, because it was sent via Peppol (eFaktúra). It can be corrected by a credit note only.', 'woocommerce-superfaktura' ) );
+					}
+
 					$old_invoice_exists = true;
 					$old_invoice        = $api->invoice( $sf_id );
 					if ( empty( $old_invoice ) ) {
@@ -178,6 +201,11 @@ class WC_SF_Invoice {
 					if ( $old_invoice_exists ) {
 						if ( $auto_credit_notes || ! $this->sf_can_regenerate( $order ) ) {
 							return new WP_Error( 'duplicate_document', __( 'Document was not created, because it already exists.', 'woocommerce-superfaktura' ) );
+						}
+
+						// It may have been sent via Peppol directly in SuperFaktura.
+						if ( $this->wc_sf->peppol->is_sent_in_superfaktura( $order, $sf_id ) ) {
+							return new WP_Error( 'peppol_sent', __( 'Document was not changed, because it was sent via Peppol (eFaktúra). It can be corrected by a credit note only.', 'woocommerce-superfaktura' ) );
 						}
 
 						if ( false === $this->wc_sf->sf_clean_invoice_items( $sf_id, $api ) ) {
@@ -387,10 +415,26 @@ class WC_SF_Invoice {
 			}
 
 			// The reason for the correction belongs on the credit note (required in the Czech Republic).
-			if ( $auto_credit_notes ) {
-				$reason = $refund ? trim( (string) $refund->get_reason() ) : '';
+			if ( 'cancel' === $type ) {
+				if ( $refund ) {
+					$reason = trim( (string) $refund->get_reason() );
+				} elseif ( $auto_credit_notes ) {
+					$reason = '';
+				} else {
+					// A credit note for the whole order covers all its refunds.
+					$reasons = array();
+					foreach ( $order->get_refunds() as $order_refund ) {
+						$refund_reason = trim( (string) $order_refund->get_reason() );
+						if ( '' !== $refund_reason ) {
+							$reasons[ $refund_reason ] = true;
+						}
+					}
+					$reason = implode( '; ', array_keys( $reasons ) );
+				}
+
 				if ( '' === $reason ) {
-					$reason = ( ! $refund && 'cancelled' === $order->get_status() ) ? __( 'Order cancellation', 'woocommerce-superfaktura' ) : __( 'Refund to the customer', 'woocommerce-superfaktura' );
+					// Without a refund, the whole order is credited because it was cancelled (or failed).
+					$reason = ( ! $refund && ( 'cancelled' === $order->get_status() || ( ! $auto_credit_notes && ! $order->get_refunds() ) ) ) ? __( 'Order cancellation', 'woocommerce-superfaktura' ) : __( 'Refund to the customer', 'woocommerce-superfaktura' );
 				}
 
 				// Translators: %s Reason for the correction.
@@ -1501,6 +1545,14 @@ class WC_SF_Invoice {
 					$ic_dph = $order->get_meta( ( $order->get_billing_country() === 'SK' ) ? '_billing_dic_dph' : '_billing_dic', true );
 					$dic    = $order->get_meta( '_billing_dic', true );
 				}
+			}
+		}
+
+		// eFaktúra needs the DIČ, which a Slovak company has in its IČ DPH (SK followed by the DIČ).
+		if ( '' === trim( (string) $dic ) && 'SK' === strtoupper( (string) $order->get_billing_country() ) && $this->wc_sf->peppol->enabled() && $this->wc_sf->peppol->is_sk_account( $order ) ) {
+			$dic_from_vat_number = WC_SF_Peppol::dic_from_vat_number( $ic_dph );
+			if ( '' !== $dic_from_vat_number ) {
+				$dic = $dic_from_vat_number;
 			}
 		}
 

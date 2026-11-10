@@ -58,7 +58,7 @@ class WC_SF_Admin {
      * Process input for admin pages.
      */
     public function admin_init() {
-		if ( isset( $_GET['sf_regen'] ) || isset( $_GET['sf_invoice_proforma_create'] ) || isset( $_GET['sf_invoice_regular_create'] ) || isset( $_GET['sf_invoice_cancel_create'] ) ) {
+		if ( isset( $_GET['sf_regen'] ) || isset( $_GET['sf_invoice_proforma_create'] ) || isset( $_GET['sf_invoice_regular_create'] ) || isset( $_GET['sf_invoice_cancel_create'] ) || isset( $_GET['sf_peppol_send'] ) || isset( $_GET['sf_peppol_check'] ) ) {
 			if ( ! current_user_can( 'manage_woocommerce' ) || ! isset( $_GET['sf_order'] ) ) {
 				wp_die( 'Unauthorized' );
 			}
@@ -97,6 +97,20 @@ class WC_SF_Admin {
 				}
 				$result      = $this->wc_sf->invoice_generator->generate_invoice( $order, 'cancel', isset( $_GET['force_create'] ), $refund );
 				$result_msg .= 'cancel';
+			} elseif ( isset( $_GET['sf_peppol_send'] ) || isset( $_GET['sf_peppol_check'] ) ) {
+				$order       = wc_get_order( $order_id );
+				$document_id = (int) ( $_GET['sf_document'] ?? 0 );
+				if ( ! $order ) {
+					wp_die( 'Unauthorized' );
+				}
+
+				if ( isset( $_GET['sf_peppol_send'] ) ) {
+					$result      = $this->wc_sf->peppol->send_document( $order, $document_id );
+					$result_msg .= 'peppol_send';
+				} else {
+					$result      = $this->wc_sf->peppol->check_status( $order, $document_id );
+					$result_msg .= 'peppol_check';
+				}
 			}
 
 			if ( is_wp_error( $result ) ) {
@@ -150,9 +164,10 @@ class WC_SF_Admin {
      * @param int    $order_id     Order ID.
      * @param bool   $force_create Create a new document even if the order already has one.
      * @param int    $refund_id    Refund for the credit note of one refund, 0 for none.
+     * @param int    $document_id  SuperFaktura ID of the document for a Peppol action, 0 for none.
      * @return string
      */
-    private function document_action_url( $action, $order_id, $force_create = false, $refund_id = 0 ) {
+    private function document_action_url( $action, $order_id, $force_create = false, $refund_id = 0, $document_id = 0 ) {
 		$args = array( $action => 1 );
 		if ( $force_create ) {
 			$args['force_create'] = 1;
@@ -160,6 +175,9 @@ class WC_SF_Admin {
 		$args['sf_order'] = $order_id;
 		if ( $refund_id ) {
 			$args['sf_refund'] = $refund_id;
+		}
+		if ( $document_id ) {
+			$args['sf_document'] = $document_id;
 		}
 
 		return wp_nonce_url( add_query_arg( $args, admin_url( 'admin.php' ) ), 'wc_sf_document_action_' . $order_id );
@@ -234,6 +252,39 @@ class WC_SF_Admin {
 
 			case 'duplicate_document':
 				echo wp_kses( '<div class="notice notice-error is-dismissible"><p>' . __( 'Document was not created, because it already exists.', 'woocommerce-superfaktura' ) . '</p></div>', $this->wc_sf->allowed_tags );
+				break;
+
+			case 'peppol_sent':
+				echo wp_kses( '<div class="notice notice-error is-dismissible"><p>' . __( 'Document was not changed, because it was sent via Peppol (eFaktúra). It can be corrected by a credit note only.', 'woocommerce-superfaktura' ) . '</p></div>', $this->wc_sf->allowed_tags );
+				break;
+
+			case 'peppol_send_ok':
+				echo wp_kses( '<div class="notice notice-success is-dismissible"><p>' . __( 'The document was handed over for sending via Peppol (eFaktúra).', 'woocommerce-superfaktura' ) . '</p></div>', $this->wc_sf->allowed_tags );
+				break;
+
+			case 'peppol_check_ok':
+				echo wp_kses( '<div class="notice notice-success is-dismissible"><p>' . __( 'The eFaktúra status was updated.', 'woocommerce-superfaktura' ) . '</p></div>', $this->wc_sf->allowed_tags );
+				break;
+
+			case 'peppol_retry':
+				echo wp_kses( '<div class="notice notice-warning is-dismissible"><p>' . __( 'SuperFaktúra could not be reached. The plugin will try to send the document via Peppol again later.', 'woocommerce-superfaktura' ) . '</p></div>', $this->wc_sf->allowed_tags );
+				break;
+
+			case 'peppol_already_sent':
+				echo wp_kses( '<div class="notice notice-warning is-dismissible"><p>' . __( 'The document was already sent via Peppol.', 'woocommerce-superfaktura' ) . '</p></div>', $this->wc_sf->allowed_tags );
+				break;
+
+			case 'peppol_not_sent':
+			case 'peppol_unknown_document':
+				echo wp_kses( '<div class="notice notice-error is-dismissible"><p>' . __( 'The document was not sent via Peppol (eFaktúra). The reason is in the order notes.', 'woocommerce-superfaktura' ) . ' ' . $see_api_log . '</p></div>', $this->wc_sf->allowed_tags );
+				break;
+
+			case 'peppol_invoice_first':
+				echo wp_kses( '<div class="notice notice-error is-dismissible"><p>' . __( 'The invoice of this credit note has to be sent via Peppol first.', 'woocommerce-superfaktura' ) . '</p></div>', $this->wc_sf->allowed_tags );
+				break;
+
+			case 'peppol_status_failed':
+				echo wp_kses( '<div class="notice notice-error is-dismissible"><p>' . __( 'The eFaktúra status could not be read.', 'woocommerce-superfaktura' ) . ' ' . $see_api_log . '</p></div>', $this->wc_sf->allowed_tags );
 				break;
 
 			default:
@@ -356,9 +407,17 @@ class WC_SF_Admin {
 			echo wp_kses( '<p><a href="' . $this->document_action_url( 'sf_invoice_proforma_create', $order->get_id() ) . '" class="sf-prevent-duplicity">' . __( 'Create proforma invoice', 'woocommerce-superfaktura' ) . '</a></p>', $this->wc_sf->allowed_tags );
 		}
 
+		foreach ( WC_SF_Peppol::get_tax_documents( $order ) as $tax_id => $tax_document ) {
+			// Translators: %s Tax document number.
+			$label = sprintf( __( 'Tax document %s', 'woocommerce-superfaktura' ), $tax_document['number'] );
+			echo wp_kses( '<p><a href="' . esc_url( $tax_document['pdf'] ) . '" class="button sf-url-check" data-error="' . htmlentities( __( 'Tax document could not be found in SuperFaktura.', 'woocommerce-superfaktura' ) ) . '" target="_blank">' . esc_html( $label ) . '</a></p>', $this->wc_sf->allowed_tags );
+			$this->peppol_box( $order, (int) $tax_id );
+		}
+
 		if ( ! empty( $invoice ) ) {
 			$error_html = sprintf( '%s<br><a href="%s">%s</a>', __( 'Invoice could not be found in SuperFaktura.', 'woocommerce-superfaktura' ), $this->document_action_url( 'sf_invoice_regular_create', $order->get_id(), true ), __( 'Create new invoice', 'woocommerce-superfaktura' ) );
 			echo wp_kses( '<p><a href="' . $invoice . '" class="button sf-url-check" data-error="' . htmlentities( $error_html ) . '" target="_blank">' . __( 'Invoice', 'woocommerce-superfaktura' ) . '</a></p>', $this->wc_sf->allowed_tags );
+			$this->peppol_box( $order, (int) $order->get_meta( 'wc_sf_internal_regular_id', true ) );
 		} elseif ( 'yes' === get_option( 'woocommerce_sf_invoice_regular_manual', 'no' ) ) {
 			echo wp_kses( '<p><a href="' . $this->document_action_url( 'sf_invoice_regular_create', $order->get_id() ) . '" class="sf-prevent-duplicity">' . __( 'Create invoice', 'woocommerce-superfaktura' ) . '</a></p>', $this->wc_sf->allowed_tags );
 		}
@@ -366,6 +425,7 @@ class WC_SF_Admin {
 		if ( ! empty( $cancel ) ) {
 			$error_html = sprintf( '%s<br><a href="%s">%s</a>', __( 'Credit note could not be found in SuperFaktura.', 'woocommerce-superfaktura' ), $this->document_action_url( 'sf_invoice_cancel_create', $order->get_id(), true ), __( 'Create new credit note', 'woocommerce-superfaktura' ) );
 			echo wp_kses( '<p><a href="' . $cancel . '" class="button sf-url-check" data-error="' . htmlentities( $error_html ) . '" target="_blank">' . __( 'Credit note', 'woocommerce-superfaktura' ) . '</a></p>', $this->wc_sf->allowed_tags );
+			$this->peppol_box( $order, (int) $order->get_meta( 'wc_sf_internal_cancel_id', true ) );
 		} elseif ( ! empty( $invoice ) && ( $this->wc_sf->auto_credit_notes() ? ! $order->get_refunds() && in_array( $order->get_status(), array( 'cancelled', 'failed' ), true ) : ( $order->get_refunds() || in_array( $order->get_status(), array( 'cancelled', 'refunded', 'failed' ), true ) ) ) ) {
 			// With credit notes for refunds, a refunded order gets them per refund below.
 			echo wp_kses( '<p><a href="' . $this->document_action_url( 'sf_invoice_cancel_create', $order->get_id() ) . '" class="sf-prevent-duplicity">' . __( 'Create credit note', 'woocommerce-superfaktura' ) . '</a></p>', $this->wc_sf->allowed_tags );
@@ -389,6 +449,52 @@ class WC_SF_Admin {
     }
 
 	/**
+	 * eFaktúra state of a document under its button in the SuperFaktura box, with links to send it via Peppol
+	 * or to check the sending status.
+	 *
+	 * @param WC_Order $order       Order.
+	 * @param int      $document_id SuperFaktura ID of the document.
+	 */
+	private function peppol_box( $order, $document_id ) {
+		$peppol    = $this->wc_sf->peppol;
+		$documents = $peppol->get_documents( $order );
+		if ( ! $document_id || ! isset( $documents[ $document_id ] ) ) {
+			return;
+		}
+
+		$state = $peppol->get_state( $order, $document_id );
+		$send  = $peppol->enabled() && $peppol->should_send( $order, $documents[ $document_id ]['type'] );
+		if ( null === $state && ! $send ) {
+			return;
+		}
+
+		if ( null === $state ) {
+			$text = __( 'Not sent yet', 'woocommerce-superfaktura' );
+		} else {
+			$text = $peppol->state_label( $state );
+			if ( ! empty( $state['sent_at'] ) ) {
+				$text .= ', ' . date_i18n( get_option( 'date_format' ) . ' ' . get_option( 'time_format' ), (int) $state['sent_at'] + (int) ( get_option( 'gmt_offset' ) * HOUR_IN_SECONDS ) );
+			}
+		}
+
+		$html = '<p class="wc-sf-peppol"><strong>' . esc_html__( 'eFaktúra', 'woocommerce-superfaktura' ) . ':</strong> ' . esc_html( $text );
+		if ( ! empty( $state['message'] ) ) {
+			$html .= '<br><em>' . esc_html( $state['message'] ) . '</em>';
+		}
+
+		// A credit note waits for its invoice. A send scheduled again that did not run for two hours can be repeated.
+		$invoice_ready = 'cancel' !== $documents[ $document_id ]['type'] || $peppol->can_follow_invoice( $order ) || null === $peppol->get_state( $order, (int) $order->get_meta( 'wc_sf_internal_regular_id', true ) );
+		$stuck_retry   = null !== $state && 'retry' === $state['status'] && (int) ( $state['sent_at'] ?? 0 ) < time() - 2 * HOUR_IN_SECONDS;
+		if ( $send && $invoice_ready && ( null === $state || WC_SF_Peppol::is_failed( $state ) || $stuck_retry ) ) {
+			$html .= '<br><a href="' . $this->document_action_url( 'sf_peppol_send', $order->get_id(), false, 0, $document_id ) . '" class="sf-prevent-duplicity">' . esc_html__( 'Send via Peppol', 'woocommerce-superfaktura' ) . '</a>';
+		} elseif ( null !== $state && ! in_array( $state['status'], array( 'error', 'retry' ), true ) && ! WC_SF_Peppol::is_final( $state ) ) {
+			$html .= '<br><a href="' . $this->document_action_url( 'sf_peppol_check', $order->get_id(), false, 0, $document_id ) . '">' . esc_html__( 'Check status', 'woocommerce-superfaktura' ) . '</a>';
+		}
+
+		echo wp_kses( $html . '</p>', $this->wc_sf->allowed_tags );
+	}
+
+	/**
 	 * Credit notes of the order's refunds in the SuperFaktura box: a button for each, and a link to create the missing ones.
 	 *
 	 * Credit notes of deleted refunds stay listed, they exist in SuperFaktura.
@@ -407,6 +513,7 @@ class WC_SF_Admin {
 			// Translators: %s Credit note number.
 			$label = sprintf( __( 'Credit note %s', 'woocommerce-superfaktura' ), $credit_note['number'] );
 			echo wp_kses( '<p><a href="' . esc_url( $credit_note['pdf'] ) . '" class="button sf-url-check" data-error="' . htmlentities( $error_html ) . '" target="_blank">' . esc_html( $label ) . '</a></p>', $this->wc_sf->allowed_tags );
+			$this->peppol_box( $order, (int) ( $credit_note['id'] ?? 0 ) );
 		}
 
 		if ( empty( $invoice ) || ! $this->wc_sf->auto_credit_notes() ) {

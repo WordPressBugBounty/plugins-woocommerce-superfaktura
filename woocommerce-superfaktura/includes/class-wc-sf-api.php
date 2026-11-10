@@ -551,6 +551,36 @@ class WC_SF_Api {
     }
 
     /**
+     * Send an invoice or a credit note via Peppol (eFaktúra)
+     *
+     * SuperFaktúra queues the document and answers HTTP 202. The outcome is read with getPeppolStatus().
+     *
+     * @param int $invoice_id SuperFaktúra ID of the document.
+     *
+     * @return mixed|stdClass
+     *
+     * @link https://github.com/superfaktura/docs/blob/master/invoice.md#send-invoice-via-peppol
+     */
+    public function sendPeppol($invoice_id)
+    {
+        return $this->post('/invoices/sendPeppol', array('invoice_id' => (int) $invoice_id), false);
+    }
+
+    /**
+     * Get the Peppol sending status of an invoice or a credit note
+     *
+     * @param int $invoice_id SuperFaktúra ID of the document.
+     *
+     * @return mixed|stdClass
+     *
+     * @link https://github.com/superfaktura/docs/blob/master/invoice.md#get-peppol-sending-status
+     */
+    public function getPeppolStatus($invoice_id)
+    {
+        return $this->get('/invoices/getPeppolStatus/' . (int) $invoice_id);
+    }
+
+    /**
      * Pay invoice
      *
      * @param int $invoice_id
@@ -1123,6 +1153,8 @@ class WC_SF_Api {
      */
     public function get($url, $json_decode = true)
     {
+        $this->last_error = array();
+
         try {
             $response = wp_remote_get(
                 $this->getConstant('SFAPI_URL') . $url,
@@ -1143,11 +1175,7 @@ class WC_SF_Api {
             $this->saveApiUsageInfo($response['headers']);
 
             if (substr($response['response']['code'], 0, 1) != 2) {
-                $error_message = json_decode($response['body']);
-                $this->last_error = array(
-                    'status' => $response['response']['code'],
-                    'message' => !empty($error_message->error_message) ? $error_message->error_message : '',
-                );
+                $this->last_error = $this->responseError($response);
                 return null;
             }
 
@@ -1156,7 +1184,7 @@ class WC_SF_Api {
         } catch (Exception $e) {
             $this->last_error = array(
                 'status' => 500,
-                'message' => $this->exceptionHandling($e),
+                'message' => $e->getMessage(),
             );
             return null;
         }
@@ -1167,17 +1195,22 @@ class WC_SF_Api {
      *
      * @param string $url
      * @param array $data
+     * @param bool $checksum Send the checksum against duplicate requests. The newer endpoints (Peppol) refuse it.
      *
      * @return mixed|stdClass
      */
-    public function post($url, $data)
+    public function post($url, $data, $checksum = true)
     {
+        $this->last_error = array();
+
         try {
             // Set actual checksum
             $this->setChecksumData($data);
 
             // Send checksum
-            $data['checksum'] = $this->getChecksum();
+            if ($checksum) {
+                $data['checksum'] = $this->getChecksum();
+            }
 
             $response = wp_remote_post(
                 $this->getConstant('SFAPI_URL') . $url,
@@ -1202,12 +1235,7 @@ class WC_SF_Api {
             $this->saveApiUsageInfo($response['headers']);
 
             if (substr($response['response']['code'], 0, 1) != 2) {
-                $error_message = json_decode($response['body']);
-                $this->last_error = array(
-                    'status'   => $response['response']['code'],
-                    'message'  => !empty($error_message->error_message) ? $error_message->error_message : '',
-                    'checksum' => $this->getChecksum(),
-                );
+                $this->last_error = $this->responseError($response) + array('checksum' => $this->getChecksum());
                 return null;
             }
 
@@ -1216,11 +1244,36 @@ class WC_SF_Api {
         } catch (Exception $e) {
             $this->last_error = array(
                 'status'   => 500,
-                'message'  => $this->exceptionHandling($e),
+                'message'  => $e->getMessage(),
                 'checksum' => $this->getChecksum(),
             );
             return null;
         }
+    }
+
+    /**
+     * Error of a response with a non-2xx HTTP status.
+     *
+     * Keeps the error code and the data of the newer endpoints (e.g. the reason or the issues of a Peppol send).
+     *
+     * @param array $response Response of wp_remote_*().
+     *
+     * @return array Keys status (int), message (string), error_code (string) and data (mixed, null when missing).
+     */
+    protected function responseError($response)
+    {
+        $body    = json_decode(wp_remote_retrieve_body($response));
+        $message = '';
+        if (is_object($body) && !empty($body->error_message)) {
+            $message = is_scalar($body->error_message) ? (string) $body->error_message : wp_json_encode($body->error_message);
+        }
+
+        return array(
+            'status'     => (int) wp_remote_retrieve_response_code($response),
+            'message'    => $message,
+            'error_code' => (is_object($body) && isset($body->error_code) && is_scalar($body->error_code)) ? (string) $body->error_code : '',
+            'data'       => (is_object($body) && isset($body->data)) ? $body->data : null,
+        );
     }
 
     /**

@@ -797,7 +797,7 @@ class WC_SF_Setup_Wizard {
 					<li><span class="wc-sf-num" aria-hidden="true">2</span><span><b><?php esc_html_e( 'Documents.', 'woocommerce-superfaktura' ); ?></b> <?php esc_html_e( 'Number sequences, logo and bank account from SuperFaktúra, and the invoice language.', 'woocommerce-superfaktura' ); ?></span></li>
 					<li><span class="wc-sf-num" aria-hidden="true">3</span><span><b><?php esc_html_e( 'Payments.', 'woocommerce-superfaktura' ); ?></b> <?php esc_html_e( 'When to create an invoice or a proforma invoice for each payment method.', 'woocommerce-superfaktura' ); ?></span></li>
 					<li><span class="wc-sf-num" aria-hidden="true">4</span><span><b><?php esc_html_e( 'Shipping.', 'woocommerce-superfaktura' ); ?></b> <?php esc_html_e( 'Which delivery type the invoice states for each shipping method.', 'woocommerce-superfaktura' ); ?></span></li>
-					<li><span class="wc-sf-num" aria-hidden="true">5</span><span><b><?php esc_html_e( 'Checkout and emails.', 'woocommerce-superfaktura' ); ?></b> <?php esc_html_e( 'Company details at checkout, VAT number, OSS and the invoice in emails.', 'woocommerce-superfaktura' ); ?></span></li>
+					<li><span class="wc-sf-num" aria-hidden="true">5</span><span><b><?php esc_html_e( 'Checkout and emails.', 'woocommerce-superfaktura' ); ?></b> <?php esc_html_e( 'Company details at checkout, VAT number, OSS, eFaktúra and the invoice in emails.', 'woocommerce-superfaktura' ); ?></span></li>
 				</ol>
 			</div>
 			<div class="wc-sf-foot">
@@ -1331,6 +1331,12 @@ class WC_SF_Setup_Wizard {
 		$link     = $this->check_state( 'woocommerce_sf_order_received_invoice_link', true, 'yes' );
 		$bysquare = $this->check_state( 'woocommerce_sf_bysquare', true, 'yes' );
 
+		// eFaktúra stays off until the shop decides: the wizard cannot tell whether eFaktúra is activated in SuperFaktúra.
+		$peppol        = $this->check_state( 'woocommerce_sf_peppol', false, 'no' );
+		$peppol_pdf    = $this->check_state( 'woocommerce_sf_peppol_email_pdf', true, 'yes' );
+		$peppol_status = $this->current( 'woocommerce_sf_peppol_status' );
+		$peppol_status = null !== $peppol_status && '' !== $peppol_status ? $peppol_status : 'completed';
+
 		$vies_description = __( 'An invalid VAT number is not accepted.', 'woocommerce-superfaktura' );
 		if ( 'allow' === get_option( 'woocommerce_sf_validate_eu_vat_number_behavior', 'allow' ) ) {
 			$vies_description .= ' ' . __( 'When the VIES service is unavailable, the order goes through.', 'woocommerce-superfaktura' );
@@ -1350,6 +1356,20 @@ class WC_SF_Setup_Wizard {
 					$this->render_check( 'reverse_charge', $reverse[0], $reverse[1], __( 'No VAT for EU businesses with a valid VAT number', 'woocommerce-superfaktura' ), __( 'Reverse charge. Enable if you sell to businesses in other EU countries and you are a VAT payer.', 'woocommerce-superfaktura' ), 'applies', 'vies', __( 'Works only with the VAT number validation in VIES turned on.', 'woocommerce-superfaktura' ) );
 					$this->render_check( 'oss', $oss[0], $oss[1], __( 'OSS for sales to private customers in other EU countries', 'woocommerce-superfaktura' ), $oss_description, 'applies' );
 					?>
+				</div>
+				<div class="wc-sf-checks" id="wc-sf-efaktura">
+					<h2><?php esc_html_e( 'eFaktúra', 'woocommerce-superfaktura' ); ?></h2>
+					<?php
+					$this->render_check( 'peppol', $peppol[0], $peppol[1], __( 'Send invoices and credit notes to companies from Slovakia via Peppol', 'woocommerce-superfaktura' ), __( 'Enable if you are a VAT payer, sell to companies in Slovakia and have eFaktúra activated in SuperFaktúra. Other customers get documents as before.', 'woocommerce-superfaktura' ), 'applies', 'company_fields', __( 'Works only with company details at checkout.', 'woocommerce-superfaktura' ) );
+					?>
+					<div class="wc-sf-field" data-sum="<?php esc_attr_e( 'eFaktúra at order status', 'woocommerce-superfaktura' ); ?>" data-peppol-only>
+						<label for="wc-sf-peppol-status"><?php esc_html_e( 'Send the invoice at order status', 'woocommerce-superfaktura' ); ?></label>
+						<select id="wc-sf-peppol-status" name="peppol_status" data-initial="<?php echo esc_attr( $peppol_status ); ?>"><?php echo $this->options( $this->get_document_statuses(), $peppol_status ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></select>
+						<span class="wc-sf-hint"><?php esc_html_e( 'The invoice must exist at this status. A sent invoice is corrected by a credit note only.', 'woocommerce-superfaktura' ); ?></span>
+					</div>
+					<div data-peppol-only>
+						<?php $this->render_check( 'peppol_email_pdf', $peppol_pdf[0], $peppol_pdf[1], __( 'PDF also with eFaktúra', 'woocommerce-superfaktura' ), __( 'The PDF of documents sent via Peppol stays in the order e-mails. The customer might book the document twice.', 'woocommerce-superfaktura' ), '' ); ?>
+					</div>
 				</div>
 				<div class="wc-sf-checks">
 					<h2><?php esc_html_e( 'Emails and order page', 'woocommerce-superfaktura' ); ?></h2>
@@ -1802,6 +1822,16 @@ class WC_SF_Setup_Wizard {
 			$options[ $name ] = 'yes' === $this->posted( $field ) ? 'yes' : 'no';
 		}
 
+		// eFaktúra: only a SuperFaktúra SK account sends via Peppol. The status and the PDF stay as they are while it is off.
+		$options['woocommerce_sf_peppol'] = 'sk' === $credentials['woocommerce_sf_lang'] && 'yes' === $this->posted( 'peppol' ) ? 'yes' : 'no';
+		if ( 'yes' === $options['woocommerce_sf_peppol'] ) {
+			$peppol_status = $this->posted( 'peppol_status' );
+			if ( isset( $this->get_document_statuses()[ $peppol_status ] ) ) {
+				$options['woocommerce_sf_peppol_status'] = $peppol_status;
+			}
+			$options['woocommerce_sf_peppol_email_pdf'] = 'yes' === $this->posted( 'peppol_email_pdf' ) ? 'yes' : 'no';
+		}
+
 		// "Yes" attaches the PDF also to the shop's own emails; keep it when it is already set.
 		if ( 'yes' === $this->posted( 'pdf_attachment' ) ) {
 			$options['woocommerce_sf_invoice_pdf_attachment'] = 'yes' === get_option( 'woocommerce_sf_invoice_pdf_attachment', 'no' ) ? 'yes' : 'customer';
@@ -1829,6 +1859,9 @@ class WC_SF_Setup_Wizard {
 				'woocommerce_sf_order_received_invoice_link'    => 'yes',
 				'woocommerce_sf_bysquare'                       => 'yes',
 				'woocommerce_sf_invoice_pdf_attachment'         => 'no',
+				'woocommerce_sf_peppol'                         => 'no',
+				'woocommerce_sf_peppol_status'                  => 'completed',
+				'woocommerce_sf_peppol_email_pdf'               => 'yes',
 			);
 			foreach ( $options as $name => $value ) {
 				if ( isset( $defaults[ $name ] ) ) {

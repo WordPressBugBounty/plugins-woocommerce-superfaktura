@@ -243,6 +243,7 @@ class WC_SF_Settings extends WC_Settings_Page {
 			''                 => __( 'Authorization', 'woocommerce-superfaktura' ),
 			'invoice'          => __( 'Invoice', 'woocommerce-superfaktura' ),
 			'invoice_creation' => __( 'Invoice Creation', 'woocommerce-superfaktura' ),
+			'efaktura'         => __( 'eFaktúra', 'woocommerce-superfaktura' ),
 			'integration'      => __( 'Integration', 'woocommerce-superfaktura' ),
 			'payment'          => __( 'Payment', 'woocommerce-superfaktura' ),
 			'shipping'         => __( 'Shipping', 'woocommerce-superfaktura' ),
@@ -251,6 +252,11 @@ class WC_SF_Settings extends WC_Settings_Page {
 			'tools'            => __( 'Tools', 'woocommerce-superfaktura' ),
 			'help'             => __( 'Help', 'woocommerce-superfaktura' ),
 		);
+
+		// eFaktúra via Peppol is sent by SuperFaktúra SK only.
+		if ( 'sk' !== get_option( 'woocommerce_sf_lang', 'sk' ) ) {
+			unset( $sections['efaktura'] );
+		}
 
 		return apply_filters( 'woocommerce_get_sections_' . $this->id, $sections );
 	}
@@ -897,6 +903,59 @@ class WC_SF_Settings extends WC_Settings_Page {
 				$settings = apply_filters( 'superfaktura_invoice_creation_settings', $settings );
 				break;
 
+			case 'efaktura':
+				$settings = array(
+					array(
+						'title' => __( 'eFaktúra', 'woocommerce-superfaktura' ),
+						'type'  => 'title',
+						'desc'  => sprintf(
+							// Translators: %s Link to the eFaktúra page of SuperFaktura.
+							__( 'Invoices and credit notes for companies from Slovakia go via Peppol, other customers get them as before. A company is recognised by its DIČ, or by its IČ DPH, which contains the DIČ. eFaktúra must be activated for the company in SuperFaktúra first: %s.', 'woocommerce-superfaktura' ),
+							'<a href="https://www.superfaktura.sk/efaktura/" target="_blank">' . esc_html__( 'eFaktúra in SuperFaktúra', 'woocommerce-superfaktura' ) . '</a>'
+						),
+						'id'    => 'woocommerce_sf_efaktura_title',
+					),
+					array(
+						'title'   => __( 'Sending via Peppol', 'woocommerce-superfaktura' ),
+						'id'      => 'woocommerce_sf_peppol',
+						'default' => 'no',
+						'type'    => 'checkbox',
+						'desc'    => __( 'Send invoices and credit notes to companies from Slovakia via Peppol', 'woocommerce-superfaktura' ),
+					),
+					array(
+						'title'    => __( 'Order status', 'woocommerce-superfaktura' ),
+						'id'       => 'woocommerce_sf_peppol_status',
+						'default'  => 'completed',
+						'type'     => 'select',
+						'class'    => 'wc-enhanced-select wc-sf-peppol-item',
+						'options'  => array_diff_key( $this->get_order_statuses(), array_flip( array( 'cancelled', 'refunded', 'failed' ) ) ),
+						'desc_tip' => __( 'The invoice is sent when the order reaches this status, so it must exist by then. A sent invoice is never changed, not even by regeneration. It is corrected by a credit note. Credit notes are sent when they are created, an invoice not sent yet goes first.', 'woocommerce-superfaktura' ),
+					),
+					array(
+						'title'    => __( 'PDF in e-mails', 'woocommerce-superfaktura' ),
+						'id'       => 'woocommerce_sf_peppol_email_pdf',
+						'default'  => 'yes',
+						'type'     => 'checkbox',
+						'class'    => 'wc-sf-peppol-item',
+						'desc'     => __( 'Attach the PDF of documents sent via Peppol to order e-mails', 'woocommerce-superfaktura' ),
+						'desc_tip' => __( 'The customer gets the document via Peppol. With the PDF in the e-mail as well, they might book it twice. The link to download the document stays in the e-mail either way.', 'woocommerce-superfaktura' ),
+					),
+					array(
+						'type' => 'sectionend',
+						'id'   => 'woocommerce_sf_efaktura_title',
+					),
+				);
+
+				/**
+				 * Filters the settings fields of the eFaktúra section of the plugin settings.
+				 *
+				 * @since 1.61.0
+				 *
+				 * @param array $settings Settings fields in the WooCommerce settings API format.
+				 */
+				$settings = apply_filters( 'superfaktura_efaktura_settings', $settings );
+				break;
+
 			case 'integration':
 				// On hold is always offered, it is the default and saving this page must keep it selected.
 				$sync_order_statuses = array_diff_key( $this->get_order_statuses(), array_flip( $this->wc_sf->get_sync_excluded_order_statuses() ) );
@@ -1539,12 +1598,12 @@ class WC_SF_Settings extends WC_Settings_Page {
 
 						$content .= '
 							<tr class="' . ( ( 0 === $index % 2 ) ? 'odd' : '' ) . ' ' . ( ( $row['response_status'] ) ? ' error' : '' ) . '">
-								<td>' . $row['order_id'] . '</td>
-								<td>' . $row['document_type'] . '</td>
-								<td>' . $row['request_type'] . '</td>
-								<td>' . $row['response_status'] . '</td>
-								<td>' . $row['response_message'] . $explanation . '</td>
-								<td>' . $row['time'] . '</td>
+								<td>' . esc_html( $row['order_id'] ) . '</td>
+								<td>' . esc_html( $row['document_type'] ) . '</td>
+								<td>' . esc_html( $row['request_type'] ) . '</td>
+								<td>' . esc_html( $row['response_status'] ) . '</td>
+								<td>' . esc_html( $row['response_message'] ) . $explanation . '</td>
+								<td>' . esc_html( $row['time'] ) . '</td>
 							</tr>
 						';
 					}

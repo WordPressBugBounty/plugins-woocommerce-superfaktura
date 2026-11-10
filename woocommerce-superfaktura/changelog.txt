@@ -1,5 +1,13 @@
 === SuperFaktura WooCommerce – Changelog ===
 
+= 1.61.0 (2026-11-10) =
+* Nové: eFaktúra. Po zapnutí v novej časti eFaktúra plugin cez SuperFaktúru posiela faktúry a dobropisy firmám zo Slovenska cez Peppol. Faktúra odíde, keď objednávka dosiahne zvolený stav (predvolene Vybavená). Dobropis odíde hneď po vytvorení a faktúra, ktorá ešte neodišla, ide pred ním. Firmu plugin rozpozná podľa DIČ alebo podľa IČ DPH, z ktorého DIČ doplní aj do faktúry. Stav odoslania je v boxe Faktúry a v poznámkach objednávky, chyby v upozornení na neúspešné doklady. eFaktúru ponúka aj sprievodca nastavením.
+* Nové: Faktúra odoslaná cez Peppol sa už nemení, ani pri pregenerovaní. Opravuje sa dobropisom.
+* Nové: Daňový doklad k prijatej platbe, ktorý SuperFaktúra vystaví po úhrade zálohovej faktúry, plugin pri zapnutom odosielaní cez Peppol a automatickom párovaní platieb pripojí k objednávke a firmám zo Slovenska ho odošle cez Peppol.
+* Nové: V nastaveniach eFaktúry si zvolíte, či e-maily objednávky prikladajú aj PDF dokladov odoslaných cez Peppol.
+* Zmena: Dôvod opravy má aj dobropis na celú objednávku vytvorený v boxe Faktúry, keď automatické dobropisy nie sú zapnuté. Sú to dôvody zadané pri vrátení platby, inak Vrátenie platby zákazníkovi alebo Zrušenie objednávky.
+* Bezpečnosť: API log zobrazuje správy ako obyčajný text.
+
 = 1.60.1 (2026-11-09) =
 * Zmena: Spoľahlivejšie overenie IČ DPH vo VIES. Keď je VIES krátko preťažený, plugin overenie zopakuje a pri výpadku VIES pokladňa na overenie opakovane nečaká.
 * Nové: Keď VIES nie je dostupný, plugin uzná IČ DPH, ktoré VIES potvrdil v posledných 30 dňoch. Ak také overenie nie je, IČ DPH zostane neoverené. Oba prípady plugin zapíše do poznámky objednávky.

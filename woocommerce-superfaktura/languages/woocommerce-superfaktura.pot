@@ -2722,3 +2722,266 @@ msgstr ""
 #, php-format
 msgid "VIES was unavailable, so the VAT number %1$s was accepted based on its verification on %2$s."
 msgstr ""
+
+#: includes/class-wc-sf-settings.php
+msgid "eFaktúra"
+msgstr ""
+
+#. Translators: %s Link to the eFaktúra page of SuperFaktura.
+#: includes/class-wc-sf-settings.php
+#, php-format
+msgid "Invoices and credit notes for companies from Slovakia go via Peppol, other customers get them as before. A company is recognised by its DIČ, or by its IČ DPH, which contains the DIČ. eFaktúra must be activated for the company in SuperFaktúra first: %s."
+msgstr ""
+
+#: includes/class-wc-sf-settings.php
+msgid "eFaktúra in SuperFaktúra"
+msgstr ""
+
+#: includes/class-wc-sf-settings.php
+msgid "Sending via Peppol"
+msgstr ""
+
+#: includes/class-wc-sf-settings.php
+msgid "Send invoices and credit notes to companies from Slovakia via Peppol"
+msgstr ""
+
+#: includes/class-wc-sf-settings.php
+msgid "Order status"
+msgstr ""
+
+#: includes/class-wc-sf-settings.php
+msgid "The invoice is sent when the order reaches this status, so it must exist by then. A sent invoice is never changed, not even by regeneration. It is corrected by a credit note. Credit notes are sent when they are created, an invoice not sent yet goes first."
+msgstr ""
+
+#: includes/class-wc-sf-settings.php
+msgid "PDF in e-mails"
+msgstr ""
+
+#: includes/class-wc-sf-settings.php
+msgid "Attach the PDF of documents sent via Peppol to order e-mails"
+msgstr ""
+
+#: includes/class-wc-sf-settings.php
+msgid "The customer gets the document via Peppol. With the PDF in the e-mail as well, they might book it twice. The link to download the document stays in the e-mail either way."
+msgstr ""
+
+#. Translators: %s Credit note number.
+#: includes/class-wc-sf-peppol.php
+#, php-format
+msgid "credit note %s"
+msgstr ""
+
+#. Translators: %s Invoice number.
+#: includes/class-wc-sf-peppol.php
+#, php-format
+msgid "invoice %s"
+msgstr ""
+
+#: includes/class-wc-sf-peppol.php
+msgid "Not sent"
+msgstr ""
+
+#: includes/class-wc-sf-peppol.php
+msgid "Rejected"
+msgstr ""
+
+#: includes/class-wc-sf-peppol.php
+msgid "Not delivered"
+msgstr ""
+
+#: includes/class-wc-sf-peppol.php
+msgid "Delivered"
+msgstr ""
+
+#: includes/class-wc-sf-peppol.php
+msgid "Sent"
+msgstr ""
+
+#: includes/class-wc-sf-peppol.php
+msgid "Sending"
+msgstr ""
+
+#: includes/class-wc-sf-peppol.php
+msgid "The document does not belong to this order."
+msgstr ""
+
+#: includes/class-wc-sf-peppol.php
+msgid "The document was already sent via Peppol."
+msgstr ""
+
+#. Translators: %s Document, e.g. "invoice IN260614".
+#: includes/class-wc-sf-peppol.php
+#, php-format
+msgid "Handed over for sending via Peppol (eFaktúra): %s."
+msgstr ""
+
+#. Translators: %1$s Document, e.g. "invoice IN260614", %2$d Minutes.
+#: includes/class-wc-sf-peppol.php
+#, php-format
+msgid "Sending via Peppol (eFaktúra) failed: %1$s. We will try again in %2$d minutes."
+msgstr ""
+
+#. Translators: %1$s Document, e.g. "invoice IN260614", %2$s Reason.
+#: includes/class-wc-sf-peppol.php
+#, php-format
+msgid "Not sent via Peppol (eFaktúra): %1$s. %2$s"
+msgstr ""
+
+#: includes/class-wc-sf-peppol.php
+msgid "The document was not sent via Peppol."
+msgstr ""
+
+#. Translators: %1$s Document, e.g. "invoice IN260614", %2$s State, e.g. "Delivered".
+#: includes/class-wc-sf-peppol.php
+#, php-format
+msgid "eFaktúra, %1$s: %2$s."
+msgstr ""
+
+#: includes/class-wc-sf-peppol.php
+msgid "eFaktúra is not activated for the company in SuperFaktura."
+msgstr ""
+
+#. Translators: %s Problems found by SuperFaktura, separated by semicolons.
+#: includes/class-wc-sf-peppol.php
+#, php-format
+msgid "SuperFaktura found problems in the document: %s"
+msgstr ""
+
+#: includes/class-wc-sf-peppol.php
+msgid "SuperFaktura did not answer."
+msgstr ""
+
+#: includes/class-wc-sf-admin.php
+msgid "Document was not changed, because it was sent via Peppol (eFaktúra). It can be corrected by a credit note only."
+msgstr ""
+
+#: includes/class-wc-sf-admin.php
+msgid "The document was handed over for sending via Peppol (eFaktúra)."
+msgstr ""
+
+#: includes/class-wc-sf-admin.php
+msgid "The eFaktúra status was updated."
+msgstr ""
+
+#: includes/class-wc-sf-admin.php
+msgid "SuperFaktúra could not be reached. The plugin will try to send the document via Peppol again later."
+msgstr ""
+
+#: includes/class-wc-sf-admin.php
+msgid "The document was not sent via Peppol (eFaktúra). The reason is in the order notes."
+msgstr ""
+
+#: includes/class-wc-sf-admin.php
+msgid "The eFaktúra status could not be read."
+msgstr ""
+
+#: includes/class-wc-sf-admin.php
+msgid "Not sent yet"
+msgstr ""
+
+#: includes/class-wc-sf-admin.php
+msgid "Send via Peppol"
+msgstr ""
+
+#: includes/class-wc-sf-admin.php
+msgid "Check status"
+msgstr ""
+
+#: includes/class-wc-sf-notices.php
+#, php-format
+msgid "More than %d documents could not be created, updated or sent in SuperFaktúra in the last 30 days."
+msgstr ""
+
+#. Translators: %s Document type, e.g. "Invoice".
+#: includes/class-wc-sf-notices.php
+#, php-format
+msgid "%s, eFaktúra"
+msgstr ""
+
+#. Translators: %s Link to the eFaktúra page of SuperFaktura.
+#: includes/class-wc-superfaktura.php
+#, php-format
+msgid "eFaktúra is not activated for the company in SuperFaktura. %s, or turn off sending via Peppol in the plugin settings."
+msgstr ""
+
+#: includes/class-wc-superfaktura.php
+msgid "Choose SuperFaktura as your digital postman"
+msgstr ""
+
+#: includes/class-wc-superfaktura.php
+msgid "SuperFaktura found problems that prevent sending the document via Peppol. Correct them, then send the document again from the Invoices box of the order."
+msgstr ""
+
+#: includes/class-wc-superfaktura.php
+msgid "The document did not reach the customer via Peppol. Check the customer details with the customer and agree how to deliver the document."
+msgstr ""
+
+#. Translators: %d Number of documents.
+#: includes/class-wc-sf-notices.php
+#, php-format
+msgid "%d document could not be created, updated or sent in SuperFaktúra in the last 30 days."
+msgid_plural "%d documents could not be created, updated or sent in SuperFaktúra in the last 30 days."
+msgstr[0] ""
+msgstr[1] ""
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Enable if you are a VAT payer, sell to companies in Slovakia and have eFaktúra activated in SuperFaktúra. Other customers get documents as before."
+msgstr ""
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Works only with company details at checkout."
+msgstr ""
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "eFaktúra at order status"
+msgstr ""
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Send the invoice at order status"
+msgstr ""
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "The invoice must exist at this status. A sent invoice is corrected by a credit note only."
+msgstr ""
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "PDF also with eFaktúra"
+msgstr ""
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "The PDF of documents sent via Peppol stays in the order e-mails. The customer might book the document twice."
+msgstr ""
+
+#. Translators: %s Tax document number.
+#: includes/class-wc-sf-peppol.php
+#, php-format
+msgid "tax document %s"
+msgstr ""
+
+#. Translators: %s Tax document number.
+#: includes/class-wc-sf-peppol.php
+#, php-format
+msgid "Tax document %s for the received payment, created in SuperFaktura, was attached to the order."
+msgstr ""
+
+#. Translators: %s Tax document number.
+#: includes/class-wc-sf-admin.php
+#, php-format
+msgid "Tax document %s"
+msgstr ""
+
+#: includes/class-wc-sf-admin.php
+msgid "Tax document could not be found in SuperFaktura."
+msgstr ""
+
+#: includes/class-wc-sf-notices.php
+msgid "Tax document"
+msgstr ""
+
+#: includes/class-wc-sf-peppol.php
+msgid "The invoice of this credit note has to be sent via Peppol first."
+msgstr ""
+
+#: includes/class-wc-sf-setup-wizard.php
+msgid "Company details at checkout, VAT number, OSS, eFaktúra and the invoice in emails."
+msgstr ""

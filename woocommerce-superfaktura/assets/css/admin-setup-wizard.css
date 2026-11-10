@@ -78,6 +78,8 @@ body.wc-sf-setup {
 .wc-sf-check-text b { font-weight: 600; }
 .wc-sf-checks { display: grid; gap: 14px; }
 .wc-sf-check[data-requires] { margin-left: 26px; }
+#wc-sf-efaktura > .wc-sf-check[data-requires] { margin-left: 0; }
+#wc-sf-efaktura > [data-peppol-only] { margin-left: 26px; }
 .wc-sf-check.is-inactive .wc-sf-check-text > b { color: #646970; }
 .wc-sf-check-warn { color: #996800; }
 .wc-sf-check-note { margin: 4px 0 0 26px !important; }

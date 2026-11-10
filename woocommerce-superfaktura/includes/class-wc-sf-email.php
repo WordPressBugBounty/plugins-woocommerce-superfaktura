@@ -239,6 +239,12 @@ class WC_SF_Email {
             }
         }
 
+        // An invoice or a credit note that goes via Peppol (eFaktúra) has no PDF when the eFaktúra settings say so,
+        // so the customer does not book it twice.
+        if (!$this->wc_sf->peppol->pdf_in_emails($order, $invoice_data['type'], (int) ($invoice_data['invoice_id'] ?? 0))) {
+            return $attachments;
+        }
+
         $invoice_pdf_attachment = get_option('woocommerce_sf_invoice_pdf_attachment', 'no');
         if ('yes' === $invoice_pdf_attachment || ('customer' === $invoice_pdf_attachment && 0 === strpos($email_id, 'customer_'))) {
             $pdf_resource = wp_safe_remote_get($invoice_data['pdf']);

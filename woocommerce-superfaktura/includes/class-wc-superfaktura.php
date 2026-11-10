@@ -29,7 +29,7 @@ class WC_SuperFaktura {
 	 *
 	 * @var string
 	 */
-	public $version = '1.60.1';
+	public $version = '1.61.0';
 
 	/**
 	 * Database version.
@@ -131,6 +131,13 @@ class WC_SuperFaktura {
 	 * @var WC_SF_Invoice
 	 */
 	public $invoice_generator;
+
+	/**
+	 * Sending of invoices and credit notes via Peppol (eFaktúra).
+	 *
+	 * @var WC_SF_Peppol
+	 */
+	public $peppol;
 
 	/**
 	 * Instance of WC_SF_Bulk.
@@ -266,6 +273,7 @@ class WC_SuperFaktura {
         }
 		$this->email = new WC_SF_Email($this);
 		$this->invoice_generator = new WC_SF_Invoice($this);
+		$this->peppol = new WC_SF_Peppol($this);
 		$this->checkout_block = new WC_SF_Checkout_Block($this);
 		$this->bulk = new WC_SF_Bulk($this);
 		$this->tools = new WC_SF_Tools($this);
@@ -466,6 +474,7 @@ class WC_SuperFaktura {
 		$this->checkout_block->init();
 		$this->bulk->init();
 		$this->notices->init();
+		$this->peppol->init();
 	}
 
 
@@ -700,9 +709,10 @@ class WC_SuperFaktura {
 		// Check if related regular invoice was created automatically in SuperFaktura.
 		if ( 'proforma' == $response->{$invoice_id}->Invoice->type ) {
 
-			// Only if regular invoice does not already exist in WooCommerce.
+			// Only if regular invoice does not already exist in WooCommerce. With eFaktúra on, also for the tax
+			// document for the received payment SuperFaktura may create.
 			$regular_id = $order->get_meta( 'wc_sf_internal_regular_id', true );
-			if ( empty( $regular_id ) ) {
+			if ( empty( $regular_id ) || $this->peppol->enabled() ) {
 
 				// Schedule an action (because SuperFaktura calls the callback BEFORE it creates the regular invoice automatically).
 				as_schedule_single_action( time() + 300, 'sf_fetch_related_invoice', array( 'proforma_id' => $invoice_id ), 'woocommerce-superfaktura' );
@@ -727,9 +737,9 @@ class WC_SuperFaktura {
 
 		$order = $orders[0];
 
-		// Only if regular invoice does not already exist in WooCommerce.
-		$regular_id = $order->get_meta( 'wc_sf_internal_regular_id', true );
-		if ( ! empty( $regular_id ) ) {
+		// Only if regular invoice does not already exist in WooCommerce, or for the tax documents of eFaktúra.
+		$has_regular = ! empty( $order->get_meta( 'wc_sf_internal_regular_id', true ) );
+		if ( $has_regular && ! $this->peppol->enabled() ) {
 			return false;
 		}
 
@@ -737,6 +747,13 @@ class WC_SuperFaktura {
 		$api      = $this->sf_api();
 		$proforma = $api->getInvoiceDetails( $proforma_id );
 		if ( ! $proforma || ! isset( $proforma->{$proforma_id} ) || 'proforma' !== $proforma->{$proforma_id}->Invoice->type ) {
+			return false;
+		}
+
+		// eFaktúra: tax documents for the received payment go via Peppol too.
+		$this->peppol->attach_tax_documents( $order, $proforma->{$proforma_id} );
+
+		if ( $has_regular ) {
 			return false;
 		}
 
@@ -785,6 +802,8 @@ class WC_SuperFaktura {
 
 		// The invoice is attached without a log entry, so refresh the failed documents warning.
 		WC_SF_Notices::flush_errors();
+
+		$this->peppol->document_attached( $order, 'regular' );
 
 		return true;
 	}
@@ -901,6 +920,8 @@ class WC_SuperFaktura {
 
 			// The document is attached without a log entry, so refresh the failed documents warning.
 			WC_SF_Notices::flush_errors();
+
+			$this->peppol->document_attached( $order, $type );
 
 			return true;
 		}
@@ -1091,7 +1112,12 @@ class WC_SuperFaktura {
 		foreach ( $this->regenerated_document_types( $order ) as $type ) {
 			$sf_id = $order->get_meta( 'wc_sf_internal_' . $type . '_id', true );
 			if ( ! empty( $sf_id ) ) {
-				$result = $result && $this->invoice_generator->generate_invoice( $order, $type );
+				$generated = $this->invoice_generator->generate_invoice( $order, $type );
+				if ( is_wp_error( $generated ) && 'peppol_sent' === $generated->get_error_code() ) {
+					// A document sent via Peppol is not regenerated, say so.
+					return $generated;
+				}
+				$result = $result && $generated;
 			}
 		}
 
@@ -1104,21 +1130,28 @@ class WC_SuperFaktura {
 	 * Document types of an order that regeneration edits.
 	 *
 	 * When credit notes for refunds are on, an issued credit note stays as it is, and so does the invoice once
-	 * a credit note corrects it.
+	 * a credit note corrects it. A document sent via Peppol (eFaktúra) stays as it is too.
 	 *
 	 * @param WC_Order $order Order.
 	 * @return string[]
 	 */
 	public function regenerated_document_types( $order ) {
 		if ( ! $this->auto_credit_notes() ) {
-			return array( 'proforma', 'regular', 'cancel' );
+			$types = array( 'proforma', 'regular', 'cancel' );
+		} elseif ( $order->get_meta( 'wc_sf_internal_cancel_id', true ) || WC_SF_Invoice::get_refund_credit_notes( $order ) ) {
+			$types = array( 'proforma' );
+		} else {
+			$types = array( 'proforma', 'regular' );
 		}
 
-		if ( $order->get_meta( 'wc_sf_internal_cancel_id', true ) || WC_SF_Invoice::get_refund_credit_notes( $order ) ) {
-			return array( 'proforma' );
-		}
-
-		return array( 'proforma', 'regular' );
+		return array_values(
+			array_filter(
+				$types,
+				function( $type ) use ( $order ) {
+					return ! $this->peppol->is_locked( $order, $order->get_meta( 'wc_sf_internal_' . $type . '_id', true ) );
+				}
+			)
+		);
 	}
 
 
@@ -1250,7 +1283,7 @@ class WC_SuperFaktura {
 		$log_data['time'] = current_time( 'mysql' );
 		$wpdb->insert( $wpdb->prefix . 'wc_sf_log', $log_data );
 
-		if ( isset( $log_data['request_type'] ) && in_array( $log_data['request_type'], array( 'create', 'edit' ), true ) ) {
+		if ( isset( $log_data['request_type'] ) && in_array( $log_data['request_type'], WC_SF_Notices::ERROR_REQUEST_TYPES, true ) ) {
 			WC_SF_Notices::flush_errors();
 		}
 	}
@@ -1325,6 +1358,16 @@ class WC_SuperFaktura {
 			} elseif ( 500 <= $status || preg_match( '/SERVICE_UNAVAILABLE|MS_UNAVAILABLE|TIMEOUT|MAX_CONCURRENT_REQ/', $message ) ) {
 				$explanation = __( 'VIES was temporarily unavailable, so the VAT number could not be verified.', 'woocommerce-superfaktura' );
 			}
+		} elseif ( 0 === strpos( $request_type, 'peppol_' ) && false !== strpos( $message, 'REGISTRATION_MISSING' ) ) {
+			$explanation = sprintf(
+				// Translators: %s Link to the eFaktúra page of SuperFaktura.
+				__( 'eFaktúra is not activated for the company in SuperFaktura. %s, or turn off sending via Peppol in the plugin settings.', 'woocommerce-superfaktura' ),
+				'<a href="https://www.superfaktura.sk/efaktura/">' . esc_html__( 'Choose SuperFaktura as your digital postman', 'woocommerce-superfaktura' ) . '</a>'
+			);
+		} elseif ( 0 === strpos( $request_type, 'peppol_' ) && false !== strpos( $message, 'peppol.precheck_failed' ) ) {
+			$explanation = __( 'SuperFaktura found problems that prevent sending the document via Peppol. Correct them, then send the document again from the Invoices box of the order.', 'woocommerce-superfaktura' );
+		} elseif ( 'peppol_status' === $request_type && WC_SF_Peppol::LOG_STATUS_FAILED === $status ) {
+			$explanation = __( 'The document did not reach the customer via Peppol. Check the customer details with the customer and agree how to deliver the document.', 'woocommerce-superfaktura' );
 		} elseif ( 401 === $status ) {
 			$explanation = __( 'Check the API email, API key and Company ID in the plugin settings, or use the Test API connection button.', 'woocommerce-superfaktura' );
 		} elseif ( 0 === strpos( $message, 'cURL error' ) ) {

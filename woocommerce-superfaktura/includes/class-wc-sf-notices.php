@@ -44,6 +44,11 @@ class WC_SF_Notices {
 	const EFAKTURA_UNTIL = '2027-01-01';
 
 	/**
+	 * Log request types whose failures the failed document warning reports.
+	 */
+	const ERROR_REQUEST_TYPES = array( 'create', 'edit', 'peppol_send', 'peppol_status' );
+
+	/**
 	 * How far back failed documents are reported.
 	 */
 	const ERRORS_DAYS = 30;
@@ -1081,7 +1086,7 @@ class WC_SF_Notices {
 		$max_id = (int) $wpdb->get_var( "SELECT MAX(id) FROM {$table}" ); // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 		$rows   = $wpdb->get_results(
 			$wpdb->prepare(
-				"SELECT id, order_id, document_type, request_type, response_status, response_message, time FROM {$table} WHERE id > %d AND id <= %d AND time >= %s AND request_type IN ('create', 'edit') ORDER BY id DESC LIMIT 2000", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+				"SELECT id, order_id, document_type, request_type, response_status, response_message, time FROM {$table} WHERE id > %d AND id <= %d AND time >= %s AND request_type IN ('create', 'edit', 'peppol_send', 'peppol_status') ORDER BY id DESC LIMIT 2000", // phpcs:ignore WordPress.DB.PreparedSQL.InterpolatedNotPrepared
 				max( 0, $max_id - 20000 ),
 				$max_id,
 				$cutoff
@@ -1095,9 +1100,32 @@ class WC_SF_Notices {
 		$more   = false;
 		$seen   = array();
 		foreach ( (array) $rows as $row ) {
-			$key = $row['order_id'] . '|' . $row['document_type'];
+			$peppol = 0 === strpos( (string) $row['request_type'], 'peppol_' );
+			$key    = $row['order_id'] . '|' . $row['document_type'] . ( $peppol ? '|peppol' : '' );
 			if ( isset( $seen[ $key ] ) ) {
 				// A newer entry for this document already decided it.
+				continue;
+			}
+
+			if ( $peppol ) {
+				// The state of the documents decides, the newest failed entry describes it. A credit note of
+				// a cancelled order goes via Peppol too, so cancelled orders are not skipped here.
+				if ( empty( $row['response_status'] ) ) {
+					continue;
+				}
+				$seen[ $key ] = true;
+
+				$order = $row['order_id'] ? wc_get_order( $row['order_id'] ) : false;
+				if ( ! $order || 'trash' === $order->get_status() || ! $this->has_failed_peppol_document( $order, $row['document_type'] ) ) {
+					continue;
+				}
+
+				if ( count( $errors ) >= self::ERRORS_LIMIT ) {
+					$more = true;
+					break;
+				}
+
+				$errors[] = $row;
 				continue;
 			}
 
@@ -1154,6 +1182,28 @@ class WC_SF_Notices {
 		set_transient( self::ERRORS_TRANSIENT, $cached, HOUR_IN_SECONDS );
 
 		return $cached;
+	}
+
+	/**
+	 * Whether a document of the type is in a failed Peppol state: not sent, failed, rejected or not delivered.
+	 *
+	 * A send that failed only for the moment is tried again without a state, so it does not count.
+	 *
+	 * @param WC_Order $order         Order.
+	 * @param string   $document_type 'regular' or 'cancel'.
+	 * @return bool
+	 */
+	private function has_failed_peppol_document( $order, $document_type ) {
+		$peppol    = $this->wc_sf->peppol;
+		$documents = $peppol->get_documents( $order );
+
+		foreach ( $peppol->get_states( $order ) as $document_id => $state ) {
+			if ( isset( $documents[ $document_id ] ) && $document_type === $documents[ $document_id ]['type'] && WC_SF_Peppol::is_failed( $state ) ) {
+				return true;
+			}
+		}
+
+		return false;
 	}
 
 	/**
@@ -1239,10 +1289,19 @@ class WC_SF_Notices {
 			'regular'  => __( 'Invoice', 'woocommerce-superfaktura' ),
 			'proforma' => __( 'Proforma invoice', 'woocommerce-superfaktura' ),
 			'cancel'   => __( 'Credit note', 'woocommerce-superfaktura' ),
+			'tax'      => __( 'Tax document', 'woocommerce-superfaktura' ),
 		);
 
 		$count   = count( $errors );
 		$shown   = array_slice( $errors, 0, 3 );
+
+		// The wording mentions sending only to shops that send via Peppol.
+		$peppol_errors = $this->wc_sf->peppol->enabled() || array_filter(
+			$errors,
+			function ( $row ) {
+				return 0 === strpos( (string) $row['request_type'], 'peppol_' );
+			}
+		);
 		$newest  = max( array_map( 'intval', wp_list_pluck( $errors, 'id' ) ) );
 		$log_url = admin_url( 'admin.php?page=wc-settings&tab=superfaktura&section=api_log' );
 		?>
@@ -1250,9 +1309,15 @@ class WC_SF_Notices {
 			<p>
 				<strong><?php esc_html_e( 'SuperFaktúra', 'woocommerce-superfaktura' ); ?></strong>:
 				<?php
-				if ( $data['more'] ) {
+				if ( $data['more'] && $peppol_errors ) {
+					// Translators: %d Number of documents.
+					echo esc_html( sprintf( __( 'More than %d documents could not be created, updated or sent in SuperFaktúra in the last 30 days.', 'woocommerce-superfaktura' ), $count ) );
+				} elseif ( $data['more'] ) {
 					// Translators: %d Number of documents.
 					echo esc_html( sprintf( __( 'More than %d documents could not be created or updated in SuperFaktúra in the last 30 days.', 'woocommerce-superfaktura' ), $count ) );
+				} elseif ( $peppol_errors ) {
+					// Translators: %d Number of documents.
+					echo esc_html( sprintf( _n( '%d document could not be created, updated or sent in SuperFaktúra in the last 30 days.', '%d documents could not be created, updated or sent in SuperFaktúra in the last 30 days.', $count, 'woocommerce-superfaktura' ), $count ) );
 				} else {
 					// Translators: %d Number of documents.
 					echo esc_html( sprintf( _n( '%d document could not be created or updated in SuperFaktúra in the last 30 days.', '%d documents could not be created or updated in SuperFaktúra in the last 30 days.', $count, 'woocommerce-superfaktura' ), $count ) );
@@ -1267,6 +1332,10 @@ class WC_SF_Notices {
 						continue;
 					}
 					$type = isset( $types[ $row['document_type'] ] ) ? $types[ $row['document_type'] ] : $row['document_type'];
+					if ( 0 === strpos( (string) $row['request_type'], 'peppol_' ) ) {
+						// Translators: %s Document type, e.g. "Invoice".
+						$type = sprintf( __( '%s, eFaktúra', 'woocommerce-superfaktura' ), $type );
+					}
 					?>
 					<li>
 						<a href="<?php echo esc_url( $order->get_edit_order_url() ); ?>">

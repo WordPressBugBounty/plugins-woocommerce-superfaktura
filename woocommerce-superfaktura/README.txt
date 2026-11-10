@@ -4,7 +4,7 @@ Tags: superfaktura, invoice, faktura, proforma, woocommerce
 Requires at least: 4.4
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.60.1
+Stable tag: 1.61.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -28,6 +28,7 @@ Main features of SuperFaktura WooCommerce include:
 	* WooCommerce My Account page
 * Set your own rules, when proforma or real invoice should be generated. Want to send proforma invoice on order creation and real invoice after payment? We got that covered.
 * Automatically create a credit note for every refund.
+* Send invoices and credit notes to companies in Slovakia via Peppol (eFaktúra) through SuperFaktura, with the sending status in the order.
 * Custom invoice numbering.
 
 Created by [Ján Bočínec](http://bocinec.sk/) with the support of [Slovak WordPress community](http://wp.sk/) and [WordPress agency Webikon](http://www.webikon.sk/). Since 2017 maintained by [2day.sk](https://www.2day.sk/).
@@ -38,7 +39,7 @@ This plugin connects to the following external services.
 
 **SuperFaktúra API** (moja.superfaktura.sk, moje.superfaktura.cz, meine.superfaktura.at, or the sandbox at sandbox.superfaktura.sk and sandbox.superfaktura.cz)
 
-The plugin creates, updates and reads invoices, proforma invoices and credit notes in your SuperFaktúra account. It sends your API credentials and the order data needed for the document: the customer's billing and shipping details (including company IDs and VAT number), ordered items, prices, payment and shipping method. With every request it also sends the WordPress, WooCommerce, plugin and PHP versions and your shop's domain name. It connects when a document is created or regenerated (automatically on an order status change or a refund, or manually), when SuperFaktúra reports a paid invoice to your shop, when the PDF is attached to an email, and when you test the connection or open the plugin settings. Terms of use: [superfaktura.sk](https://www.superfaktura.sk/podmienky-pouzivania/), [superfaktura.cz](https://www.superfaktura.cz/podminky-uzivani/). Privacy policy: [superfaktura.sk](https://www.superfaktura.sk/ochrana-sukromia/), [superfaktura.cz](https://www.superfaktura.cz/ochrana-soukromi/).
+The plugin creates, updates and reads invoices, proforma invoices and credit notes in your SuperFaktúra account. It sends your API credentials and the order data needed for the document: the customer's billing and shipping details (including company IDs and VAT number), ordered items, prices, payment and shipping method. With every request it also sends the WordPress, WooCommerce, plugin and PHP versions and your shop's domain name. It connects when a document is created or regenerated (automatically on an order status change or a refund, or manually), when SuperFaktúra reports a paid invoice to your shop, when the PDF is attached to an email, and when you test the connection or open the plugin settings. When *Sending via Peppol* is enabled (SuperFaktura accounts in Slovakia), it also asks SuperFaktura to send invoices, credit notes and tax documents of companies from Slovakia via the Peppol network, and reads their sending status. SuperFaktura delivers them through its Peppol service provider. Terms of use: [superfaktura.sk](https://www.superfaktura.sk/podmienky-pouzivania/), [superfaktura.cz](https://www.superfaktura.cz/podminky-uzivani/). Privacy policy: [superfaktura.sk](https://www.superfaktura.sk/ochrana-sukromia/), [superfaktura.cz](https://www.superfaktura.cz/ochrana-soukromi/).
 
 **VIES VAT number validation by the European Commission** (ec.europa.eu)
 
@@ -89,6 +90,10 @@ Enable *Validate VAT #* and *Remove VAT for EU businesses with a valid VAT #* in
 
 Enable *OSS* in the *Invoice* section. A document is an OSS sale when the customer has no VAT number and the taxable country is another EU country than the store's. With OSS enabled, the order shows below the billing address whether its documents will be OSS sales and why. [More](https://superfaktura.2day.sk/podpora/#oss)
 
+= Does the plugin send eFaktúra via Peppol? =
+
+Yes, for SuperFaktura accounts in Slovakia. Enable *Sending via Peppol* in the *eFaktúra* section after you activate eFaktúra for your company in SuperFaktura. Invoices and credit notes of companies from Slovakia with a tax ID (DIČ) or VAT number then go via Peppol, other customers get documents as before. The state of each document is shown in the order. [More](https://superfaktura.2day.sk/novinky/verzia-1-61-0/)
+
 = How do I create a credit note? =
 
 Enable *Credit notes* in *Invoice Creation*. Every refund then gets its own credit note automatically, and the customer gets it in the WooCommerce refund e-mail. Without the setting, create a credit note with the link in the SuperFaktura box of the order. [More](https://superfaktura.2day.sk/podpora/#dobropis)
@@ -102,6 +107,14 @@ Check the API e-mail, API key and Company ID in *Authorization* and use *Test AP
 You can read more about SuperFaktura API integration at [superfaktura.sk/api](https://www.superfaktura.sk/api/).
 
 == Changelog ==
+
+= 1.61.0 (2026-11-10) =
+* Nové: eFaktúra. Po zapnutí v novej časti eFaktúra plugin cez SuperFaktúru posiela faktúry a dobropisy firmám zo Slovenska cez Peppol. Faktúra odíde, keď objednávka dosiahne zvolený stav (predvolene Vybavená). Dobropis odíde hneď po vytvorení a faktúra, ktorá ešte neodišla, ide pred ním. Firmu plugin rozpozná podľa DIČ alebo podľa IČ DPH, z ktorého DIČ doplní aj do faktúry. Stav odoslania je v boxe Faktúry a v poznámkach objednávky, chyby v upozornení na neúspešné doklady. eFaktúru ponúka aj sprievodca nastavením.
+* Nové: Faktúra odoslaná cez Peppol sa už nemení, ani pri pregenerovaní. Opravuje sa dobropisom.
+* Nové: Daňový doklad k prijatej platbe, ktorý SuperFaktúra vystaví po úhrade zálohovej faktúry, plugin pri zapnutom odosielaní cez Peppol a automatickom párovaní platieb pripojí k objednávke a firmám zo Slovenska ho odošle cez Peppol.
+* Nové: V nastaveniach eFaktúry si zvolíte, či e-maily objednávky prikladajú aj PDF dokladov odoslaných cez Peppol.
+* Zmena: Dôvod opravy má aj dobropis na celú objednávku vytvorený v boxe Faktúry, keď automatické dobropisy nie sú zapnuté. Sú to dôvody zadané pri vrátení platby, inak Vrátenie platby zákazníkovi alebo Zrušenie objednávky.
+* Bezpečnosť: API log zobrazuje správy ako obyčajný text.
 
 = 1.60.1 (2026-11-09) =
 * Zmena: Spoľahlivejšie overenie IČ DPH vo VIES. Keď je VIES krátko preťažený, plugin overenie zopakuje a pri výpadku VIES pokladňa na overenie opakovane nečaká.

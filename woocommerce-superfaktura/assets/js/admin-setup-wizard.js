@@ -387,6 +387,16 @@
 			pairing.hidden = ! anyProforma;
 		}
 
+		// eFaktúra: only for a SuperFaktúra SK account, its details only while it is on.
+		var efaktura = $( '#wc-sf-efaktura' );
+		if ( efaktura ) {
+			var account = $( 'input[name="lang"]:checked', form );
+			efaktura.hidden = ! account || 'sk' !== account.value;
+			$$( '[data-peppol-only]', efaktura ).forEach( function ( element ) {
+				element.hidden = ! form.elements.peppol.checked;
+			} );
+		}
+
 		$$( '[data-requires]', form ).forEach( function ( label ) {
 			var required = form.elements[ label.getAttribute( 'data-requires' ) ];
 			var inactive = !! required && ! required.checked;
