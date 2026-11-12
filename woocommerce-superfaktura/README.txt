@@ -4,7 +4,7 @@ Tags: superfaktura, invoice, faktura, proforma, woocommerce
 Requires at least: 4.4
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.61.0
+Stable tag: 1.62.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -108,12 +108,16 @@ You can read more about SuperFaktura API integration at [superfaktura.sk/api](ht
 
 == Changelog ==
 
+= 1.62.0 (2026-11-12) =
+* Nové: Číselníky, logo a bankový účet vyberiete v nastaveniach podľa názvu zo zoznamu, aj v tabuľke Krajiny. Plugin ich načíta z vašej firmy v SuperFaktúre. Ak je v nastaveniach uložené ID, ktoré vo firme nie je, plugin na to upozorní.
+* Zmena: Zrozumiteľnejšie slovenské texty v nastaveniach a správach pluginu.
+
 = 1.61.0 (2026-11-10) =
-* Nové: eFaktúra. Po zapnutí v novej časti eFaktúra plugin cez SuperFaktúru posiela faktúry a dobropisy firmám zo Slovenska cez Peppol. Faktúra odíde, keď objednávka dosiahne zvolený stav (predvolene Vybavená). Dobropis odíde hneď po vytvorení a faktúra, ktorá ešte neodišla, ide pred ním. Firmu plugin rozpozná podľa DIČ alebo podľa IČ DPH, z ktorého DIČ doplní aj do faktúry. Stav odoslania je v boxe Faktúry a v poznámkach objednávky, chyby v upozornení na neúspešné doklady. eFaktúru ponúka aj sprievodca nastavením.
+* Nové: eFaktúra. Po zapnutí v novej časti eFaktúra plugin cez SuperFaktúru posiela faktúry a dobropisy firmám zo Slovenska cez Peppol. Faktúra odíde, keď objednávka dosiahne zvolený stav (predvolene Vybavená). Dobropis odíde hneď po vytvorení. Ak faktúra ešte neodišla, odíde pred ním. Firmu plugin rozpozná podľa DIČ alebo podľa IČ DPH, z ktorého DIČ doplní aj do faktúry. Stav odoslania uvidíte v boxe Faktúry a v poznámkach objednávky. Chyby plugin ukáže aj v upozornení na neúspešné doklady. eFaktúru ponúka aj sprievodca nastavením.
 * Nové: Faktúra odoslaná cez Peppol sa už nemení, ani pri pregenerovaní. Opravuje sa dobropisom.
-* Nové: Daňový doklad k prijatej platbe, ktorý SuperFaktúra vystaví po úhrade zálohovej faktúry, plugin pri zapnutom odosielaní cez Peppol a automatickom párovaní platieb pripojí k objednávke a firmám zo Slovenska ho odošle cez Peppol.
+* Nové: Daňový doklad k prijatej platbe, ktorý SuperFaktúra vystaví po úhrade zálohovej faktúry, plugin pripojí k objednávke a firmám zo Slovenska ho odošle cez Peppol. Platí to pri zapnutom odosielaní cez Peppol a automatickom párovaní platieb.
 * Nové: V nastaveniach eFaktúry si zvolíte, či e-maily objednávky prikladajú aj PDF dokladov odoslaných cez Peppol.
-* Zmena: Dôvod opravy má aj dobropis na celú objednávku vytvorený v boxe Faktúry, keď automatické dobropisy nie sú zapnuté. Sú to dôvody zadané pri vrátení platby, inak Vrátenie platby zákazníkovi alebo Zrušenie objednávky.
+* Zmena: Aj dobropis na celú objednávku, ktorý vytvoríte v boxe Faktúry bez zapnutých automatických dobropisov, má dôvod opravy. Sú to dôvody zadané pri vráteniach platby, inak Vrátenie platby zákazníkovi alebo Zrušenie objednávky.
 * Bezpečnosť: API log zobrazuje správy ako obyčajný text.
 
 = 1.60.1 (2026-11-09) =
@@ -121,7 +125,7 @@ You can read more about SuperFaktura API integration at [superfaktura.sk/api](ht
 * Nové: Keď VIES nie je dostupný, plugin uzná IČ DPH, ktoré VIES potvrdil v posledných 30 dňoch. Ak také overenie nie je, IČ DPH zostane neoverené. Oba prípady plugin zapíše do poznámky objednávky.
 
 = 1.60.0 (2026-11-03) =
-* Nové: Dobropis automaticky pri každom vrátení platby. Po zapnutí nastavenia Dobropisy v časti Vytvorenie faktúry dostane každé vrátenie platby vo WooCommerce vlastný dobropis s dátumom a dôvodom vrátenia, so sumou presne podľa vrátenia a so sadzbami DPH z objednávky. Zákazník ho dostane v e-maile o vrátení platby namiesto faktúry a nájde ho aj v časti Môj účet. Zrušená objednávka s faktúrou bez vrátenia platby dostane dobropis na celú faktúru.
+* Nové: Dobropis automaticky pri každom vrátení platby. Po zapnutí nastavenia Dobropisy v časti Vytvorenie faktúry dostane každé vrátenie platby vo WooCommerce vlastný dobropis s dátumom a dôvodom vrátenia, so sumou presne podľa vrátenia a so sadzbami DPH z objednávky. Zákazník ho dostane v e-maile o vrátení platby namiesto faktúry a nájde ho aj v časti Môj účet. Keď zrušíte objednávku s faktúrou bez vrátenia platby, vznikne dobropis na celú faktúru.
 * Oprava: Na dobropise na celú objednávku majú zľava a darčeková karta správne znamienko, takže jeho suma sedí s faktúrou.
 
 = 1.59.2 (2026-10-19) =
@@ -152,7 +156,7 @@ You can read more about SuperFaktura API integration at [superfaktura.sk/api](ht
 * Nové: Jazyk faktúry podľa krajiny zákazníka, s nastaviteľným jazykom pre krajiny, ktorých jazyk SuperFaktúra nepodporuje. Nový filter sf_invoice_language_country_map.
 
 = 1.55.3 (2026-09-29) =
-* Zmena: Príznak OSS sa určuje podľa krajiny, podľa ktorej WooCommerce vypočítal DPH (dodacia alebo fakturačná adresa podľa nastavení dane, pri osobnom odbere krajina obchodu), namiesto vždy podľa fakturačnej adresy. Nový filter sf_invoice_oss.
+* Zmena: Príznak OSS sa určuje podľa tej istej krajiny, z ktorej WooCommerce počíta DPH, nie vždy podľa fakturačnej adresy. Podľa nastavení dane je to dodacia alebo fakturačná adresa, pri osobnom odbere krajina obchodu. Nový filter sf_invoice_oss.
 
 = 1.55.2 (2026-09-25) =
 * Oprava: Strata názvu firmy a firemných údajov v predplatnom (WooCommerce Subscriptions) po zaplatení zlyhanej obnovy cez pokladňu. Pri úhrade obnovy sa firemné údaje predvyplnia z predplatného.
@@ -161,7 +165,7 @@ You can read more about SuperFaktura API integration at [superfaktura.sk/api](ht
 * Oprava: Obnovovacia objednávka s firemnými údajmi, ale bez názvu firmy, doplní názov z predplatného alebo pôvodnej objednávky.
 
 = 1.55.1 (2026-09-23) =
-* Zmena: PDF faktúra v prílohe e-mailu má rovnaký názov ako pri stiahnutí zo SuperFaktúry, namiesto interného ID dokladu.
+* Zmena: PDF faktúry v prílohe e-mailu sa volá rovnako ako pri stiahnutí zo SuperFaktúry, nie podľa interného ID dokladu.
 * Nové: Filter sf_invoice_attachment_filename pre nastavenie vlastného názvu.
 
 = 1.55.0 (2026-09-14) =

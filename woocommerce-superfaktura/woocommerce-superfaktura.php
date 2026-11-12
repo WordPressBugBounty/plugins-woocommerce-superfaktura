@@ -12,7 +12,7 @@
  * Plugin Name: SuperFaktúra WooCommerce
  * Plugin URI:  https://superfaktura.2day.sk/
  * Description: Integrácia služby <a href="http://www.superfaktura.sk/api/">SuperFaktúra.sk</a> pre WooCommerce. Máte s modulom technický problém? Napíšte nám na <a href="mailto:superfaktura@2day.sk">superfaktura@2day.sk</a>
- * Version:     1.61.0
+ * Version:     1.62.0
  * Author:      2day.sk
  * Author URI:  https://www.2day.sk/
  * Requires Plugins: woocommerce
@@ -34,6 +34,7 @@ require_once plugin_dir_path( WC_SF_FILE_PATH ) . 'includes/class-wc-sf-admin.ph
 require_once plugin_dir_path( WC_SF_FILE_PATH ) . 'includes/class-wc-sf-api.php';
 require_once plugin_dir_path( WC_SF_FILE_PATH ) . 'includes/class-wc-sf-bulk.php';
 require_once plugin_dir_path( WC_SF_FILE_PATH ) . 'includes/class-wc-sf-checkout-block.php';
+require_once plugin_dir_path( WC_SF_FILE_PATH ) . 'includes/class-wc-sf-company-lists.php';
 require_once plugin_dir_path( WC_SF_FILE_PATH ) . 'includes/class-wc-sf-email.php';
 require_once plugin_dir_path( WC_SF_FILE_PATH ) . 'includes/class-wc-sf-helper.php';
 require_once plugin_dir_path( WC_SF_FILE_PATH ) . 'includes/class-wc-sf-invoice.php';

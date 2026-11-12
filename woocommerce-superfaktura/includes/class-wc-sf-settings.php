@@ -32,6 +32,21 @@ class WC_SF_Settings extends WC_Settings_Page {
 	protected $notice;
 
 	/**
+	 * Titles of the settings whose saved ID is not in the lists of the SuperFaktúra company.
+	 *
+	 * @var string[]
+	 */
+	protected $missing_ids = array();
+
+	/**
+	 * Whether the settings screen is being rendered. The lists of the SuperFaktúra company are loaded only then, so
+	 * saving the settings or any other use of the settings fields never calls the API.
+	 *
+	 * @var bool
+	 */
+	protected $rendering = false;
+
+	/**
 	 * Allowed tags in HTML output.
 	 *
 	 * @var array
@@ -1786,6 +1801,8 @@ class WC_SF_Settings extends WC_Settings_Page {
 				break;
 		}
 
+		$settings = $this->add_company_lists( $settings );
+
 		$settings = apply_filters( 'woocommerce_get_settings_' . $this->id, $settings, $current_section );
 
 		return $this->filter_settings_for_rest_api( $settings );
@@ -1848,7 +1865,8 @@ class WC_SF_Settings extends WC_Settings_Page {
 	 */
 	public function output() {
 		global $current_section;
-		$settings = $this->get_settings( $current_section );
+		$this->rendering = true;
+		$settings        = $this->get_settings( $current_section );
 
 		if ( 'yes' === get_option( 'woocommerce_sf_sandbox', 'no' ) ) {
 			echo wp_kses( '<div class="sf-notice-info">' . __( 'Plugin SuperFaktura WooCommerce is in sandbox mode.', 'woocommerce-superfaktura' ) . '</div>', $this->allowed_tags );
@@ -1856,6 +1874,17 @@ class WC_SF_Settings extends WC_Settings_Page {
 
 		if ($this->notice) {
 			echo wp_kses( '<div class="sf-notice-error">' . $this->notice . '</div>', $this->allowed_tags );
+		}
+
+		if ( $this->missing_ids ) {
+			echo wp_kses(
+				'<div class="sf-notice-error">' . sprintf(
+					/* translators: %s: list of setting titles */
+					esc_html__( 'These settings contain an ID that is not in your SuperFaktúra company: %s. Choose an item from the list. For a number sequence, SuperFaktúra numbers the document by its default sequence.', 'woocommerce-superfaktura' ),
+					'<strong>' . implode( '</strong>, <strong>', array_map( 'esc_html', array_unique( $this->missing_ids ) ) ) . '</strong>'
+				) . '</div>',
+				$this->allowed_tags
+			);
 		}
 
 		if ( '' === $current_section && $this->wc_sf->setup_wizard ) {
@@ -1877,6 +1906,8 @@ class WC_SF_Settings extends WC_Settings_Page {
 		if ( 'invoice' === $current_section ) {
 			$this->get_country_specific_settings();
 		}
+
+		$this->rendering = false;
 
 		?>
 		<script>
@@ -1918,8 +1949,14 @@ class WC_SF_Settings extends WC_Settings_Page {
 			return;
 		}
 
+		// The ID fields are text fields while saving, so the posted ID is saved as it is.
 		$settings = $this->get_settings( $current_section );
 		WC_Admin_Settings::save_fields( $settings );
+
+		// Load the lists again when the page is shown after saving, so items just added in SuperFaktúra can be chosen.
+		if ( in_array( $current_section, array( '', 'invoice' ), true ) ) {
+			WC_SF_Company_Lists::forget();
+		}
 
 		if ( isset( $_POST['woocommerce_sf_country_settings'] ) ) {
 			update_option( 'woocommerce_sf_country_settings', sanitize_text_field( wp_unslash( $_POST['woocommerce_sf_country_settings'] ) ) );
@@ -1941,6 +1978,8 @@ class WC_SF_Settings extends WC_Settings_Page {
 		if ( is_array( $country_settings_db ) ) {
 			$country_settings = array_merge( array( 'template' ), $country_settings_db );
 		}
+
+		$lists = $this->company_lists();
 		?>
 
 		<h2><?php esc_html_e( 'Countries', 'woocommerce-superfaktura' ); ?></h2>
@@ -1987,10 +2026,10 @@ class WC_SF_Settings extends WC_Settings_Page {
 						<td><input type="text" name="_country_vat" placeholder="<?php esc_html_e( 'VAT #', 'woocommerce-superfaktura' ); ?>" value="<?php echo ( 'template' !== $country ) ? esc_attr( $country['vat_id'] ) : ''; ?>" style="padding: 12px 10px !important;"></td>
 						<td style="text-align: center; vertical-align: middle;"><input type="checkbox" name="_country_vat_id_only_final_consumer" <?php echo ( 'template' !== $country && ! empty( $country['vat_id_only_final_consumer'] ) ) ? 'checked="checked"' : ''; ?>></td>
 						<td><input type="text" name="_country_tax" placeholder="<?php esc_html_e( 'TAX ID #', 'woocommerce-superfaktura' ); ?>" value="<?php echo ( 'template' !== $country ) ? esc_attr( $country['tax_id'] ) : ''; ?>" style="padding: 12px 10px !important;"></td>
-						<td><input type="text" name="_country_bank_account_id" placeholder="<?php esc_html_e( 'Bank Account ID', 'woocommerce-superfaktura' ); ?>" value="<?php echo ( 'template' !== $country ) ? esc_attr( $country['bank_account_id'] ) : ''; ?>" style="padding: 12px 10px !important;"></td>
-						<td><input type="text" name="_country_proforma_invoice_sequence_id" placeholder="<?php esc_html_e( 'Proforma Invoice Sequence ID', 'woocommerce-superfaktura' ); ?>" value="<?php echo ( 'template' !== $country ) ? esc_attr( $country['proforma_sequence_id'] ) : ''; ?>" style="padding: 12px 10px !important;"></td>
-						<td><input type="text" name="_country_invoice_sequence_id" placeholder="<?php esc_html_e( 'Invoice Sequence ID', 'woocommerce-superfaktura' ); ?>" value="<?php echo ( 'template' !== $country ) ? esc_attr( $country['invoice_sequence_id'] ) : ''; ?>" style="padding: 12px 10px !important;"></td>
-						<td><input type="text" name="_country_cancel_sequence_id" placeholder="<?php esc_html_e( 'Credit Note Sequence ID', 'woocommerce-superfaktura' ); ?>" value="<?php echo ( 'template' !== $country ) ? esc_attr( $country['cancel_sequence_id'] ) : ''; ?>" style="padding: 12px 10px !important;"></td>
+						<td><?php $this->country_id_field( '_country_bank_account_id', __( 'Bank Account ID', 'woocommerce-superfaktura' ), $lists ? $lists['banks'] : null, ( 'template' !== $country ) ? $country['bank_account_id'] : '' ); ?></td>
+						<td><?php $this->country_id_field( '_country_proforma_invoice_sequence_id', __( 'Proforma Invoice Sequence ID', 'woocommerce-superfaktura' ), $lists && $lists['sequences'] ? $lists['sequences']['proforma'] : null, ( 'template' !== $country ) ? $country['proforma_sequence_id'] : '' ); ?></td>
+						<td><?php $this->country_id_field( '_country_invoice_sequence_id', __( 'Invoice Sequence ID', 'woocommerce-superfaktura' ), $lists && $lists['sequences'] ? $lists['sequences']['regular'] : null, ( 'template' !== $country ) ? $country['invoice_sequence_id'] : '' ); ?></td>
+						<td><?php $this->country_id_field( '_country_cancel_sequence_id', __( 'Credit Note Sequence ID', 'woocommerce-superfaktura' ), $lists && $lists['sequences'] ? $lists['sequences']['cancel'] : null, ( 'template' !== $country ) ? $country['cancel_sequence_id'] : '' ); ?></td>
 						<td><a href="#" class="sf-delete-country-settings" style="display: block; padding: 12px 10px; white-space: nowrap;"><span class="dashicons dashicons-dismiss"></span><?php esc_html_e( 'Delete', 'woocommerce-superfaktura' ); ?></a></td>
 					</tr>
 
@@ -2000,5 +2039,152 @@ class WC_SF_Settings extends WC_Settings_Page {
 		</table>
 
 		<?php
+	}
+
+
+	/**
+	 * Lists of the SuperFaktúra company for the ID fields.
+	 *
+	 * @return array|null Lists, or null when they are not available (the screen is not being rendered, no API
+	 *                    credentials, or nothing could be loaded). A list that could not be loaded is null.
+	 */
+	private function company_lists() {
+		if ( ! $this->rendering || $this->is_settings_rest_api_request() ) {
+			return null;
+		}
+
+		$lists = WC_SF_Company_Lists::load( $this->wc_sf );
+		$error = is_wp_error( $lists ) ? ( 'api_error' === $lists->get_error_code() ? $lists->get_error_message() : null ) : ( $lists['error'] ?? null );
+
+		if ( null !== $error && ! $this->notice ) {
+			$this->notice = esc_html__( 'Number sequences, logos and bank accounts could not be loaded from SuperFaktúra, so enter their IDs. The error was:', 'woocommerce-superfaktura' );
+			if ( '' !== $error ) {
+				$this->notice .= '<br><em>' . esc_html( $error ) . '</em>';
+			}
+		}
+
+		return is_wp_error( $lists ) ? null : $lists;
+	}
+
+	/**
+	 * Turn the ID fields of number sequences, logo and bank account into selects with the items of the SuperFaktúra
+	 * company.
+	 *
+	 * A field stays a text field when its list is not available. A saved ID the list does not contain stays among the
+	 * options and is reported in a notice.
+	 *
+	 * @param array $settings Settings fields.
+	 * @return array
+	 */
+	private function add_company_lists( $settings ) {
+		$this->missing_ids = array();
+
+		$fields = array(
+			'woocommerce_sf_proforma_invoice_sequence_id' => array( 'sequences', 'proforma' ),
+			'woocommerce_sf_invoice_sequence_id'          => array( 'sequences', 'regular' ),
+			'woocommerce_sf_cancel_sequence_id'           => array( 'sequences', 'cancel' ),
+			'woocommerce_sf_logo_id'                      => array( 'logos', null ),
+			'woocommerce_sf_bank_account_id'              => array( 'banks', null ),
+		);
+
+		$present = array_filter(
+			$settings,
+			function( $setting ) use ( $fields ) {
+				return isset( $setting['id'], $fields[ $setting['id'] ] ) && 'text' === ( $setting['type'] ?? '' );
+			}
+		);
+
+		if ( ! $present ) {
+			return $settings;
+		}
+
+		$lists = $this->company_lists();
+		if ( ! $lists ) {
+			return $settings;
+		}
+
+		foreach ( $settings as $key => $setting ) {
+			if ( ! isset( $present[ $key ] ) ) {
+				continue;
+			}
+
+			list( $list, $type ) = $fields[ $setting['id'] ];
+			$items               = null === $type ? $lists[ $list ] : ( $lists[ $list ][ $type ] ?? null );
+			if ( null === $items ) {
+				continue;
+			}
+
+			$current = (string) get_option( $setting['id'], '' );
+
+			$settings[ $key ]['type']    = 'select';
+			$settings[ $key ]['options'] = WC_SF_Company_Lists::options( $items, $current );
+
+			if ( WC_SF_Company_Lists::is_missing( $items, $current ) ) {
+				$this->missing_ids[] = $setting['title'];
+			}
+		}
+
+		// The Countries table under the invoice settings uses the same lists.
+		if ( in_array( 'woocommerce_sf_invoice_sequence_id', wp_list_pluck( $present, 'id' ), true ) ) {
+			$this->check_country_ids( $lists );
+		}
+
+		return $settings;
+	}
+
+	/**
+	 * Report IDs in the Countries table that are not in the lists of the SuperFaktúra company.
+	 *
+	 * @param array $lists Lists of the SuperFaktúra company.
+	 */
+	private function check_country_ids( $lists ) {
+		$countries = json_decode( (string) get_option( 'woocommerce_sf_country_settings', '' ), true );
+		if ( ! is_array( $countries ) ) {
+			return;
+		}
+
+		$columns = array(
+			'bank_account_id'      => array( $lists['banks'], __( 'Bank Account ID', 'woocommerce-superfaktura' ) ),
+			'proforma_sequence_id' => array( $lists['sequences']['proforma'] ?? null, __( 'Proforma Invoice Sequence ID', 'woocommerce-superfaktura' ) ),
+			'invoice_sequence_id'  => array( $lists['sequences']['regular'] ?? null, __( 'Invoice Sequence ID', 'woocommerce-superfaktura' ) ),
+			'cancel_sequence_id'   => array( $lists['sequences']['cancel'] ?? null, __( 'Credit Note Sequence ID', 'woocommerce-superfaktura' ) ),
+		);
+
+		foreach ( $countries as $country ) {
+			foreach ( $columns as $column => $info ) {
+				if ( null !== $info[0] && WC_SF_Company_Lists::is_missing( $info[0], $country[ $column ] ?? '' ) ) {
+					/* translators: 1: column title, 2: country code */
+					$this->missing_ids[] = sprintf( __( '%1$s (Countries, %2$s)', 'woocommerce-superfaktura' ), $info[1], $country['country'] ?? '' );
+				}
+			}
+		}
+	}
+
+	/**
+	 * Output an ID field of the Countries table: a select when the list is available, otherwise a text field.
+	 *
+	 * @param string     $name        Field name.
+	 * @param string     $placeholder Placeholder of the text field.
+	 * @param array|null $items       Items of the list, or null.
+	 * @param string     $current     Saved ID.
+	 */
+	private function country_id_field( $name, $placeholder, $items, $current ) {
+		$current = (string) $current;
+
+		if ( null === $items ) {
+			printf(
+				'<input type="text" name="%s" placeholder="%s" value="%s" style="padding: 12px 10px !important;">',
+				esc_attr( $name ),
+				esc_attr( $placeholder ),
+				esc_attr( $current )
+			);
+			return;
+		}
+
+		printf( '<select name="%s" style="max-width: 14em; margin: 6px 0;">', esc_attr( $name ) );
+		foreach ( WC_SF_Company_Lists::options( $items, $current ) as $value => $label ) {
+			printf( '<option value="%s"%s>%s</option>', esc_attr( $value ), selected( (string) $value, $current, false ), esc_html( $label ) );
+		}
+		echo '</select>';
 	}
 }

@@ -1824,8 +1824,8 @@ msgstr "Požadavek selhal. Zkontrolujte připojení k internetu a zkuste to znov
 #. translators: %s: name of the default item in SuperFaktúra.
 #: includes/class-wc-sf-setup-wizard.php
 #, php-format
-msgid "Default in SuperFaktúra (%s)"
-msgstr "Výchozí v SuperFaktuře (%s)"
+msgid "Default in SuperFaktúra: %s"
+msgstr "Výchozí v SuperFaktuře: %s"
 
 #: includes/class-wc-sf-setup-wizard.php
 msgid "Default in SuperFaktúra"
@@ -3043,3 +3043,25 @@ msgstr "Faktura k tomuto dobropisu musí nejprve odejít přes Peppol."
 #: includes/class-wc-sf-setup-wizard.php
 msgid "Company details at checkout, VAT number, OSS, eFaktúra and the invoice in emails."
 msgstr "Údaje firmy v pokladně, DIČ, OSS, eFaktura a faktura v e-mailech."
+
+#. translators: %s: ID saved in the settings
+#: includes/class-wc-sf-company-lists.php
+#, php-format
+msgid "ID %s: not found in your SuperFaktúra company"
+msgstr "ID %s: ve vaší firmě v SuperFaktuře nenalezeno"
+
+#. translators: %s: list of setting titles
+#: includes/class-wc-sf-settings.php
+#, php-format
+msgid "These settings contain an ID that is not in your SuperFaktúra company: %s. Choose an item from the list. For a number sequence, SuperFaktúra numbers the document by its default sequence."
+msgstr "Tato nastavení obsahují ID, které ve vaší firmě v SuperFaktuře není: %s. Vyberte položku ze seznamu. U číselníku SuperFaktura očísluje doklad podle výchozího číselníku."
+
+#: includes/class-wc-sf-settings.php
+msgid "Number sequences, logos and bank accounts could not be loaded from SuperFaktúra, so enter their IDs. The error was:"
+msgstr "Číselníky, loga a bankovní účty se nepodařilo načíst ze SuperFaktury, proto zadejte jejich ID. Chyba:"
+
+#. translators: 1: column title, 2: country code
+#: includes/class-wc-sf-settings.php
+#, php-format
+msgid "%1$s (Countries, %2$s)"
+msgstr "%1$s (Země, %2$s)"

@@ -616,7 +616,7 @@ class WC_SF_Setup_Wizard {
 				'verifyNote'     => __( 'Verify the connection to continue.', 'woocommerce-superfaktura' ),
 				'companyNote'    => __( 'Choose a company to continue.', 'woocommerce-superfaktura' ),
 				/* translators: %s: name of the default item in SuperFaktúra. */
-				'sfDefault'      => __( 'Default in SuperFaktúra (%s)', 'woocommerce-superfaktura' ),
+				'sfDefault'      => __( 'Default in SuperFaktúra: %s', 'woocommerce-superfaktura' ),
 				'sfDefaultPlain' => __( 'Default in SuperFaktúra', 'woocommerce-superfaktura' ),
 				/* translators: %s: ID of an item in SuperFaktúra. */
 				'currentId'      => __( 'Current setting (ID %s)', 'woocommerce-superfaktura' ),
@@ -1598,54 +1598,9 @@ class WC_SF_Setup_Wizard {
 			'delivery'  => array(),
 		);
 
-		foreach ( array( 'regular', 'proforma', 'cancel' ) as $type ) {
-			$result['sequences'][ $type ] = array();
-			foreach ( isset( $sequences->$type ) ? (array) $sequences->$type : array() as $sequence ) {
-				if ( ! is_object( $sequence ) || ! isset( $sequence->id ) ) {
-					continue;
-				}
-				$label = trim( (string) ( $sequence->name ?? '' ) );
-				if ( ! empty( $sequence->sequence_formatted ) ) {
-					$label .= ' (' . $sequence->sequence_formatted . ')';
-				}
-				$result['sequences'][ $type ][] = array(
-					'id'      => (string) $sequence->id,
-					'label'   => wp_strip_all_tags( $label ),
-					'default' => ! empty( $sequence->default ),
-				);
-			}
-		}
-
-		$logos = $api->getLogos();
-		if ( is_array( $logos ) ) {
-			foreach ( $logos as $logo ) {
-				if ( ! is_object( $logo ) || ! isset( $logo->id ) ) {
-					continue;
-				}
-				$result['logos'][] = array(
-					'id'      => (string) $logo->id,
-					'label'   => wp_strip_all_tags( (string) ( $logo->basename ?? $logo->id ) ),
-					'default' => ! empty( $logo->default ),
-				);
-			}
-		}
-
-		$banks = $api->getBankAccounts();
-		if ( is_object( $banks ) && isset( $banks->BankAccounts ) ) {
-			foreach ( (array) $banks->BankAccounts as $bank ) {
-				$bank = (array) $bank;
-				$bank = isset( $bank['BankAccount'] ) ? (array) $bank['BankAccount'] : $bank;
-				if ( empty( $bank['id'] ) ) {
-					continue;
-				}
-				$number             = ! empty( $bank['iban'] ) ? $bank['iban'] : trim( ( $bank['account'] ?? '' ) . ( ! empty( $bank['bank_code'] ) ? '/' . $bank['bank_code'] : '' ) );
-				$result['banks'][] = array(
-					'id'      => (string) $bank['id'],
-					'label'   => wp_strip_all_tags( trim( ( $bank['bank_name'] ?? '' ) . ( '' !== $number ? ', ' . $number : '' ) . ( ! empty( $bank['currency'] ) ? ' (' . $bank['currency'] . ')' : '' ), ', ' ) ),
-					'default' => ! empty( $bank['default'] ),
-				);
-			}
-		}
+		$result['sequences'] = WC_SF_Company_Lists::sequences( $sequences );
+		$result['logos']     = WC_SF_Company_Lists::logos( $api->getLogos() );
+		$result['banks']     = WC_SF_Company_Lists::banks( $api->getBankAccounts() );
 
 		$data = $api->get( '/dashboard/full_data' );
 		if ( ! is_object( $data ) ) {

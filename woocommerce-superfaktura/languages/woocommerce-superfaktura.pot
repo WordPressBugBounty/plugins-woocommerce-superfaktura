@@ -1767,7 +1767,7 @@ msgstr ""
 #. translators: %s: name of the default item in SuperFaktúra.
 #: includes/class-wc-sf-setup-wizard.php
 #, php-format
-msgid "Default in SuperFaktúra (%s)"
+msgid "Default in SuperFaktúra: %s"
 msgstr ""
 
 #: includes/class-wc-sf-setup-wizard.php
@@ -2984,4 +2984,26 @@ msgstr ""
 
 #: includes/class-wc-sf-setup-wizard.php
 msgid "Company details at checkout, VAT number, OSS, eFaktúra and the invoice in emails."
+msgstr ""
+
+#. translators: %s: ID saved in the settings
+#: includes/class-wc-sf-company-lists.php
+#, php-format
+msgid "ID %s: not found in your SuperFaktúra company"
+msgstr ""
+
+#. translators: %s: list of setting titles
+#: includes/class-wc-sf-settings.php
+#, php-format
+msgid "These settings contain an ID that is not in your SuperFaktúra company: %s. Choose an item from the list. For a number sequence, SuperFaktúra numbers the document by its default sequence."
+msgstr ""
+
+#: includes/class-wc-sf-settings.php
+msgid "Number sequences, logos and bank accounts could not be loaded from SuperFaktúra, so enter their IDs. The error was:"
+msgstr ""
+
+#. translators: 1: column title, 2: country code
+#: includes/class-wc-sf-settings.php
+#, php-format
+msgid "%1$s (Countries, %2$s)"
 msgstr ""

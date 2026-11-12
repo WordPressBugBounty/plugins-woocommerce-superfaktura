@@ -27,12 +27,12 @@ msgid ""
 "You have exceeded the allowed number of API requests / day. If you issue a "
 "large number of invoices, you can increase this number."
 msgstr ""
-"Prekročili ste povolený počet API requestov za deň. Ak vystavujete veľké "
-"množstvo faktúr, môžete tento počet zvýšiť."
+"Prekročili ste denný počet povolených API požiadaviek. Ak vystavujete veľa "
+"faktúr, počet si môžete zvýšiť."
 
 #: includes/class-wc-sf-admin.php:112 includes/class-wc-sf-settings.php:1308
 msgid "Increase the number of API requests"
-msgstr "Zvýšiť počet API requestov"
+msgstr "Zvýšiť počet API požiadaviek"
 
 #: includes/class-wc-sf-admin.php:133
 #, php-format
@@ -82,8 +82,8 @@ msgid ""
 "plugin \"%2$s\" is not activated. This may cause that your invoice numbers will "
 "not be sequential."
 msgstr ""
-"V čísle faktúr alebo zálohových faktúr používate premennú %1$s, ale plugin "
-"%2$s\" nie je aktívny. To môže spôsobiť, že čísla faktúr nebudú sekvenčné."
+"V čísle faktúry alebo zálohovej faktúry používate premennú %1$s, ale plugin "
+"\"%2$s\" nie je aktívny. Čísla faktúr potom nemusia ísť za sebou."
 
 #: includes/class-wc-sf-admin.php:220
 msgid "Hide notification forever"
@@ -228,7 +228,7 @@ msgstr "Dokument bol vytvorený."
 
 #: includes/class-wc-sf-settings.php:105
 msgid "Data could not be loaded from SuperFaktura due to the following error:"
-msgstr "Údaje sa nepodarilo načítať zo SuperFaktury pre nasledujúcu chybu:"
+msgstr "Údaje sa zo SuperFaktúry nepodarilo načítať. Chyba:"
 
 #: includes/class-wc-sf-settings.php:118 includes/class-wc-sf-settings.php:162
 #: includes/class-wc-sf-settings.php:1119
@@ -239,8 +239,7 @@ msgstr "Nepoužiť"
 msgid ""
 "Payment methods could not be loaded from SuperFaktura due to the following "
 "error:"
-msgstr ""
-"Spôsoby platby sa nepodarilo načítať zo SuperFaktury pre nasledujúcu chybu:"
+msgstr "Spôsoby platby sa zo SuperFaktúry nepodarilo načítať. Chyba:"
 
 #: includes/class-wc-sf-settings.php:134
 msgid "Cash"
@@ -300,7 +299,7 @@ msgstr "Poštový poukaz"
 
 #: includes/class-wc-sf-settings.php:148
 msgid "Mutual credit"
-msgstr "Vzajomný zápočet"
+msgstr "Vzájomný zápočet"
 
 #: includes/class-wc-sf-settings.php:152
 msgid "Other"
@@ -310,8 +309,7 @@ msgstr "Iné"
 msgid ""
 "Shipping methods could not be loaded from SuperFaktura due to the following "
 "error:"
-msgstr ""
-"Spôsoby dopravy sa nepodarilo načítať zo SuperFaktury pre nasledujúcu chybu:"
+msgstr "Spôsoby dopravy sa zo SuperFaktúry nepodarilo načítať. Chyba:"
 
 #: includes/class-wc-sf-settings.php:178
 msgid "By mail"
@@ -524,7 +522,7 @@ msgstr "Po položkách"
 
 #: includes/class-wc-sf-settings.php:374
 msgid "Retail (recommended for eshops)"
-msgstr "Maloobchod (odporúčaný typ pre eshopy)"
+msgstr "Maloobchod (odporúčaný pre e-shopy)"
 
 #: includes/class-wc-sf-settings.php:378
 msgid "Rounding for cash on delivery orders"
@@ -558,8 +556,9 @@ msgid ""
 "Override default comments options in SuperFaktúra. Adds custom comment, order "
 "comment and tax liability if needed."
 msgstr ""
-"Prepísať predvolené poznámky v SuperFaktúre. Pridá poznámku, poznámku z "
-"objednávky a daňovú povinnosť."
+"Namiesto predvolených poznámok zo SuperFaktúry použije vlastné. Podľa "
+"potreby pridá vašu poznámku, poznámku zákazníka a text o prenesení daňovej "
+"povinnosti."
 
 #: includes/class-wc-sf-settings.php:409
 msgid "Proforma invoice payment"
@@ -722,8 +721,8 @@ msgid ""
 "By default, in case of free shipping, the invoice does not contain shipping "
 "item; to force the item to appear, fill in its name in this field"
 msgstr ""
-"Štandardne pri bezplatnej preprave faktúra neobsahuje poštovné; ak chcete, aby "
-"sa položka zobrazila, vyplňte jej názov v tomto poli."
+"Pri doprave zdarma faktúra predvolene nemá položku poštovného. Ak ju na "
+"faktúre chcete mať, vyplňte jej názov."
 
 #: includes/class-wc-sf-settings.php:564
 msgid "Refunded items"
@@ -743,7 +742,7 @@ msgstr "OSS"
 
 #: includes/class-wc-sf-settings.php:581
 msgid "Create invoices under the One Stop Shop scheme"
-msgstr "Osobitná úprava dane OSS"
+msgstr "Vystavovať faktúry v režime OSS (One Stop Shop)"
 
 #: includes/class-wc-sf-settings.php:596
 msgid "Don't generate"
@@ -751,7 +750,7 @@ msgstr "Negenerovať"
 
 #: includes/class-wc-sf-settings.php:602
 msgid "Select when you would like to create an invoice for each payment gateway."
-msgstr "Nastavte kedy chcete vytvoriť faktúru pre každú platobnú bránu."
+msgstr "Pri každom spôsobe platby nastavte, kedy sa má vystaviť faktúra."
 
 #: includes/class-wc-sf-settings.php:621 includes/class-wc-sf-settings.php:722
 msgid "Create as paid"
@@ -766,7 +765,7 @@ msgid ""
 "Allow zero value invoices to be generated when order changes to the selected "
 "status."
 msgstr ""
-"Povoliť generovanie faktúry s nulovou hodnotou pri zmene stavu objednávky do "
+"Povoliť vytvorenie faktúry s nulovou hodnotou, keď objednávka prejde do "
 "zvoleného stavu."
 
 #: includes/class-wc-sf-settings.php:647
@@ -780,8 +779,8 @@ msgid ""
 "processing. Only applies if the invoice was supposed to be created in \"%2$s\" "
 "state."
 msgstr ""
-"Povoliť vytvorenie faktúry v stave \"%1$s\" pre objednávky, ktoré nepotrebujú "
-"spracovanie. Platí iba v prípade, že faktúra mala byť vytvorená v stave "
+"Povoliť vytvorenie faktúry v stave \"%1$s\" pre objednávky, ktoré "
+"nepotrebujú spracovanie. Platí, len ak sa má faktúra vytvoriť v stave "
 "\"%2$s\"."
 
 #: includes/class-wc-sf-settings.php:660
@@ -812,7 +811,8 @@ msgstr "Vytvorenie zálohovej faktúry"
 msgid ""
 "Select when you would like to create a proforma invoice for each payment "
 "gateway."
-msgstr "Nastavte kedy chcete vytvoriť zálohovú faktúru pre každú platobnú bránu."
+msgstr ""
+"Pri každom spôsobe platby nastavte, kedy sa má vystaviť zálohová faktúra."
 
 #: includes/class-wc-sf-settings.php:737
 msgid "Manual Proforma Invoice Creation"
@@ -831,8 +831,8 @@ msgid ""
 "These features are either experimental or incomplete, enable them at your own "
 "risk!"
 msgstr ""
-"Tieto funkcie sú buď experimentálne alebo neúplné, aktivujte ich na vlastné "
-"riziko!"
+"Tieto funkcie sú experimentálne alebo neúplné. Zapínate ich na vlastné "
+"riziko."
 
 #: includes/class-wc-sf-settings.php:757
 msgid "Prevent document duplicity"
@@ -843,8 +843,8 @@ msgid ""
 "Prevent document duplicity caused by concurrent callbacks and/or return URLs "
 "from some payment plugins (such as GoPay)"
 msgstr ""
-"Zabrániť duplicite dokumentov spôsobenej súbežnými spätnými volaniami a/alebo "
-"návratovými adresami URL z niektorých platobných pluginov (napríklad GoPay)"
+"Zabrániť dvom rovnakým dokladom, keď niektorý platobný plugin (napríklad "
+"GoPay) oznámi zaplatenie viackrát v tej istej chvíli"
 
 #: includes/class-wc-sf-settings.php:765
 msgid "Retry failed API calls to create a document"
@@ -857,10 +857,10 @@ msgid ""
 "fail, the plugin will display an admin notification and add the information to "
 "the order notes."
 msgstr ""
-"Ak API volanie na vytvorenie dokumentu zlyhá pre chybu SuperFaktúra servera "
-"alebo časový limit, skúsiť znovu o 5 minút, 30 minút a 1 hodinu. Ak všetky "
-"pokusy zlyhajú, plugin zobrazí upozornenie administrátorovi a doplní informácie "
-"do poznámok k objednávke."
+"Ak sa doklad nepodarí vytvoriť pre chybu servera SuperFaktúry alebo "
+"vypršanie času, plugin to skúsi znova po 5 minútach, potom po ďalších 30 "
+"minútach a po ďalšej hodine. Ak zlyhajú všetky pokusy, zobrazí upozornenie v "
+"administrácii a zapíše to do poznámok objednávky."
 
 #: includes/class-wc-sf-settings.php:783
 msgid "Checkout"
@@ -912,7 +912,7 @@ msgstr "Overiť platnosť IČ DPH"
 
 #: includes/class-wc-sf-settings.php:838
 msgid "Validate VAT # in EU countries"
-msgstr "Overiť platnosť IČ DPH v krajinách EU (VIES)"
+msgstr "Overiť platnosť IČ DPH v krajinách EÚ (VIES)"
 
 #: includes/class-wc-sf-settings.php:915
 msgid "When VAT # cannot be validated"
@@ -931,8 +931,8 @@ msgid ""
 "Behavior when the EU VIES service is unreachable and the VAT # cannot be "
 "verified. A confirmed invalid VAT # always blocks checkout."
 msgstr ""
-"Správanie, keď je služba EU VIES nedostupná a IČ DPH sa nedá overiť. Potvrdené "
-"neplatné IČ DPH vždy zablokuje dokončenie objednávky."
+"Čo sa stane, keď služba VIES nie je dostupná a IČ DPH sa nedá overiť. "
+"Neplatné IČ DPH dokončenie objednávky zablokuje vždy."
 
 #: includes/class-wc-sf-settings.php:926
 msgid "Remove VAT for EU businesses with a valid VAT #"
@@ -940,7 +940,7 @@ msgstr "Odpočítať DPH pre firmy z EÚ s platným IČ DPH"
 
 #: includes/class-wc-sf-settings.php:930
 msgid "Apply reverse charge for EU businesses with a valid VAT #"
-msgstr "Uplatniť prenos daňovej povinnosti pre firmy z EÚ s platným IČ DPH"
+msgstr "Uplatniť prenesenie daňovej povinnosti pre firmy z EÚ s platným IČ DPH"
 
 #: includes/class-wc-sf-settings.php:931
 msgid ""
@@ -950,9 +950,9 @@ msgid ""
 "setup is correct before enabling."
 msgstr ""
 "Po zapnutí sa DPH z objednávky odpočíta, ak firemný zákazník zadá IČ DPH "
-"overené cez VIES a má fakturačnú adresu v inej krajine EÚ než váš obchod. "
-"Týmto sa mení súčet dane v objednávke, preto pred zapnutím skontrolujte "
-"nastavenie daní vo WooCommerce."
+"overené vo VIES a má fakturačnú adresu v inej krajine EÚ, ako je krajina "
+"vášho obchodu. Zmení sa tým DPH v objednávke, preto pred zapnutím "
+"skontrolujte nastavenie daní vo WooCommerce."
 
 #: includes/class-wc-sf-settings.php:841
 msgid "Add field TAX ID #"
@@ -972,7 +972,7 @@ msgstr "Pridať odkaz na faktúru na stránku Objednávka prijatá"
 
 #: includes/class-wc-sf-settings.php:875
 msgid "Emails"
-msgstr "Emaily"
+msgstr "E-maily"
 
 #: includes/class-wc-sf-settings.php:881
 msgid "Billing details"
@@ -980,15 +980,15 @@ msgstr "Údaje odberateľa"
 
 #: includes/class-wc-sf-settings.php:885
 msgid "Add customer billing details (ID #, VAT #, TAX ID #) to WooCommerce emails"
-msgstr "Pridať údaje odberateľa (IČO, IČ DPH, DIČ) do WooCommerce emailov"
+msgstr "Pridať údaje odberateľa (IČO, IČ DPH, DIČ) do e-mailov WooCommerce"
 
 #: includes/class-wc-sf-settings.php:892
 msgid "Add online payment link to WooCommerce emails"
-msgstr "Pridať odkaz na online platbu do WooCommerce emailov"
+msgstr "Pridať odkaz na online platbu do e-mailov WooCommerce"
 
 #: includes/class-wc-sf-settings.php:899
 msgid "Add invoice link to WooCommerce emails"
-msgstr "Pridať odkaz na faktúru do WooCommerce emailov"
+msgstr "Pridať odkaz na faktúru do e-mailov WooCommerce"
 
 #: includes/class-wc-sf-settings.php:902
 msgid "Invoice PDF attachment"
@@ -1004,7 +1004,7 @@ msgstr "Áno"
 
 #: includes/class-wc-sf-settings.php:911
 msgid "Attach invoice PDF to WooCommerce emails"
-msgstr "Pridať PDF faktúru do WooCommerce emailov"
+msgstr "Prikladať PDF faktúry k e-mailom WooCommerce"
 
 #: includes/class-wc-sf-settings.php:914
 msgid "Completed orders"
@@ -1012,7 +1012,7 @@ msgstr "Vybavené objednávky"
 
 #: includes/class-wc-sf-settings.php:918
 msgid "Don't add invoice to WooCommerce emails for completed orders"
-msgstr "Nedávať faktúru do WooCommerce emailov pre vybavené objednávky"
+msgstr "Neprikladať faktúru k e-mailom WooCommerce pri vybavených objednávkach"
 
 #: includes/class-wc-sf-settings.php:921
 msgid "Cash on delivery orders"
@@ -1020,7 +1020,8 @@ msgstr "Objednávky na dobierku"
 
 #: includes/class-wc-sf-settings.php:925
 msgid "Don't add invoice to WooCommerce emails for cash on delivery orders"
-msgstr "Nedávať faktúru do WooCommerce emailov pre objednávky na dobierku"
+msgstr ""
+"Neprikladať faktúru k e-mailom WooCommerce pri objednávkach na dobierku"
 
 #: includes/class-wc-sf-settings.php:932
 msgid "Admin"
@@ -1049,22 +1050,20 @@ msgid ""
 "SuperFaktura, fill in callback URL and Secret Key in <a target=\"_blank\" "
 "href=\"%1$s\">SuperFaktura settings</a>.<br>Callback URL: <strong>%2$s</strong>"
 msgstr ""
-"Ak chcete automaticky aktualizovať stav objednávky, keď je platba spárovaná s "
-"faktúrou v SuperFaktúre, vyplňte Callback URL a Secret Key v <a "
-"target=\"_blank\" href=\"%1$s\"> nastaveniach SuperFaktúry</a>. <br>Callback URL: "
+"Aby sa stav objednávky zmenil sám, keď SuperFaktúra spáruje platbu s "
+"faktúrou, zadajte Callback URL a Secret Key v <a target=\"_blank\" "
+"href=\"%1$s\">nastaveniach SuperFaktúry</a>.<br>Callback URL: "
 "<strong>%2$s</strong>"
 
 #: includes/class-wc-sf-settings.php:959 includes/class-wc-sf-settings.php:971
 msgid "Multiple eshops per single company"
-msgstr "Viac eshopov na jednu firmu"
+msgstr "Viac e-shopov v jednej firme"
 
 #: includes/class-wc-sf-settings.php:960
 msgid ""
 "Plugin will send Callback URL to SuperFaktura automatically for each document "
 "issued."
-msgstr ""
-"Plugin pošle Callback URL do SuperFaktúry automaticky pre každý vystavený "
-"dokument zvlášť."
+msgstr "Plugin pošle SuperFaktúre Callback URL s každým vystaveným dokladom."
 
 #: includes/class-wc-sf-settings.php:965
 msgid "Automatic pairing type"
@@ -1080,12 +1079,11 @@ msgstr "Pregenerovať"
 
 #: includes/class-wc-sf-settings.php:993
 msgid "Payment Methods"
-msgstr "Platobné brány"
+msgstr "Spôsoby platby"
 
 #: includes/class-wc-sf-settings.php:995
 msgid "Map Woocommerce payment methods to ones in SuperFaktura"
-msgstr ""
-"Spárujte spôsoby platieb vo Woocommerce so spôsobmi platieb v SuperFakture"
+msgstr "Priraďte spôsobom platby vo WooCommerce spôsoby úhrady v SuperFaktúre"
 
 #: includes/class-wc-sf-settings.php:1018
 msgid "Cash Registers"
@@ -1093,11 +1091,11 @@ msgstr "Pokladne"
 
 #: includes/class-wc-sf-settings.php:1020
 msgid "Map Woocommerce payment methods to cash registers in SuperFaktura"
-msgstr "Spárujte spôsoby platieb vo Woocommerce s pokladňami v SuperFakture"
+msgstr "Priraďte spôsobom platby vo WooCommerce pokladne v SuperFaktúre"
 
 #: includes/class-wc-sf-settings.php:1055 includes/class-wc-sf-settings.php:1086
 msgid "Shipping Methods"
-msgstr "Možnosti doručenia"
+msgstr "Spôsoby dopravy"
 
 #: includes/class-wc-sf-settings.php:1120
 msgid "Item"
@@ -1171,7 +1169,7 @@ msgstr "Sandbox"
 
 #: includes/class-wc-sf-settings.php:1441
 msgid "Use sandbox"
-msgstr "Použiť sandbox - testovacie prostredie"
+msgstr "Použiť sandbox (testovacie prostredie)"
 
 #: includes/class-wc-sf-settings.php:1441
 msgid ""
@@ -1183,7 +1181,7 @@ msgstr ""
 
 #: includes/class-wc-sf-settings.php:1447
 msgid "API Email"
-msgstr "API email"
+msgstr "API e-mail"
 
 #: includes/class-wc-sf-settings.php:1454
 msgid "API Key"
@@ -1208,7 +1206,8 @@ msgstr "ID bankového účtu"
 
 #: includes/class-wc-sf-settings.php:1557
 msgid "Plugin SuperFaktura WooCommerce is in sandbox mode."
-msgstr "Plugin SuperFaktura WooCommerce používa sandbox - testovacie prostredie."
+msgstr ""
+"Plugin SuperFaktúra WooCommerce používa sandbox (testovacie prostredie)."
 
 #: includes/class-wc-sf-settings.php:1619
 msgid "ALL"
@@ -1223,8 +1222,8 @@ msgid ""
 "Override invoice settings for specific countries based on customer billing "
 "address."
 msgstr ""
-"Nastavenia faktúry pre konkrétne krajiny na základe fakturačnej adresy "
-"zákazníka."
+"Iné nastavenia faktúry pre zákazníkov z vybraných krajín podľa fakturačnej "
+"adresy."
 
 #: includes/class-wc-sf-settings.php:1637
 msgid "Country"
@@ -1232,7 +1231,7 @@ msgstr "Krajina"
 
 #: includes/class-wc-sf-settings.php:1639
 msgid "Use VAT # only for final consumer"
-msgstr "Použiť IČ DPH len pre konečného spotrebiteľa"
+msgstr "IČ DPH len pre zákazníkov bez IČ DPH"
 
 #: includes/class-wc-sf-settings.php:1652
 msgid "Add country"
@@ -1254,23 +1253,22 @@ msgstr ""
 msgid ""
 "API call to create proforma invoice failed. We will try again in %d minutes."
 msgstr ""
-"API volanie na vytvorenie zálohovej faktúry zlyhalo. Skúsime to znova o %d "
-"minút."
+"Zálohovú faktúru sa nepodarilo vytvoriť. Plugin to skúsi znova o %d minút."
 
 #: includes/class-wc-superfaktura.php:691
 #, php-format
 msgid "API call to create invoice failed. We will try again in %d minutes."
-msgstr "API volanie na vytvorenie faktúry zlyhalo. Skúsime to znova o %d minút."
+msgstr "Faktúru sa nepodarilo vytvoriť. Plugin to skúsi znova o %d minút."
 
 #: includes/class-wc-superfaktura.php:695
 #, php-format
 msgid "API call to create credit note failed. We will try again in %d minutes."
-msgstr "API volanie na vytvorenie dobropisu zlyhalo. Skúsime to znova o %d minút."
+msgstr "Dobropis sa nepodarilo vytvoriť. Plugin to skúsi znova o %d minút."
 
 #: includes/class-wc-superfaktura.php:699
 #, php-format
 msgid "API call to create document failed. We will try again in %d minutes."
-msgstr "API volanie na vytvorenie dokumentu zlyhalo. Skúsime to znova o %d minút."
+msgstr "Doklad sa nepodarilo vytvoriť. Plugin to skúsi znova o %d minút."
 
 #: includes/class-wc-superfaktura.php:708
 #, php-format
@@ -1278,16 +1276,14 @@ msgid ""
 "API call to create proforma invoice for <a href=\"%s\">order #%d</a> failed %d "
 "times. Try creating it manually."
 msgstr ""
-"API volanie na vytvorenie zálohovej faktúry pre <a href=\"%s\">objednávku č. %d</"
-"a> zlyhalo %d-krát. Skúste ju vytvoriť ručne."
+"Zálohovú faktúru pre <a href=\"%s\">objednávku č. %d</a> sa %d-krát "
+"nepodarilo vytvoriť. Vytvorte ju ručne."
 
 #: includes/class-wc-superfaktura.php:709
 #, php-format
 msgid ""
 "API call to create proforma invoice failed %d times. Try creating it manually."
-msgstr ""
-"API volanie na vytvorenie proforma faktúry %d-krát zlyhalo. Skúste ju vytvoriť "
-"ručne."
+msgstr "Zálohovú faktúru sa %d-krát nepodarilo vytvoriť. Vytvorte ju ručne."
 
 #: includes/class-wc-superfaktura.php:713
 #, php-format
@@ -1295,14 +1291,13 @@ msgid ""
 "API call to create invoice for <a href=\"%s\">order #%d</a> failed %d times. "
 "Try creating it manually."
 msgstr ""
-"API volanie na vytvorenie faktúry pre <a href=\"%s\">objednávku č. %d</a> zlyhalo "
-"%d-krát. Skúste ju vytvoriť ručne."
+"Faktúru pre <a href=\"%s\">objednávku č. %d</a> sa %d-krát nepodarilo "
+"vytvoriť. Vytvorte ju ručne."
 
 #: includes/class-wc-superfaktura.php:714
 #, php-format
 msgid "API call to create invoice failed %d times. Try creating it manually."
-msgstr ""
-"API volanie na vytvorenie faktúry %d-krát zlyhalo. Skúste ju vytvoriť ručne."
+msgstr "Faktúru sa %d-krát nepodarilo vytvoriť. Vytvorte ju ručne."
 
 #: includes/class-wc-superfaktura.php:718
 #, php-format
@@ -1310,14 +1305,13 @@ msgid ""
 "API call to create credit note for <a href=\"%s\">order #%d</a> failed %d "
 "times. Try creating it manually."
 msgstr ""
-"API volanie na vytvorenie dobropisu pre <a href=\"%s\">objednávku č. %d</a> %d-"
-"krát zlyhalo. Skúste ho vytvoriť ručne."
+"Dobropis pre <a href=\"%s\">objednávku č. %d</a> sa %d-krát nepodarilo "
+"vytvoriť. Vytvorte ho ručne."
 
 #: includes/class-wc-superfaktura.php:719
 #, php-format
 msgid "API call to create credit note failed %d times. Try creating it manually."
-msgstr ""
-"API volanie na vytvorenie dobropisu zlyhalo %d-krát. Skúste ho vytvoriť ručne."
+msgstr "Dobropis sa %d-krát nepodarilo vytvoriť. Vytvorte ho ručne."
 
 #: includes/class-wc-superfaktura.php:723
 #, php-format
@@ -1325,14 +1319,13 @@ msgid ""
 "API call to create document for <a href=\"%s\">order #%d</a> failed %d times. "
 "Try creating it manually."
 msgstr ""
-"API volanie na vytvorenie dokumentu pre <a href=\"%s\">objednávku č. %d</a> %d-"
-"krát zlyhalo. Skúste ho vytvoriť ručne."
+"Doklad pre <a href=\"%s\">objednávku č. %d</a> sa %d-krát nepodarilo "
+"vytvoriť. Vytvorte ho ručne."
 
 #: includes/class-wc-superfaktura.php:724
 #, php-format
 msgid "API call to create document failed %d times. Try creating it manually."
-msgstr ""
-"API volanie na vytvorenie dokumentu zlyhalo %d-krát. Skúste ho vytvoriť ručne."
+msgstr "Doklad sa %d-krát nepodarilo vytvoriť. Vytvorte ho ručne."
 
 #: includes/class-wc-superfaktura.php:1076
 msgid "Coupons"
@@ -1420,7 +1413,9 @@ msgstr "Spracovaných %1$d z %2$d objednávok"
 
 #: includes/class-wc-sf-bulk.php
 msgid "Several documents in a row could not be created — the SuperFaktúra API may be unavailable. Check the API log and continue later."
-msgstr "Viacero dokladov za sebou sa nepodarilo vytvoriť — API SuperFaktúry môže byť nedostupné. Skontrolujte API log a pokračujte neskôr."
+msgstr ""
+"Viac dokladov za sebou sa nepodarilo vytvoriť. API SuperFaktúry môže byť "
+"nedostupné. Skontrolujte API log a pokračujte neskôr."
 
 #: includes/class-wc-sf-bulk.php
 msgid "The request failed. Check your connection and continue."
@@ -1448,19 +1443,21 @@ msgstr "pregenerované"
 
 #: includes/class-wc-sf-bulk.php
 msgid "skipped – document already exists"
-msgstr "preskočené – doklad už existuje"
+msgstr "preskočené: doklad už existuje"
 
 #: includes/class-wc-sf-bulk.php
 msgid "skipped – no document to regenerate"
-msgstr "preskočené – žiadny doklad na pregenerovanie"
+msgstr "preskočené: nie je čo pregenerovať"
 
 #: includes/class-wc-sf-bulk.php
 msgid "skipped – paid or completed orders are not regenerated (see the sf_can_regenerate filter)"
-msgstr "preskočené – uhradené alebo vybavené objednávky sa nepregenerujú (pozri filter sf_can_regenerate)"
+msgstr ""
+"preskočené: uhradené a vybavené objednávky sa nepregenerujú (filter "
+"sf_can_regenerate)"
 
 #: includes/class-wc-sf-bulk.php
 msgid "skipped – cancelled, refunded or failed orders"
-msgstr "preskočené – zrušené, refundované alebo neúspešné objednávky"
+msgstr "preskočené: zrušená, refundovaná alebo neúspešná objednávka"
 
 #: includes/class-wc-sf-bulk.php
 msgid "failed"
@@ -1477,12 +1474,17 @@ msgstr "Neboli vybrané žiadne objednávky."
 #. Translators: %d number of API requests kept free for new orders.
 #: includes/class-wc-sf-bulk.php
 msgid "The selected orders do not fit into the remaining daily limit of SuperFaktúra API requests (%d requests are always kept for new orders)."
-msgstr "Vybrané objednávky sa nezmestia do zostávajúceho denného limitu požiadaviek na API SuperFaktúry (%d požiadaviek zostáva vždy rezervovaných pre nové objednávky)."
+msgstr ""
+"Na vybrané objednávky nestačí zostávajúci denný limit API požiadaviek "
+"SuperFaktúry. Plugin vždy necháva %d požiadaviek pre nové objednávky."
 
 #. Translators: %d number of API requests kept free for new orders.
 #: includes/class-wc-sf-bulk.php
 msgid "The remaining daily limit of SuperFaktúra API requests is too low to continue (%d requests are always kept for new orders). Continue after the limit resets or increase it."
-msgstr "Zostávajúci denný limit požiadaviek na API SuperFaktúry je príliš nízky na pokračovanie (%d požiadaviek zostáva vždy rezervovaných pre nové objednávky). Pokračujte po obnovení limitu alebo si ho navýšte."
+msgstr ""
+"Na pokračovanie nestačí zostávajúci denný limit API požiadaviek "
+"SuperFaktúry. Plugin vždy necháva %d požiadaviek pre nové objednávky. "
+"Pokračujte po obnovení limitu alebo si ho navýšte."
 
 #~ msgid "Checkout fields required"
 #~ msgstr "Povinné IČO a DIČ pri objednávke"
@@ -1501,7 +1503,9 @@ msgstr "Zostávajúci denný limit požiadaviek na API SuperFaktúry je príliš
 
 #: includes/class-wc-sf-invoice.php
 msgid "Document was not regenerated, because replacing its items was refused."
-msgstr "Doklad nebol pregenerovaný, pretože nahradenie jeho položiek bolo zamietnuté."
+msgstr ""
+"Doklad sa nepregeneroval, pretože nahradenie jeho položiek odmietol filter "
+"sf_clean_invoice_items_allowed."
 
 #: includes/class-wc-sf-tools.php
 msgid "Tools"
@@ -1545,7 +1549,8 @@ msgstr "Export"
 
 #: includes/class-wc-sf-tools.php
 msgid "Include API credentials (e-mail, API key, company ID and secret key)"
-msgstr "Zahrnúť prístupové údaje k API (e-mail, API kľúč, Company ID a tajný kľúč)"
+msgstr ""
+"Zahrnúť prístupové údaje k API (e-mail, API kľúč, Company ID a Secret Key)"
 
 #: includes/class-wc-sf-tools.php
 msgid "Export settings"
@@ -1553,7 +1558,11 @@ msgstr "Exportovať nastavenia"
 
 #: includes/class-wc-sf-tools.php
 msgid "Downloads a JSON file with all plugin settings. Leave the credentials out when the file is meant for a different site, and leave the account references out when it is meant for a different SuperFaktúra account, because their IDs exist only in the account they were created in."
-msgstr "Stiahne súbor JSON so všetkými nastaveniami pluginu. Ak je súbor určený pre iný web, nezahŕňajte prístupové údaje, a ak je určený pre iný účet SuperFaktúry, nezahŕňajte odkazy na účet, pretože ich ID existujú len v účte, v ktorom vznikli."
+msgstr ""
+"Stiahne súbor JSON so všetkými nastaveniami pluginu. Súbor pre iný web "
+"exportujte bez prístupových údajov. Súbor pre iný účet SuperFaktúry "
+"exportujte aj bez odkazov na účet, lebo tieto ID existujú len v účte, v "
+"ktorom vznikli."
 
 #: includes/class-wc-sf-tools.php
 msgid "Import"
@@ -1569,7 +1578,14 @@ msgstr "Importovať nastavenia"
 
 #: includes/class-wc-sf-tools.php
 msgid "Overwrites the current settings with the values from the file. Settings that are not in the file stay unchanged. Export the current settings first if you may need them again. Settings that refer to payment gateways, shipping methods or order statuses only take effect when the same ones exist on this site, so review the Invoice Creation, Payment and Shipping sections after importing from a different site. Document counters used for custom numbering are never overwritten."
-msgstr "Prepíše aktuálne nastavenia hodnotami zo súboru. Nastavenia, ktoré v súbore nie sú, zostanú nezmenené. Ak by ste aktuálne nastavenia ešte mohli potrebovať, najprv ich exportujte. Nastavenia, ktoré odkazujú na platobné brány, spôsoby dopravy alebo stavy objednávok, sa uplatnia len vtedy, keď na tomto webe existujú rovnaké, preto po importe z iného webu skontrolujte sekcie Vytvorenie faktúry, Platby a Doprava. Počítadlá dokladov používané pri vlastnom číslovaní sa nikdy neprepisujú."
+msgstr ""
+"Prepíše aktuálne nastavenia hodnotami zo súboru. Nastavenia, ktoré v súbore "
+"nie sú, zostanú bez zmeny. Ak by ste aktuálne nastavenia ešte mohli "
+"potrebovať, najprv ich exportujte. Nastavenia spôsobov platby, spôsobov "
+"dopravy a stavov objednávok platia, len ak rovnaké existujú aj na tomto "
+"webe. Po importe z iného webu preto skontrolujte časti Vytvorenie faktúry, "
+"Platby a Doprava. Počítadlá dokladov pri vlastnom číslovaní sa nikdy "
+"neprepíšu."
 
 #: includes/class-wc-sf-tools.php
 msgid "Reset"
@@ -1697,7 +1713,9 @@ msgstr "Služba VIES bola dočasne nedostupná, preto sa IČ DPH nedalo overiť.
 
 #: includes/class-wc-superfaktura.php
 msgid "Check the API email, API key and Company ID in the plugin settings, or use the Test API connection button."
-msgstr "Skontrolujte API email, API kľúč a Company ID v nastaveniach pluginu, alebo použite tlačidlo Otestovať API pripojenie."
+msgstr ""
+"Skontrolujte API e-mail, API kľúč a Company ID v nastaveniach pluginu alebo "
+"použite tlačidlo Otestovať API pripojenie."
 
 #: includes/class-wc-superfaktura.php
 msgid "The server could not connect to SuperFaktura. If this happens often, contact your hosting provider."
@@ -1765,7 +1783,7 @@ msgstr "Nie."
 
 #: includes/class-wc-sf-admin.php
 msgid "Applies to documents created now."
-msgstr "Platí pre doklady vytvorené teraz."
+msgstr "Platí pre doklad vystavený teraz."
 
 #: includes/class-wc-sf-admin.php
 msgid "WooCommerce sets the tax country by the \"Calculate tax based on\" setting, for local pickup usually by the shop's address."
@@ -1777,7 +1795,9 @@ msgstr "SuperFaktúra WooCommerce"
 
 #: includes/class-wc-sf-setup-wizard.php
 msgid "Connect your shop to SuperFaktúra. The setup wizard recommends settings for your payment and shipping methods, it takes about 5 minutes."
-msgstr "Prepojte obchod so SuperFaktúrou. Sprievodca nastavením odporučí nastavenia pre vaše spôsoby platby a dopravy, zaberie to asi 5 minút."
+msgstr ""
+"Prepojte obchod so SuperFaktúrou. Sprievodca nastavením odporučí nastavenia "
+"pre vaše spôsoby platby a dopravy. Zaberie to asi 5 minút."
 
 #: includes/class-wc-sf-setup-wizard.php
 msgid "Start the setup wizard"
@@ -1789,7 +1809,9 @@ msgstr "Sprievodca nastavením prepojí obchod so SuperFaktúrou a odporučí na
 
 #: includes/class-wc-sf-setup-wizard.php
 msgid "The invoice is created when the order is shipped, so it matches what was actually sent."
-msgstr "Faktúra sa vystaví pri vybavení objednávky, aby sedela s tým, čo naozaj odišlo."
+msgstr ""
+"Faktúra sa vystaví pri vybavení objednávky, aby zodpovedala tomu, čo sa "
+"naozaj odoslalo."
 
 #. translators: %s: order status name.
 #: includes/class-wc-sf-setup-wizard.php
@@ -1799,7 +1821,10 @@ msgstr "Vytvorí sa ako uhradená, lebo nastavenie „Označiť faktúru ako uhr
 
 #: includes/class-wc-sf-setup-wizard.php
 msgid "We do not recognize this payment method, so no document is created automatically. You can create documents from the order, or choose when to create them here."
-msgstr "Tento spôsob platby nepoznáme, preto sa doklad nevytvorí automaticky. Doklady môžete vytvoriť v objednávke alebo tu vybrať, kedy sa majú vytvoriť."
+msgstr ""
+"Tento spôsob platby nepoznáme, preto sa doklad nevytvorí automaticky. "
+"Doklady vytvoríte ručne v objednávke, alebo tu vyberte, kedy sa majú "
+"vytvárať."
 
 #: includes/class-wc-sf-setup-wizard.php
 msgid "SuperFaktúra setup wizard"
@@ -1828,8 +1853,8 @@ msgstr "Požiadavka zlyhala. Skontrolujte pripojenie na internet a skúste to zn
 #. translators: %s: name of the default item in SuperFaktúra.
 #: includes/class-wc-sf-setup-wizard.php
 #, php-format
-msgid "Default in SuperFaktúra (%s)"
-msgstr "Predvolené v SuperFaktúre (%s)"
+msgid "Default in SuperFaktúra: %s"
+msgstr "Predvolené v SuperFaktúre: %s"
 
 #: includes/class-wc-sf-setup-wizard.php
 msgid "Default in SuperFaktúra"
@@ -1959,7 +1984,9 @@ msgstr "Uložený kľúč ostane bez zmeny"
 
 #: includes/class-wc-sf-setup-wizard.php
 msgid "For testing only. Use a test account from sandbox.superfaktura.sk or sandbox.superfaktura.cz, documents are not created in your real account."
-msgstr "Len na skúšanie. Použite testovací účet zo sandbox.superfaktura.sk alebo sandbox.superfaktura.cz, doklady nevznikajú vo vašom ostrom účte."
+msgstr ""
+"Len na skúšanie. Použite testovací účet zo sandbox.superfaktura.sk alebo "
+"sandbox.superfaktura.cz. Doklady potom nevznikajú vo vašom ostrom účte."
 
 #: includes/class-wc-sf-setup-wizard.php
 msgid "Needed when the account has several companies and its default company has no active subscription. You can find it in SuperFaktúra under Tools > API, in the company you want to use."
@@ -1983,7 +2010,8 @@ msgstr "Firma"
 
 #: includes/class-wc-sf-setup-wizard.php
 msgid "If you run several shops in different companies, each shop uses its own company."
-msgstr "Ak máte viac eshopov v rôznych firmách, každý eshop používa svoju firmu."
+msgstr ""
+"Ak máte viac e-shopov v rôznych firmách, každý e-shop používa svoju firmu."
 
 #: includes/class-wc-sf-setup-wizard.php
 msgid "Verify the connection to continue."
@@ -2031,7 +2059,9 @@ msgstr "Bankový účet na faktúrach"
 
 #: includes/class-wc-sf-setup-wizard.php
 msgid "Customers send payments for proforma invoices to this account. For automatic pairing, the account must be connected in SuperFaktúra."
-msgstr "Na tento účet budú zákazníci posielať platby za zálohové faktúry. Pri automatickom párovaní musí byť tento účet pripojený v SuperFaktúre."
+msgstr ""
+"Na tento účet budú zákazníci posielať platby za zálohové faktúry. Aby "
+"fungovalo automatické párovanie, účet musí byť pripojený v SuperFaktúre."
 
 #: includes/class-wc-sf-setup-wizard.php
 msgid "A customer from the Czech Republic gets the invoice in Czech, from Austria in German. For countries whose language SuperFaktúra does not support, the fallback language from the settings is used."
@@ -2047,7 +2077,9 @@ msgstr "Len ručne"
 
 #: includes/class-wc-sf-setup-wizard.php
 msgid "For each payment method enabled in your shop, we recommend which document to create and when. You can change the recommendation."
-msgstr "Pri každom spôsobe platby zapnutom v obchode odporúčame, aký doklad a kedy vystaviť. Odporúčanie môžete zmeniť."
+msgstr ""
+"Ku každému spôsobu platby, ktorý máte v obchode zapnutý, odporučíme, aký "
+"doklad vystaviť a kedy. Odporúčanie môžete zmeniť."
 
 #: includes/class-wc-sf-setup-wizard.php
 msgid "No payment method is enabled in your shop. Enable them in WooCommerce > Settings > Payments and set up the documents later in the plugin settings."
@@ -2083,7 +2115,10 @@ msgstr "Automatické párovanie platieb prevodom"
 
 #: includes/class-wc-sf-setup-wizard.php
 msgid "When SuperFaktúra pairs a payment with the proforma invoice, it notifies the shop and the order is marked as paid. For this, enter these two values in SuperFaktúra once."
-msgstr "Keď SuperFaktúra spáruje platbu so zálohovou faktúrou, dá vedieť obchodu a objednávka sa označí ako zaplatená. Na to treba raz vložiť tieto dva údaje do SuperFaktúry."
+msgstr ""
+"Keď SuperFaktúra spáruje platbu so zálohovou faktúrou, oznámi to obchodu a "
+"objednávka sa označí ako zaplatená. Stačí na to raz zadať tieto dva údaje v "
+"SuperFaktúre."
 
 #: includes/class-wc-sf-setup-wizard.php
 msgid "Callback URL"
@@ -2151,13 +2186,19 @@ msgstr "Ak sa vás týka"
 #: includes/class-wc-sf-setup-wizard.php
 #, php-format
 msgid "Your shop also sells to %d other EU countries. Invoices to private customers there are created in the OSS scheme. Enable only if you are registered for OSS, or check with your accountant."
-msgstr "Obchod predáva aj do %d ďalších krajín EÚ. Faktúry súkromným osobám v nich sa vystavia v režime OSS. Zapnite len vtedy, ak ste registrovaní do OSS, prípadne to overte s účtovníkom."
+msgstr ""
+"Obchod predáva aj do %d ďalších krajín EÚ. Faktúry súkromným osobám v nich "
+"sa vystavia v režime OSS. Zapnite, len ak ste registrovaní do OSS. Ak si nie "
+"ste istí, overte to s účtovníkom."
 
 #. translators: %s: list of countries.
 #: includes/class-wc-sf-setup-wizard.php
 #, php-format
 msgid "Your shop also sells to %s. Invoices to private customers there are created in the OSS scheme. Enable only if you are registered for OSS, or check with your accountant."
-msgstr "Obchod predáva aj do krajín: %s. Faktúry súkromným osobám v nich sa vystavia v režime OSS. Zapnite len vtedy, ak ste registrovaní do OSS, prípadne to overte s účtovníkom."
+msgstr ""
+"Obchod predáva aj do krajín: %s. Faktúry súkromným osobám v nich sa vystavia "
+"v režime OSS. Zapnite, len ak ste registrovaní do OSS. Ak si nie ste istí, "
+"overte to s účtovníkom."
 
 #: includes/class-wc-sf-setup-wizard.php
 msgid "What customers fill in at checkout and what they receive with the order."
@@ -2217,7 +2258,9 @@ msgstr "Zákazník zaplatí zálohovú faktúru naskenovaním kódu v bankovej a
 
 #: includes/class-wc-sf-setup-wizard.php
 msgid "These settings will be saved. All other settings stay as they are, you can find them in WooCommerce > Settings > SuperFaktúra."
-msgstr "Tieto nastavenia sa uložia. Ostatné nastavenia ostanú tak, ako sú, nájdete ich vo WooCommerce > Nastavenia > SuperFaktúra."
+msgstr ""
+"Tieto nastavenia sa uložia. Ostatné nastavenia ostanú tak, ako sú. Nájdete "
+"ich vo WooCommerce > Nastavenia > SuperFaktúra."
 
 #: includes/class-wc-sf-setup-wizard.php
 msgid "Automatic pairing is not set up in SuperFaktúra yet."
@@ -2377,7 +2420,10 @@ msgstr "SuperFaktúra požiadavku neprijala. Skontrolujte e-mail, API kľúč, k
 #: includes/class-wc-sf-setup-wizard.php
 #, php-format
 msgid "The customer pays after placing the order. The proforma invoice gives them the payment details and SuperFaktúra pairs the incoming payment with it. With automatic pairing set up, the plugin then changes the order status to %s and creates the invoice."
-msgstr "Zákazník platí až po objednávke. Zo zálohovej faktúry má údaje na platbu a SuperFaktúra s ňou prijatú platbu spáruje. Keď je automatické párovanie nastavené, plugin potom zmení stav objednávky na %s a vystaví faktúru."
+msgstr ""
+"Zákazník platí až po objednávke. Údaje na platbu nájde na zálohovej faktúre "
+"a SuperFaktúra s ňou prijatú platbu spáruje. Keď je automatické párovanie "
+"nastavené, plugin potom zmení stav objednávky na %s a vystaví faktúru."
 
 #: includes/class-wc-sf-setup-wizard.php
 msgid "The page has been open for too long. Reload it and try again."
@@ -2391,7 +2437,9 @@ msgstr "Spôsoby platby a dodania sa zo SuperFaktúry nepodarilo načítať."
 #: includes/class-wc-sf-setup-wizard.php
 #, php-format
 msgid "The payment is made during checkout. The invoice is created when the paid order changes to %s, and it is marked as paid."
-msgstr "Platba prebehne už pri objednávke. Faktúra sa vystaví, keď sa zaplatená objednávka zmení na stav %s, a rovno ako uhradená."
+msgstr ""
+"Zákazník zaplatí už pri objednávke. Faktúra sa vystaví ako uhradená, keď "
+"zaplatená objednávka prejde do stavu %s."
 
 #: includes/class-wc-sf-setup-wizard.php
 msgid "The plugin is already set up. Settings that will change are marked. If you might need the current settings again, download a backup first."
@@ -2782,7 +2830,9 @@ msgstr "Podrobnosti sú v API logu."
 #: includes/class-wc-superfaktura.php
 #, php-format
 msgid "VIES was unavailable, so the VAT number %1$s was accepted based on its verification on %2$s."
-msgstr "VIES nebol dostupný, preto sa IČ DPH %1$s uznalo podľa overenia z %2$s."
+msgstr ""
+"VIES nebol dostupný, preto plugin uznal IČ DPH %1$s podľa jeho overenia z "
+"%2$s."
 
 #: includes/class-wc-sf-settings.php
 msgid "eFaktúra"
@@ -2792,7 +2842,10 @@ msgstr "eFaktúra"
 #: includes/class-wc-sf-settings.php
 #, php-format
 msgid "Invoices and credit notes for companies from Slovakia go via Peppol, other customers get them as before. A company is recognised by its DIČ, or by its IČ DPH, which contains the DIČ. eFaktúra must be activated for the company in SuperFaktúra first: %s."
-msgstr "Faktúry a dobropisy pre firmy zo Slovenska idú cez Peppol, ostatní zákazníci ich dostanú ako doteraz. Firmu plugin rozpozná podľa DIČ alebo podľa IČ DPH, ktoré DIČ obsahuje. eFaktúru treba najprv aktivovať pre firmu v SuperFaktúre: %s."
+msgstr ""
+"Faktúry a dobropisy firmám zo Slovenska odídu cez Peppol. Ostatní zákazníci "
+"dostanú doklady ako doteraz. Firmu plugin rozpozná podľa DIČ alebo IČ DPH. "
+"Najprv si v SuperFaktúre aktivujte eFaktúru: %s."
 
 #: includes/class-wc-sf-settings.php
 msgid "eFaktúra in SuperFaktúra"
@@ -2812,7 +2865,11 @@ msgstr "Stav objednávky"
 
 #: includes/class-wc-sf-settings.php
 msgid "The invoice is sent when the order reaches this status, so it must exist by then. A sent invoice is never changed, not even by regeneration. It is corrected by a credit note. Credit notes are sent when they are created, an invoice not sent yet goes first."
-msgstr "Faktúra sa odošle, keď objednávka dosiahne tento stav, preto už vtedy musí existovať. Odoslaná faktúra sa už nikdy nezmení, ani pri pregenerovaní. Opravuje sa dobropisom. Dobropisy sa odošlú hneď po vytvorení, faktúra, ktorá ešte neodišla, ide pred nimi."
+msgstr ""
+"Faktúra odíde, keď objednávka prejde do tohto stavu, preto vtedy už musí "
+"existovať. Odoslanú faktúru plugin už nezmení ani pri pregenerovaní. "
+"Opravíte ju dobropisom. Dobropis odíde hneď po vytvorení. Ak faktúra ešte "
+"neodišla, odíde pred ním."
 
 #: includes/class-wc-sf-settings.php
 msgid "PDF in e-mails"
@@ -2820,11 +2877,14 @@ msgstr "PDF v e-mailoch"
 
 #: includes/class-wc-sf-settings.php
 msgid "Attach the PDF of documents sent via Peppol to order e-mails"
-msgstr "Prikladať PDF dokladov odoslaných cez Peppol do e-mailov objednávky"
+msgstr ""
+"Prikladať k e-mailom objednávky PDF aj pri dokladoch odoslaných cez Peppol"
 
 #: includes/class-wc-sf-settings.php
 msgid "The customer gets the document via Peppol. With the PDF in the e-mail as well, they might book it twice. The link to download the document stays in the e-mail either way."
-msgstr "Zákazník dostane doklad cez Peppol. Ak ho dostane aj ako PDF v e-maile, môže ho zaevidovať dvakrát. Odkaz na stiahnutie dokladu zostáva v e-maile v každom prípade."
+msgstr ""
+"Zákazník dostane doklad cez Peppol. Ak ho dostane aj ako PDF v e-maile, môže "
+"ho zaevidovať dvakrát. Odkaz na stiahnutie dokladu v e-maile zostane aj tak."
 
 #. Translators: %s Credit note number.
 #: includes/class-wc-sf-peppol.php
@@ -2880,7 +2940,9 @@ msgstr "Odovzdané na odoslanie cez Peppol (eFaktúra): %s."
 #: includes/class-wc-sf-peppol.php
 #, php-format
 msgid "Sending via Peppol (eFaktúra) failed: %1$s. We will try again in %2$d minutes."
-msgstr "Odoslanie cez Peppol (eFaktúra) zlyhalo: %1$s. Skúsime to znova o %2$d minút."
+msgstr ""
+"Odoslanie cez Peppol (eFaktúra) zlyhalo: %1$s. Plugin to skúsi znova o %2$d "
+"minút."
 
 #. Translators: %1$s Document, e.g. "invoice IN260614", %2$s Reason.
 #: includes/class-wc-sf-peppol.php
@@ -2914,7 +2976,9 @@ msgstr "SuperFaktúra neodpovedala."
 
 #: includes/class-wc-sf-admin.php
 msgid "Document was not changed, because it was sent via Peppol (eFaktúra). It can be corrected by a credit note only."
-msgstr "Doklad sa nezmenil, pretože bol odoslaný cez Peppol (eFaktúra). Opraviť ho možno len dobropisom."
+msgstr ""
+"Doklad sa nezmenil, pretože bol odoslaný cez Peppol (eFaktúra). Opraviť sa "
+"dá len dobropisom."
 
 #: includes/class-wc-sf-admin.php
 msgid "The document was handed over for sending via Peppol (eFaktúra)."
@@ -3024,7 +3088,9 @@ msgstr "daňový doklad %s"
 #: includes/class-wc-sf-peppol.php
 #, php-format
 msgid "Tax document %s for the received payment, created in SuperFaktura, was attached to the order."
-msgstr "K objednávke bol pripojený daňový doklad %s k prijatej platbe, ktorý vystavila SuperFaktúra."
+msgstr ""
+"Daňový doklad k prijatej platbe %s, ktorý vystavila SuperFaktúra, bol "
+"pripojený k objednávke."
 
 #. Translators: %s Tax document number.
 #: includes/class-wc-sf-admin.php
@@ -3047,3 +3113,25 @@ msgstr "Faktúra k tomuto dobropisu musí najprv odísť cez Peppol."
 #: includes/class-wc-sf-setup-wizard.php
 msgid "Company details at checkout, VAT number, OSS, eFaktúra and the invoice in emails."
 msgstr "Údaje firmy v pokladni, IČ DPH, OSS, eFaktúra a faktúra v e-mailoch."
+
+#. translators: %s: ID saved in the settings
+#: includes/class-wc-sf-company-lists.php
+#, php-format
+msgid "ID %s: not found in your SuperFaktúra company"
+msgstr "ID %s: vo vašej firme v SuperFaktúre sa nenašlo"
+
+#. translators: %s: list of setting titles
+#: includes/class-wc-sf-settings.php
+#, php-format
+msgid "These settings contain an ID that is not in your SuperFaktúra company: %s. Choose an item from the list. For a number sequence, SuperFaktúra numbers the document by its default sequence."
+msgstr "Tieto nastavenia obsahujú ID, ktoré vo vašej firme v SuperFaktúre nie je: %s. Vyberte položku zo zoznamu. Pri číselníku SuperFaktúra očísluje doklad podľa predvoleného číselníka."
+
+#: includes/class-wc-sf-settings.php
+msgid "Number sequences, logos and bank accounts could not be loaded from SuperFaktúra, so enter their IDs. The error was:"
+msgstr "Číselníky, logá a bankové účty sa nepodarilo načítať zo SuperFaktúry, preto zadajte ich ID. Chyba:"
+
+#. translators: 1: column title, 2: country code
+#: includes/class-wc-sf-settings.php
+#, php-format
+msgid "%1$s (Countries, %2$s)"
+msgstr "%1$s (Krajiny, %2$s)"

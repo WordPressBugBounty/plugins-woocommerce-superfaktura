@@ -204,10 +204,10 @@ jQuery(document).ready(function($) {
 					'vat_id': $(this).find('input[name=_country_vat]').val(),
 					'vat_id_only_final_consumer': $(this).find('input[name=_country_vat_id_only_final_consumer]').prop('checked'),
 					'tax_id': $(this).find('input[name=_country_tax]').val(),
-					'bank_account_id': $(this).find('input[name=_country_bank_account_id]').val(),
-					'proforma_sequence_id': $(this).find('input[name=_country_proforma_invoice_sequence_id]').val(),
-					'invoice_sequence_id': $(this).find('input[name=_country_invoice_sequence_id]').val(),
-					'cancel_sequence_id': $(this).find('input[name=_country_cancel_sequence_id]').val()
+					'bank_account_id': $(this).find('[name=_country_bank_account_id]').val(),
+					'proforma_sequence_id': $(this).find('[name=_country_proforma_invoice_sequence_id]').val(),
+					'invoice_sequence_id': $(this).find('[name=_country_invoice_sequence_id]').val(),
+					'cancel_sequence_id': $(this).find('[name=_country_cancel_sequence_id]').val()
 				});
 			});
 
