@@ -39,6 +39,18 @@ class WC_SF_Settings extends WC_Settings_Page {
 	protected $missing_ids = array();
 
 	/**
+	 * Why the posted Secret Key was not saved and the current key was kept: 'empty' or 'invalid'.
+	 *
+	 * @var string|false
+	 */
+	protected $secret_key_kept = false;
+
+	/**
+	 * Entries on one page of the API log.
+	 */
+	const API_LOG_PER_PAGE = 100;
+
+	/**
 	 * Whether the settings screen is being rendered. The lists of the SuperFaktúra company are loaded only then, so
 	 * saving the settings or any other use of the settings fields never calls the API.
 	 *
@@ -67,6 +79,9 @@ class WC_SF_Settings extends WC_Settings_Page {
 		add_action( 'woocommerce_settings_save_' . $this->id, array( $this, 'save' ) );
 		add_action( 'woocommerce_sections_' . $this->id, array( $this, 'output_sections' ) );
 		add_filter( 'woocommerce_settings-' . $this->id, array( $this, 'filter_settings_for_rest_api' ), 100 );
+		add_filter( 'woocommerce_admin_settings_sanitize_option_woocommerce_sf_sync_secret_key', array( $this, 'keep_secret_key' ) );
+		add_action( 'admin_footer', array( $this, 'api_log_filter_form' ) );
+		add_action( 'woocommerce_admin_field_wc_sf_api_log', array( $this, 'output_api_log' ) );
 
 		$this->notice = null;
 		$this->allowed_tags = wp_kses_allowed_html( 'post' );
@@ -1554,8 +1569,8 @@ class WC_SF_Settings extends WC_Settings_Page {
 				break;
 
 			case 'api_log':
-				global $wpdb;
-				$results = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}wc_sf_log ORDER BY time DESC LIMIT 200", ARRAY_A );
+				$log     = $this->api_log_rows();
+				$results = $log['rows'];
 
 				$content = '';
 
@@ -1589,16 +1604,18 @@ class WC_SF_Settings extends WC_Settings_Page {
 					}
 				}
 
+				$content .= $this->api_log_filters_html( $log );
+
 				$content .= '
 					<table class="wc-sf-api-log">
 						<thead>
 							<tr>
-								<th>Order ID</th>
-								<th>Document Type</th>
-								<th>Request Type</th>
-								<th>Response Status</th>
-								<th>Response Message</th>
-								<th>Time</th>
+								<th>' . esc_html__( 'Order ID', 'woocommerce-superfaktura' ) . '</th>
+								<th>' . esc_html__( 'Document type', 'woocommerce-superfaktura' ) . '</th>
+								<th>' . esc_html__( 'Request type', 'woocommerce-superfaktura' ) . '</th>
+								<th>' . esc_html__( 'Response status', 'woocommerce-superfaktura' ) . '</th>
+								<th>' . esc_html__( 'Response message', 'woocommerce-superfaktura' ) . '</th>
+								<th>' . esc_html__( 'Time', 'woocommerce-superfaktura' ) . '</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -1629,12 +1646,22 @@ class WC_SF_Settings extends WC_Settings_Page {
 					</table>
 				';
 
+				$content .= $this->api_log_pagination_html( $log );
+
+				// A field of its own: the description of a title is filtered with wp_kses_post(), which removes the
+				// fields of the filter.
 				$settings = array(
 					array(
 						'title' => __( 'API log', 'woocommerce-superfaktura' ),
 						'type'  => 'title',
-						'desc'  => $content,
+						'desc'  => '',
 						'id'    => 'woocommerce_sf_invoice_title98',
+					),
+					array(
+						'type'      => 'wc_sf_api_log',
+						'id'        => 'wc_sf_api_log',
+						'is_option' => false,
+						'content'   => $content,
 					),
 					array(
 						'type' => 'sectionend',
@@ -1887,12 +1914,37 @@ class WC_SF_Settings extends WC_Settings_Page {
 			);
 		}
 
+		if ( 'integration' === $current_section && $this->secret_key_kept ) {
+			$kept_text = 'empty' === $this->secret_key_kept ? __( 'The Secret Key cannot be empty, so the current key was kept.', 'woocommerce-superfaktura' ) : __( 'The Secret Key must have 16 to 64 letters and digits, so the current key was kept.', 'woocommerce-superfaktura' );
+			echo wp_kses( '<div class="sf-notice-error">' . esc_html( $kept_text ) . '</div>', $this->allowed_tags );
+		} elseif ( 'integration' === $current_section && '' === (string) get_option( 'woocommerce_sf_sync_secret_key', '' ) ) {
+			echo wp_kses(
+				'<div class="sf-notice-error">' . sprintf(
+					// Translators: %s Button label.
+					esc_html__( 'The Secret Key for automatic pairing is empty, so the shop cannot check that a payment notification came from SuperFaktúra. Click %s below and save the settings. If you entered the Callback URL and Secret Key in the company settings in SuperFaktúra, enter the new key there too. Payments of orders created before the change are still paired for 60 days.', 'woocommerce-superfaktura' ),
+					'<strong>' . esc_html__( 'Regenerate', 'woocommerce-superfaktura' ) . '</strong>'
+				) . '</div>',
+				$this->allowed_tags
+			);
+		}
+
+		if ( 'integration' === $current_section && $this->vat_validation_warning_needed() ) {
+			echo wp_kses(
+				'<div class="sf-notice-info">' . sprintf(
+					// Translators: %s Setting name.
+					esc_html__( 'VAT # validation in VIES is off. When a business from another EU country enters a VAT # at checkout, the plugin marks reverse charge on its invoice even if the number is not valid, for example the tax ID of a business that is not registered for VAT. Turn on %s below.', 'woocommerce-superfaktura' ),
+					'<strong>' . esc_html__( 'Validate VAT #', 'woocommerce-superfaktura' ) . '</strong>'
+				) . '</div>',
+				$this->allowed_tags
+			);
+		}
+
 		if ( '' === $current_section && $this->wc_sf->setup_wizard ) {
 			echo wp_kses( $this->wc_sf->setup_wizard->get_settings_notice(), $this->allowed_tags );
 		}
 
-		// The Help section has nothing to save.
-		if ( 'help' === $current_section ) {
+		// The Help and API log sections have nothing to save.
+		if ( 'help' === $current_section || 'api_log' === $current_section ) {
 			$GLOBALS['hide_save_button'] = true;
 		}
 
@@ -1994,10 +2046,10 @@ class WC_SF_Settings extends WC_Settings_Page {
 					<th><?php esc_html_e( 'VAT #', 'woocommerce-superfaktura' ); ?></th>
 					<th><?php esc_html_e( 'Use VAT # only for final consumer', 'woocommerce-superfaktura' ); ?></th>
 					<th><?php esc_html_e( 'TAX ID #', 'woocommerce-superfaktura' ); ?></th>
-					<th><?php esc_html_e( 'Bank Account ID', 'woocommerce-superfaktura' ); ?></th>
-					<th><?php esc_html_e( 'Proforma Invoice Sequence ID', 'woocommerce-superfaktura' ); ?></th>
-					<th><?php esc_html_e( 'Invoice Sequence ID', 'woocommerce-superfaktura' ); ?></th>
-					<th><?php esc_html_e( 'Credit Note Sequence ID', 'woocommerce-superfaktura' ); ?></th>
+					<th><?php echo esc_html( $lists && null !== $lists['banks'] ? $this->company_list_title( 'woocommerce_sf_bank_account_id' ) : __( 'Bank Account ID', 'woocommerce-superfaktura' ) ); ?></th>
+					<th><?php echo esc_html( $lists && isset( $lists['sequences']['proforma'] ) ? $this->company_list_title( 'woocommerce_sf_proforma_invoice_sequence_id' ) : __( 'Proforma Invoice Sequence ID', 'woocommerce-superfaktura' ) ); ?></th>
+					<th><?php echo esc_html( $lists && isset( $lists['sequences']['regular'] ) ? $this->company_list_title( 'woocommerce_sf_invoice_sequence_id' ) : __( 'Invoice Sequence ID', 'woocommerce-superfaktura' ) ); ?></th>
+					<th><?php echo esc_html( $lists && isset( $lists['sequences']['cancel'] ) ? $this->company_list_title( 'woocommerce_sf_cancel_sequence_id' ) : __( 'Credit Note Sequence ID', 'woocommerce-superfaktura' ) ); ?></th>
 					<th></th>
 				</tr>
 			</thead>
@@ -2118,9 +2170,10 @@ class WC_SF_Settings extends WC_Settings_Page {
 
 			$settings[ $key ]['type']    = 'select';
 			$settings[ $key ]['options'] = WC_SF_Company_Lists::options( $items, $current );
+			$settings[ $key ]['title']   = $this->company_list_title( $setting['id'] );
 
 			if ( WC_SF_Company_Lists::is_missing( $items, $current ) ) {
-				$this->missing_ids[] = $setting['title'];
+				$this->missing_ids[] = $settings[ $key ]['title'];
 			}
 		}
 
@@ -2130,6 +2183,263 @@ class WC_SF_Settings extends WC_Settings_Page {
 		}
 
 		return $settings;
+	}
+
+	/**
+	 * Rows of the API log for the current filter and page.
+	 *
+	 * @return array Array with 'rows', 'total', 'page', 'per_page', 'filters' and 'types'.
+	 */
+	private function api_log_rows() {
+		global $wpdb;
+
+		$table   = $wpdb->prefix . 'wc_sf_log';
+		$filters = $this->api_log_filters();
+		$where   = array( '1=1' );
+		$args    = array();
+
+		if ( $filters['order'] ) {
+			$where[] = 'order_id = %d';
+			$args[]  = $filters['order'];
+		}
+		if ( '' !== $filters['type'] ) {
+			$where[] = 'request_type = %s';
+			$args[]  = $filters['type'];
+		}
+		if ( '' !== $filters['date'] ) {
+			$where[] = 'time >= %s AND time < %s';
+			$args[]  = $filters['date'] . ' 00:00:00';
+			$args[]  = gmdate( 'Y-m-d', strtotime( $filters['date'] . ' +1 day' ) ) . ' 00:00:00';
+		}
+		if ( $filters['errors'] ) {
+			$where[] = 'response_status > 0';
+		}
+
+		$where_sql = implode( ' AND ', $where );
+		// phpcs:disable WordPress.DB.PreparedSQL.InterpolatedNotPrepared -- $where_sql holds only placeholders.
+		$count_sql = "SELECT COUNT(*) FROM {$table} WHERE {$where_sql}";
+		$total     = (int) $wpdb->get_var( $args ? $wpdb->prepare( $count_sql, $args ) : $count_sql );
+
+		$per_page = self::API_LOG_PER_PAGE;
+		$pages    = max( 1, (int) ceil( $total / $per_page ) );
+		$page     = min( $filters['page'], $pages );
+
+		$rows = $wpdb->get_results(
+			$wpdb->prepare( "SELECT * FROM {$table} WHERE {$where_sql} ORDER BY time DESC, id DESC LIMIT %d OFFSET %d", array_merge( $args, array( $per_page, ( $page - 1 ) * $per_page ) ) ),
+			ARRAY_A
+		);
+		$types = $wpdb->get_col( "SELECT DISTINCT request_type FROM {$table} WHERE request_type <> '' ORDER BY request_type" );
+		// phpcs:enable WordPress.DB.PreparedSQL.InterpolatedNotPrepared
+
+		return array(
+			'rows'     => $rows ? $rows : array(),
+			'total'    => $total,
+			'page'     => $page,
+			'pages'    => $pages,
+			'per_page' => $per_page,
+			'filters'  => $filters,
+			'types'    => $types ? $types : array(),
+		);
+	}
+
+	/**
+	 * Filter of the API log from the request.
+	 *
+	 * @return array Array with 'order', 'type', 'date', 'errors' and 'page'.
+	 */
+	private function api_log_filters() {
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- Read-only filter of a list.
+		$date = isset( $_GET['sf_log_date'] ) ? sanitize_text_field( wp_unslash( $_GET['sf_log_date'] ) ) : '';
+
+		$filters = array(
+			'order'  => isset( $_GET['sf_log_order'] ) ? absint( $_GET['sf_log_order'] ) : 0,
+			'type'   => isset( $_GET['sf_log_type'] ) ? sanitize_key( wp_unslash( $_GET['sf_log_type'] ) ) : '',
+			'date'   => preg_match( '/^\d{4}-\d{2}-\d{2}$/', $date ) ? $date : '',
+			'errors' => ! empty( $_GET['sf_log_errors'] ),
+			'page'   => isset( $_GET['sf_log_page'] ) ? max( 1, (int) $_GET['sf_log_page'] ) : 1,
+		);
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
+
+		return $filters;
+	}
+
+	/**
+	 * URL of the API log with a filter.
+	 *
+	 * @param array $filters Filter.
+	 * @param int   $page    Page.
+	 * @return string
+	 */
+	private function api_log_url( $filters, $page ) {
+		$args = array(
+			'page'          => 'wc-settings',
+			'tab'           => $this->id,
+			'section'       => 'api_log',
+			'sf_log_order'  => $filters['order'] ? $filters['order'] : null,
+			'sf_log_type'   => '' !== $filters['type'] ? $filters['type'] : null,
+			'sf_log_date'   => '' !== $filters['date'] ? $filters['date'] : null,
+			'sf_log_errors' => $filters['errors'] ? 1 : null,
+			'sf_log_page'   => 1 < $page ? $page : null,
+		);
+
+		return add_query_arg( array_filter( $args, 'is_scalar' ), admin_url( 'admin.php' ) );
+	}
+
+	/**
+	 * Filter fields of the API log. They belong to a form printed outside the settings form.
+	 *
+	 * @param array $log Result of api_log_rows().
+	 * @return string
+	 */
+	private function api_log_filters_html( $log ) {
+		$filters = $log['filters'];
+
+		$types = '<option value="">' . esc_html__( 'All request types', 'woocommerce-superfaktura' ) . '</option>';
+		foreach ( $log['types'] as $type ) {
+			$types .= '<option value="' . esc_attr( $type ) . '"' . selected( $filters['type'], $type, false ) . '>' . esc_html( $type ) . '</option>';
+		}
+
+		// The class keeps WooCommerce from asking about unsaved settings when the filter changes.
+		$html  = '<p class="wc-sf-api-log-filter wc-settings-prevent-change-event">';
+		$html .= '<label>' . esc_html__( 'Order ID', 'woocommerce-superfaktura' ) . ' <input type="number" min="1" name="sf_log_order" form="wc-sf-api-log-filter" value="' . esc_attr( $filters['order'] ? $filters['order'] : '' ) . '" style="width: 8em;"></label> ';
+		$html .= '<label>' . esc_html__( 'Date', 'woocommerce-superfaktura' ) . ' <input type="date" name="sf_log_date" form="wc-sf-api-log-filter" value="' . esc_attr( $filters['date'] ) . '"></label> ';
+		$html .= '<select name="sf_log_type" form="wc-sf-api-log-filter" aria-label="' . esc_attr__( 'Request type', 'woocommerce-superfaktura' ) . '">' . $types . '</select> ';
+		$html .= '<label><input type="checkbox" name="sf_log_errors" value="1" form="wc-sf-api-log-filter"' . checked( $filters['errors'], true, false ) . '> ' . esc_html__( 'Only errors', 'woocommerce-superfaktura' ) . '</label> ';
+		$html .= '<button type="submit" class="button" form="wc-sf-api-log-filter">' . esc_html__( 'Filter', 'woocommerce-superfaktura' ) . '</button> ';
+		if ( $filters['order'] || '' !== $filters['type'] || '' !== $filters['date'] || $filters['errors'] ) {
+			$html .= '<a href="' . esc_url( $this->api_log_url( array( 'order' => 0, 'type' => '', 'date' => '', 'errors' => false ), 1 ) ) . '">' . esc_html__( 'Clear filter', 'woocommerce-superfaktura' ) . '</a>';
+		}
+		$html .= '</p>';
+
+		return $html;
+	}
+
+	/**
+	 * Page links of the API log.
+	 *
+	 * @param array $log Result of api_log_rows().
+	 * @return string
+	 */
+	private function api_log_pagination_html( $log ) {
+		if ( ! $log['total'] ) {
+			$filtered = $log['filters']['order'] || '' !== $log['filters']['type'] || '' !== $log['filters']['date'] || $log['filters']['errors'];
+			return '<p>' . ( $filtered ? esc_html__( 'No entries match the filter.', 'woocommerce-superfaktura' ) : esc_html__( 'The API log is empty.', 'woocommerce-superfaktura' ) ) . '</p>';
+		}
+
+		$first = ( $log['page'] - 1 ) * $log['per_page'] + 1;
+		$last  = min( $log['total'], $log['page'] * $log['per_page'] );
+
+		$html = '<p class="wc-sf-api-log-pages">' . esc_html(
+			sprintf(
+				// Translators: 1: first entry, 2: last entry, 3: number of entries.
+				__( 'Entries %1$d to %2$d of %3$d', 'woocommerce-superfaktura' ),
+				$first,
+				$last,
+				$log['total']
+			)
+		);
+
+		if ( 1 < $log['page'] ) {
+			$html .= ' <a class="button" href="' . esc_url( $this->api_log_url( $log['filters'], $log['page'] - 1 ) ) . '">' . esc_html__( 'Newer', 'woocommerce-superfaktura' ) . '</a>';
+		}
+		if ( $log['page'] < $log['pages'] ) {
+			$html .= ' <a class="button" href="' . esc_url( $this->api_log_url( $log['filters'], $log['page'] + 1 ) ) . '">' . esc_html__( 'Older', 'woocommerce-superfaktura' ) . '</a>';
+		}
+
+		return $html . '</p>';
+	}
+
+	/**
+	 * Output the API log. Its parts are escaped where they are built.
+	 *
+	 * @param array $value Field with 'content'.
+	 */
+	public function output_api_log( $value ) {
+		echo '<tr valign="top"><td colspan="2" style="padding: 0;">' . $value['content'] . '</td></tr>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- Escaped in api_log_filters_html(), the table rows and api_log_pagination_html().
+	}
+
+	/**
+	 * The form of the API log filter, outside the settings form so it can use GET.
+	 */
+	public function api_log_filter_form() {
+		global $current_section;
+
+		// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- Only decides where the form is printed.
+		if ( 'api_log' !== $current_section || ! isset( $_GET['page'], $_GET['tab'] ) || 'wc-settings' !== $_GET['page'] || $this->id !== $_GET['tab'] ) {
+			return;
+		}
+
+		printf(
+			'<form id="wc-sf-api-log-filter" method="get" action="%s"><input type="hidden" name="page" value="wc-settings"><input type="hidden" name="tab" value="%s"><input type="hidden" name="section" value="api_log"></form>',
+			esc_url( admin_url( 'admin.php' ) ),
+			esc_attr( $this->id )
+		);
+		// Older WooCommerce versions ask about unsaved settings for any changed field.
+		echo "<script>document.getElementById('wc-sf-api-log-filter').addEventListener('submit',function(){window.onbeforeunload=null;});document.querySelectorAll('.wc-sf-api-log-pages a,.wc-sf-api-log-filter a').forEach(function(a){a.addEventListener('click',function(){window.onbeforeunload=null;});});</script>";
+	}
+
+	/**
+	 * Keep the current Secret Key when an empty one is posted.
+	 *
+	 * @param mixed $value Posted value.
+	 * @return mixed
+	 */
+	public function keep_secret_key( $value ) {
+		$current = (string) get_option( 'woocommerce_sf_sync_secret_key', '' );
+		$value   = trim( (string) $value );
+
+		if ( $value === $current ) {
+			return $value;
+		}
+
+		// Letters and digits only: the key goes into the address SuperFaktura calls.
+		if ( '' === $value || ! preg_match( '/^[A-Za-z0-9]{16,64}$/', $value ) ) {
+			$this->secret_key_kept = '' === $value ? 'empty' : 'invalid';
+			return $current;
+		}
+
+		return $value;
+	}
+
+	/**
+	 * Whether to warn that VAT numbers are not validated although customers from other EU countries can enter one.
+	 *
+	 * @return bool
+	 */
+	private function vat_validation_warning_needed() {
+		if ( 'yes' !== get_option( 'woocommerce_sf_add_company_billing_fields', 'yes' ) || 'no' === get_option( 'woocommerce_sf_add_company_billing_fields_vat', 'optional' ) || ! $this->wc_sf->vat_number_hint_needed() ) {
+			return false;
+		}
+
+		$base      = WC()->countries->get_base_country();
+		$countries = array_keys( WC()->countries->get_allowed_countries() );
+
+		return (bool) array_diff( array_intersect( $countries, $this->wc_sf->eu_countries ), array( $base ) );
+	}
+
+
+
+	/**
+	 * Title of an ID setting shown as a select of the SuperFaktúra company, the same as in the setup wizard.
+	 *
+	 * @param string $id Setting ID.
+	 * @return string
+	 */
+	private function company_list_title( $id ) {
+		switch ( $id ) {
+			case 'woocommerce_sf_proforma_invoice_sequence_id':
+				return __( 'Proforma invoice number sequence', 'woocommerce-superfaktura' );
+			case 'woocommerce_sf_invoice_sequence_id':
+				return __( 'Invoice number sequence', 'woocommerce-superfaktura' );
+			case 'woocommerce_sf_cancel_sequence_id':
+				return __( 'Credit note number sequence', 'woocommerce-superfaktura' );
+			case 'woocommerce_sf_logo_id':
+				return __( 'Logo', 'woocommerce-superfaktura' );
+			case 'woocommerce_sf_bank_account_id':
+				return __( 'Bank account on invoices', 'woocommerce-superfaktura' );
+		}
+
+		return $id;
 	}
 
 	/**
@@ -2144,10 +2454,10 @@ class WC_SF_Settings extends WC_Settings_Page {
 		}
 
 		$columns = array(
-			'bank_account_id'      => array( $lists['banks'], __( 'Bank Account ID', 'woocommerce-superfaktura' ) ),
-			'proforma_sequence_id' => array( $lists['sequences']['proforma'] ?? null, __( 'Proforma Invoice Sequence ID', 'woocommerce-superfaktura' ) ),
-			'invoice_sequence_id'  => array( $lists['sequences']['regular'] ?? null, __( 'Invoice Sequence ID', 'woocommerce-superfaktura' ) ),
-			'cancel_sequence_id'   => array( $lists['sequences']['cancel'] ?? null, __( 'Credit Note Sequence ID', 'woocommerce-superfaktura' ) ),
+			'bank_account_id'      => array( $lists['banks'], $this->company_list_title( 'woocommerce_sf_bank_account_id' ) ),
+			'proforma_sequence_id' => array( $lists['sequences']['proforma'] ?? null, $this->company_list_title( 'woocommerce_sf_proforma_invoice_sequence_id' ) ),
+			'invoice_sequence_id'  => array( $lists['sequences']['regular'] ?? null, $this->company_list_title( 'woocommerce_sf_invoice_sequence_id' ) ),
+			'cancel_sequence_id'   => array( $lists['sequences']['cancel'] ?? null, $this->company_list_title( 'woocommerce_sf_cancel_sequence_id' ) ),
 		);
 
 		foreach ( $countries as $country ) {

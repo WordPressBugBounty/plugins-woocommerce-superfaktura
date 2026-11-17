@@ -230,6 +230,10 @@ class WC_SF_Admin {
 				echo wp_kses( '<div class="notice notice-success is-dismissible"><p>' . __( 'Credit note was created.', 'woocommerce-superfaktura' ) . '</p></div>', $this->wc_sf->allowed_tags );
 				break;
 
+			case 'attach_failed':
+				echo wp_kses( '<div class="notice notice-error is-dismissible"><p>' . __( 'The invoice SuperFaktura issued from the paid proforma invoice could not be attached to the order. Try again later.', 'woocommerce-superfaktura' ) . '</p></div>', $this->wc_sf->allowed_tags );
+				break;
+
 			case 'regen_ok':
 				echo wp_kses( '<div class="notice notice-success is-dismissible"><p>' . __( 'Documents were regenerated.', 'woocommerce-superfaktura' ) . '</p></div>', $this->wc_sf->allowed_tags );
 				break;

@@ -4,7 +4,7 @@ Tags: superfaktura, invoice, faktura, proforma, woocommerce
 Requires at least: 4.4
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.62.0
+Stable tag: 1.63.0
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -107,6 +107,16 @@ Check the API e-mail, API key and Company ID in *Authorization* and use *Test AP
 You can read more about SuperFaktura API integration at [superfaktura.sk/api](https://www.superfaktura.sk/api/).
 
 == Changelog ==
+
+= 1.63.0 (2026-11-17) =
+* Nové: Keď máte zapnuté odosielanie cez Peppol, odošlete faktúry viacerých objednávok naraz hromadnou akciou SuperFaktúra: odoslať faktúry cez Peppol (eFaktúra) v zozname objednávok. Plugin s faktúrou odošle aj jej dobropisy.
+* Nové: Na weboch s HTTPS oznámi SuperFaktúra výsledok odoslania eFaktúry e-shopu sama. Plugin preto stav v SuperFaktúre overí už len raz, jeden deň po odoslaní.
+* Nové: API log má stránkovanie a filter podľa objednávky, dátumu, typu požiadavky a chýb.
+* Zmena: Keď SuperFaktúra vystaví faktúru z uhradenej zálohovej faktúry a e-shop sa o tom nedozvie, plugin ju pri vytváraní faktúry pripojí k objednávke a druhú nevytvorí.
+* Zmena: Secret Key pre automatické párovanie už nemôžete uložiť prázdny. Ak je kľúč prázdny, nastavenia na to upozornia. Keď kľúč zmeníte, úhrady objednávok vytvorených predtým sa spárujú ešte 60 dní.
+* Zmena: Keď je overovanie IČ DPH vo VIES vypnuté, pokladňa pri nepovinnom poli IČ DPH uvedie, že ho vyplní len firma registrovaná pre DPH. Ak predávate aj do iných krajín EÚ, sekcia Integrácia upozorní, že plugin označí prenesenie daňovej povinnosti aj pri neplatnom čísle.
+* Zmena: Číselníky, logo a bankový účet majú v nastaveniach rovnaké názvy ako v sprievodcovi nastavením.
+* Bezpečnosť: Oznámenia o úhrade s nesprávnym kľúčom ani opakované oznámenia nemíňajú denný limit API SuperFaktúry.
 
 = 1.62.0 (2026-11-12) =
 * Nové: Číselníky, logo a bankový účet vyberiete v nastaveniach podľa názvu zo zoznamu, aj v tabuľke Krajiny. Plugin ich načíta z vašej firmy v SuperFaktúre. Ak je v nastaveniach uložené ID, ktoré vo firme nie je, plugin na to upozorní.

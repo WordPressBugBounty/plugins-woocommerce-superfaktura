@@ -57,6 +57,7 @@ jQuery(document).ready(function ($) {
 	var chipClass = {
 		created: 'wc-sf-bulk-chip--ok',
 		regenerated: 'wc-sf-bulk-chip--ok',
+		sent: 'wc-sf-bulk-chip--ok',
 		failed: 'wc-sf-bulk-chip--err'
 	};
 
@@ -91,7 +92,7 @@ jQuery(document).ready(function ($) {
 		$notice.find('.wc-sf-bulk-bar-fill').css('width', state.total ? Math.round((state.processed / state.total) * 100) + '%' : '0');
 
 		var $summary = $notice.find('.wc-sf-bulk-summary').empty();
-		$.each(['created', 'regenerated', 'skipped_exists', 'skipped_no_document', 'skipped_not_allowed', 'skipped_status', 'failed'], function (_, key) {
+		$.each(['created', 'regenerated', 'sent', 'skipped_exists', 'skipped_no_document', 'skipped_not_allowed', 'skipped_no_invoice', 'skipped_not_peppol', 'skipped_sent', 'skipped_status', 'failed'], function (_, key) {
 			if (state.counts && state.counts[key]) {
 				$('<li class="wc-sf-bulk-chip">').addClass(chipClass[key] || '')
 					.append($('<b>').text(state.counts[key])).append(document.createTextNode(' ' + t(key)))

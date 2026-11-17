@@ -405,6 +405,9 @@ class WC_SF_Tools {
 	 * Delete all plugin options and redirect back with the result.
 	 */
 	private function reset() {
+		// Payments of documents issued with the current key are still paired for 60 days.
+		$this->wc_sf->remember_previous_secret_key( get_option( 'woocommerce_sf_sync_secret_key', '' ), '' );
+
 		$count = 0;
 		foreach ( $this->get_option_names() as $name ) {
 			if ( in_array( $name, $this->counter_options, true ) ) {
@@ -450,6 +453,11 @@ class WC_SF_Tools {
 	 * @return string|array|null Sanitized value or null when rejected.
 	 */
 	private function sanitize_value( $name, $value ) {
+		// The same rule as in the settings: an empty or unusable Secret Key is not imported.
+		if ( 'woocommerce_sf_sync_secret_key' === $name ) {
+			return is_string( $value ) && preg_match( '/^[A-Za-z0-9]{16,64}$/', $value ) ? $value : null;
+		}
+
 		if ( 'woocommerce_sf_country_settings' === $name ) {
 			return $this->sanitize_country_settings( $value );
 		}

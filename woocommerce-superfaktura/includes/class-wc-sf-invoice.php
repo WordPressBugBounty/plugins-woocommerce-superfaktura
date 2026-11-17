@@ -106,6 +106,29 @@ class WC_SF_Invoice {
 
 
 	/**
+	 * ID of the invoice SuperFaktura issued from a paid proforma invoice.
+	 *
+	 * @param mixed $proforma Proforma invoice from /invoices/view.
+	 * @return string|null Invoice ID, or null when the proforma is not paid or has no such invoice.
+	 */
+	private function paid_proforma_invoice_id( $proforma ) {
+		if ( ! is_object( $proforma ) || ! isset( $proforma->Invoice ) || 'proforma' !== ( $proforma->Invoice->type ?? '' ) || 3 != ( $proforma->Invoice->status ?? 0 ) ) { // phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
+			return null;
+		}
+
+		$invoice_id = null;
+		foreach ( isset( $proforma->RelatedItems ) ? (array) $proforma->RelatedItems : array() as $related_item ) { // phpcs:ignore WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase
+			if ( isset( $related_item->Invoice->id ) && 'regular' === ( $related_item->Invoice->type ?? '' ) && empty( $related_item->Invoice->tax_document ) ) {
+				$invoice_id = (string) $related_item->Invoice->id;
+			}
+		}
+
+		return $invoice_id;
+	}
+
+
+
+	/**
 	 * SuperFaktura API credentials for the documents of an order.
 	 *
 	 * @param WC_Order $order Order.
@@ -224,6 +247,54 @@ class WC_SF_Invoice {
 				}
 			}
 
+			// A missed payment notification, or a proforma invoice marked as paid directly in SuperFaktura, leaves the
+			// order without the invoice SuperFaktura issued from the proforma. Attach that invoice instead of creating
+			// a second one. The proforma is loaded here instead of below, so this costs no extra API request.
+			$proforma_loaded = false;
+			if ( 'regular' === $type && ! $force_create && ! $edit ) {
+				$sf_proforma_id = $order->get_meta( 'wc_sf_internal_proforma_id', true );
+				if ( $sf_proforma_id ) {
+					$proforma        = $api->invoice( $sf_proforma_id );
+					$proforma_loaded = true;
+					$related_id      = $this->paid_proforma_invoice_id( $proforma );
+					if ( $related_id ) {
+						$attached = $this->wc_sf->attach_regular_invoice( $order, $related_id, $api );
+
+						if ( isset( $fp ) && $fp ) {
+							fclose( $fp );
+							unlink( $lock_file );
+						}
+
+						if ( ! $attached ) {
+							// Creating a new invoice now would make the duplicate this is meant to prevent.
+							$error = $api->getLastError();
+							$this->wc_sf->wc_sf_log(
+								array(
+									'order_id'         => $order->get_id(),
+									'document_type'    => $type,
+									'request_type'     => 'create',
+									'response_status'  => (int) ( $error['status'] ?? 999 ),
+									'response_message' => sprintf( 'Invoice %s issued from the paid proforma invoice could not be loaded: %s', $related_id, (string) ( $error['message'] ?? '' ) ),
+								)
+							);
+
+							return new WP_Error( 'attach_failed', __( 'The invoice SuperFaktura issued from the paid proforma invoice could not be attached to the order. Try again later.', 'woocommerce-superfaktura' ) );
+						}
+
+						$order = wc_get_order( $order->get_id() );
+						$order->add_order_note(
+							sprintf(
+								// Translators: %s Invoice number.
+								__( 'Invoice %s, which SuperFaktura issued from the paid proforma invoice, was attached to the order instead of creating a new one.', 'woocommerce-superfaktura' ),
+								$order->get_meta( 'wc_sf_regular_invoice_number', true )
+							)
+						);
+
+						return true;
+					}
+				}
+			}
+
 			/* CLIENT DATA */
 
 			$client_data = $this->get_client_data( $order );
@@ -268,7 +339,9 @@ class WC_SF_Invoice {
 					if ( $sf_proforma_id ) {
 						$set_invoice_data['proforma_id'] = $sf_proforma_id;
 
-						$proforma = $api->invoice( $set_invoice_data['proforma_id'] );
+						if ( ! $proforma_loaded ) {
+							$proforma = $api->invoice( $set_invoice_data['proforma_id'] );
+						}
 					}
 					break;
 

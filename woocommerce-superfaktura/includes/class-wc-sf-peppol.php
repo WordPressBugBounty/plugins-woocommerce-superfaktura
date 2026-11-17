@@ -71,6 +71,7 @@ class WC_SF_Peppol {
 		// Sends scheduled again and status checks finish even when sending is turned off in the meantime.
 		add_action( 'sf_peppol_retry_send', array( $this, 'scheduled_send' ), 10, 3 );
 		add_action( 'sf_peppol_check_status', array( $this, 'scheduled_check' ), 10, 3 );
+		add_action( 'wp_loaded', array( $this, 'receive_webhook' ) );
 
 		if ( ! $this->enabled() ) {
 			return;
@@ -292,13 +293,35 @@ class WC_SF_Peppol {
 	 * @param array    $state       State to merge into the saved one.
 	 */
 	private function save_state( $order, $document_id, $state ) {
-		$states                        = $this->get_states( $order );
+		// Merge into the states saved in the database, not into this request's copy: a notification from SuperFaktura
+		// may have saved the state of another document meanwhile.
+		$states                        = $this->get_stored_states( $order );
 		$states[ (int) $document_id ] = array_merge( $states[ (int) $document_id ] ?? array(), $state );
 
 		$order->update_meta_data( self::META, $states );
 		$order->save();
 
 		WC_SF_Notices::flush_errors();
+	}
+
+	/**
+	 * Peppol states as saved in the database right now, bypassing the order objects cached in this request.
+	 *
+	 * @param WC_Order $order Order.
+	 * @return array
+	 */
+	private function get_stored_states( $order ) {
+		$data_store = $order->get_data_store();
+		$rows       = is_callable( array( $data_store, 'read_meta' ) ) ? $data_store->read_meta( $order ) : array();
+
+		foreach ( (array) $rows as $row ) {
+			if ( isset( $row->meta_key ) && self::META === $row->meta_key ) {
+				$states = maybe_unserialize( $row->meta_value );
+				return is_array( $states ) ? $states : array();
+			}
+		}
+
+		return is_array( $rows ) ? array() : $this->get_states( $order );
 	}
 
 	/**
@@ -628,9 +651,10 @@ class WC_SF_Peppol {
 			}
 		}
 
-		$api      = $this->wc_sf->sf_api( $this->wc_sf->invoice_generator->get_order_api_credentials( $order ) );
-		$response = $api->sendPeppol( $document_id );
-		$label    = $this->document_label( $document );
+		$api         = $this->wc_sf->sf_api( $this->wc_sf->invoice_generator->get_order_api_credentials( $order ) );
+		$webhook_url = $this->webhook_url( $order );
+		$response    = $api->sendPeppol( $document_id, $webhook_url, '' !== $webhook_url ? $this->webhook_secret() : '' );
+		$label       = $this->document_label( $document );
 
 		if ( is_object( $response ) && empty( $response->error ) ) {
 			$this->save_state(
@@ -644,13 +668,16 @@ class WC_SF_Peppol {
 					'error_code'      => '',
 					'message'         => '',
 					'sent_at'         => time(),
+					'webhook'         => '' !== $webhook_url,
 				)
 			);
 			$this->log( $order, $document, 'peppol_send', null, 'Queued for sending via Peppol (operation ' . ( $response->data->operation_id ?? '?' ) . ').' );
 
 			// Translators: %s Document, e.g. "invoice IN260614".
 			$order->add_order_note( sprintf( __( 'Handed over for sending via Peppol (eFaktúra): %s.', 'woocommerce-superfaktura' ), $label ) );
-			$this->schedule_check( $order, $document_id, 0 );
+
+			// With the notification from SuperFaktura only the last check stays, for a document that never gets one.
+			$this->schedule_check( $order, $document_id, '' !== $webhook_url ? count( self::CHECK_DELAYS ) - 1 : 0 );
 
 			if ( 'regular' === $document['type'] ) {
 				$this->send_credit_notes( $order );
@@ -805,6 +832,11 @@ class WC_SF_Peppol {
 			return;
 		}
 
+		// The notification from SuperFaktura may have brought the outcome already.
+		if ( self::is_final( $this->get_state( $order, (int) $document_id ) ) ) {
+			return;
+		}
+
 		$this->check_status( $order, (int) $document_id, (int) $attempt );
 	}
 
@@ -843,13 +875,43 @@ class WC_SF_Peppol {
 			return new WP_Error( 'peppol_status_failed', $message );
 		}
 
+		$state = $this->apply_status( $order, $document, $document_id, $state, $response->data );
+
+		if ( null !== $attempt && ! self::is_final( $state ) ) {
+			$this->schedule_check( $order, $document_id, $attempt + 1 );
+		}
+
+		return true;
+	}
+
+	/**
+	 * Save a sending status from SuperFaktura, write it to the log and the order notes and announce a change.
+	 *
+	 * @param WC_Order $order       Order.
+	 * @param array    $document    Document from get_documents().
+	 * @param int      $document_id SuperFaktura ID of the document.
+	 * @param array    $state       Saved state.
+	 * @param object   $data        Status with status, provider_status, failure_code and operation_id.
+	 * @param string   $source      'check' for a status check, 'webhook' for a notification from SuperFaktura.
+	 * @param string   $event_at    Time of the notification, for notifications only.
+	 * @return array New state.
+	 */
+	private function apply_status( $order, $document, $document_id, $state, $data, $source = 'check', $event_at = '' ) {
+		$text      = function( $value ) {
+			return is_scalar( $value ) ? (string) $value : '';
+		};
 		$new_state = array(
-			'status'          => (string) $response->data->status,
-			'provider_status' => (string) ( $response->data->provider_status ?? '' ),
-			'failure_code'    => (string) ( $response->data->failure_code ?? '' ),
-			'operation_id'    => (string) ( $response->data->operation_id ?? ( $state['operation_id'] ?? '' ) ),
+			'status'          => $text( $data->status ?? '' ),
+			'provider_status' => $text( $data->provider_status ?? '' ),
+			'failure_code'    => $text( $data->failure_code ?? '' ),
+			'operation_id'    => $text( $data->operation_id ?? ( $state['operation_id'] ?? '' ) ),
+			'error_code'      => '',
+			'message'         => '',
 			'checked_at'      => time(),
 		);
+		if ( '' !== $event_at ) {
+			$new_state['event_at'] = $event_at;
+		}
 		$failed    = self::is_failed( $new_state );
 
 		$this->log(
@@ -857,7 +919,7 @@ class WC_SF_Peppol {
 			$document,
 			'peppol_status',
 			$failed ? self::LOG_STATUS_FAILED : null,
-			sprintf( 'Status: %s, provider status: %s, failure code: %s', $new_state['status'], $new_state['provider_status'] ? $new_state['provider_status'] : '-', $new_state['failure_code'] ? $new_state['failure_code'] : '-' )
+			( 'webhook' === $source ? 'Notification from SuperFaktura. ' : '' ) . sprintf( 'Status: %s, provider status: %s, failure code: %s', $new_state['status'], $new_state['provider_status'] ? $new_state['provider_status'] : '-', $new_state['failure_code'] ? $new_state['failure_code'] : '-' )
 		);
 
 		$old_label = $this->state_label( $state );
@@ -886,11 +948,197 @@ class WC_SF_Peppol {
 			do_action( 'sf_peppol_status_changed', $order, $document_id, $state );
 		}
 
-		if ( null !== $attempt && ! self::is_final( $state ) ) {
-			$this->schedule_check( $order, $document_id, $attempt + 1 );
+		return $state;
+	}
+
+	/**
+	 * URL SuperFaktura notifies when the outcome of a sending is known, or empty when the shop cannot receive it.
+	 *
+	 * SuperFaktura needs a public HTTPS address, so local sites and sites without HTTPS check the status only.
+	 *
+	 * @param WC_Order $order Order.
+	 * @return string
+	 */
+	private function webhook_url( $order ) {
+		$url       = add_query_arg(
+			array(
+				'callback' => 'wc_sf_peppol_status',
+				'order_id' => $order->get_id(),
+			),
+			site_url( '/' )
+		);
+		$available = 'https' === wp_parse_url( $url, PHP_URL_SCHEME ) && 'local' !== wp_get_environment_type();
+
+		/**
+		 * Filters whether SuperFaktura notifies the shop when the outcome of a Peppol (eFaktúra) sending is known.
+		 *
+		 * Without the notification, the plugin checks the status in SuperFaktura several times after sending.
+		 *
+		 * @since 1.63.0
+		 *
+		 * @param bool     $available Whether the shop can receive the notification. Default true for HTTPS sites
+		 *                            that are not local.
+		 * @param WC_Order $order     Order.
+		 */
+		return apply_filters( 'sf_peppol_webhook', $available, $order ) ? $url : '';
+	}
+
+	/**
+	 * Secret SuperFaktura signs the notifications with.
+	 *
+	 * @return string
+	 */
+	private function webhook_secret() {
+		$secret = (string) get_option( 'wc_sf_peppol_webhook_secret', '' );
+		if ( '' === $secret ) {
+			// add_option() does not overwrite a secret another request created meanwhile, so read it back.
+			add_option( 'wc_sf_peppol_webhook_secret', bin2hex( random_bytes( 32 ) ), '', false );
+			$secret = (string) get_option( 'wc_sf_peppol_webhook_secret', '' );
 		}
 
-		return true;
+		return $secret;
+	}
+
+	/**
+	 * Receive the notification about the outcome of a Peppol sending.
+	 */
+	public function receive_webhook() {
+		// phpcs:disable WordPress.Security.NonceVerification.Recommended -- Signed by SuperFaktura.
+		if ( ! isset( $_GET['callback'] ) || 'wc_sf_peppol_status' !== $_GET['callback'] ) {
+			return;
+		}
+
+		$order_id = isset( $_GET['order_id'] ) ? absint( $_GET['order_id'] ) : 0;
+		// phpcs:enable WordPress.Security.NonceVerification.Recommended
+
+		$body      = (string) file_get_contents( 'php://input' );
+		$timestamp = isset( $_SERVER['HTTP_X_SUPERFAKTURA_WEBHOOK_TIMESTAMP'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_X_SUPERFAKTURA_WEBHOOK_TIMESTAMP'] ) ) : '';
+		$signature = isset( $_SERVER['HTTP_X_SUPERFAKTURA_WEBHOOK_SIGNATURE'] ) ? sanitize_text_field( wp_unslash( $_SERVER['HTTP_X_SUPERFAKTURA_WEBHOOK_SIGNATURE'] ) ) : '';
+		$secret    = (string) get_option( 'wc_sf_peppol_webhook_secret', '' );
+
+		// A signed request older than a day is not accepted again.
+		if ( '' === $secret || '' === $timestamp || '' === $signature || ! ctype_digit( $timestamp ) || DAY_IN_SECONDS < abs( time() - (int) $timestamp ) || ! hash_equals( 'sha256=' . hash_hmac( 'sha256', $timestamp . '.' . $body, $secret ), $signature ) ) {
+			status_header( 401 );
+			exit();
+		}
+
+		$event = json_decode( $body );
+		if ( ! is_object( $event ) || empty( $event->event_id ) ) {
+			status_header( 400 );
+			exit();
+		}
+
+		// Other events are accepted and left alone.
+		if ( 'invoice.peppol.status_changed' !== ( $event->event_type ?? '' ) || ! isset( $event->data->invoice_id, $event->data->status ) || ! is_scalar( $event->data->status ) ) {
+			status_header( 200 );
+			exit();
+		}
+
+		// Deliveries are retried, an event already accepted is accepted again without a change.
+		$events = get_option( 'wc_sf_peppol_webhook_events', array() );
+		$events = is_array( $events ) ? $events : array();
+		if ( in_array( (string) $event->event_id, $events, true ) ) {
+			status_header( 200 );
+			exit();
+		}
+
+		// Two deliveries of the same event at the same moment: only one of them is processed.
+		$claim = $this->claim_webhook_event( (string) $event->event_id );
+		if ( ! $claim ) {
+			status_header( 200 );
+			exit();
+		}
+
+		// Another request may have finished the same event just before the claim.
+		$done = get_option( 'wc_sf_peppol_webhook_events', array() );
+		if ( is_array( $done ) && in_array( (string) $event->event_id, $done, true ) ) {
+			$this->release_webhook_event( $claim );
+			status_header( 200 );
+			exit();
+		}
+
+		$order       = $order_id ? wc_get_order( $order_id ) : false;
+		$document_id = (int) $event->data->invoice_id;
+		$documents   = $order ? $this->get_documents( $order ) : array();
+		$state       = $order ? $this->get_state( $order, $document_id ) : null;
+		$event_at    = isset( $event->occurred_at ) && is_string( $event->occurred_at ) ? (string) strtotime( $event->occurred_at ) : '';
+
+		// The sending request has not saved the state yet: SuperFaktura retries the notification later. The same
+		// holds for a document sent again after a failure, while the state still belongs to the earlier sending.
+		$event_operation = isset( $event->data->operation_id ) && is_scalar( $event->data->operation_id ) ? (string) $event->data->operation_id : '';
+		$other_operation = null !== $state && '' !== $event_operation && ! empty( $state['operation_id'] ) && $event_operation !== (string) $state['operation_id'];
+		if ( isset( $documents[ $document_id ] ) && ( null === $state || ( $other_operation && self::is_final( $state ) ) ) ) {
+			$this->release_webhook_event( $claim );
+			status_header( 409 );
+			exit();
+		}
+
+		// A document the shop does not know any more (for example a deleted order) is accepted so it is not sent
+		// again. A known outcome is not replaced, and an older notification that arrives late changes nothing.
+		$older = '' !== $event_at && ! empty( $state['event_at'] ) && (int) $event_at < (int) $state['event_at'];
+		if ( isset( $documents[ $document_id ] ) && ! self::is_final( $state ) && ! $older ) {
+			$state = $this->apply_status( $order, $documents[ $document_id ], $document_id, $state, $event->data, 'webhook', $event_at );
+
+			// Without the outcome yet, one check later in case no further notification comes.
+			if ( ! self::is_final( $state ) ) {
+				$this->schedule_check( $order, $document_id, count( self::CHECK_DELAYS ) - 1 );
+			}
+		}
+
+		$events   = get_option( 'wc_sf_peppol_webhook_events', array() );
+		$events   = is_array( $events ) ? $events : array();
+		$events[] = (string) $event->event_id;
+		update_option( 'wc_sf_peppol_webhook_events', array_slice( $events, -200 ), false );
+		$this->release_webhook_event( $claim );
+
+		status_header( 200 );
+		exit();
+	}
+
+	/**
+	 * Claim a notification for processing. The database accepts the claim only once, so a second delivery at the
+	 * same moment is not processed. A claim older than five minutes belongs to a request that did not finish.
+	 *
+	 * @param string $event_id Event ID.
+	 * @return string Claim name, or empty when another request is processing the event.
+	 */
+	private function claim_webhook_event( $event_id ) {
+		global $wpdb;
+
+		$claim = 'wc_sf_peppol_event_' . md5( $event_id );
+
+		// phpcs:disable WordPress.DB.DirectDatabaseQuery -- An atomic insert, add_option() would overwrite.
+		if ( $wpdb->query( $wpdb->prepare( "INSERT IGNORE INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, 'no')", $claim, (string) time() ) ) ) {
+			return $claim;
+		}
+
+		$claimed_at = $wpdb->get_var( $wpdb->prepare( "SELECT option_value FROM {$wpdb->options} WHERE option_name = %s", $claim ) );
+
+		// Released by the other request meanwhile: claim it once more.
+		if ( null === $claimed_at ) {
+			return $wpdb->query( $wpdb->prepare( "INSERT IGNORE INTO {$wpdb->options} (option_name, option_value, autoload) VALUES (%s, %s, 'no')", $claim, (string) time() ) ) ? $claim : '';
+		}
+
+		$claimed_at = (int) $claimed_at;
+		if ( time() - $claimed_at < 5 * MINUTE_IN_SECONDS ) {
+			return '';
+		}
+
+		$taken = $wpdb->query( $wpdb->prepare( "UPDATE {$wpdb->options} SET option_value = %s WHERE option_name = %s AND option_value = %s", (string) time(), $claim, (string) $claimed_at ) );
+		// phpcs:enable WordPress.DB.DirectDatabaseQuery
+
+		return $taken ? $claim : '';
+	}
+
+	/**
+	 * Release a claimed notification.
+	 *
+	 * @param string $claim Claim name.
+	 */
+	private function release_webhook_event( $claim ) {
+		global $wpdb;
+
+		$wpdb->delete( $wpdb->options, array( 'option_name' => $claim ) ); // phpcs:ignore WordPress.DB.DirectDatabaseQuery
 	}
 
 	/**

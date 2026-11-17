@@ -954,9 +954,7 @@ msgstr ""
 
 #: includes/class-wc-sf-settings.php:841
 msgid "Add field TAX ID #"
-msgstr ""
-"Přidat pole (SK) \n"
-"DIČ"
+msgstr "Přidat pole (SK) DIČ"
 
 #: includes/class-wc-sf-settings.php:858
 msgid "Order received"
@@ -1444,19 +1442,19 @@ msgstr "znovu vygenerováno"
 
 #: includes/class-wc-sf-bulk.php
 msgid "skipped – document already exists"
-msgstr "přeskočeno – doklad již existuje"
+msgstr "přeskočeno: doklad již existuje"
 
 #: includes/class-wc-sf-bulk.php
 msgid "skipped – no document to regenerate"
-msgstr "přeskočeno – žádný doklad k opětovnému vygenerování"
+msgstr "přeskočeno: žádný doklad k opětovnému vygenerování"
 
 #: includes/class-wc-sf-bulk.php
 msgid "skipped – paid or completed orders are not regenerated (see the sf_can_regenerate filter)"
-msgstr "přeskočeno – uhrazené nebo vyřízené objednávky se znovu negenerují (viz filtr sf_can_regenerate)"
+msgstr "přeskočeno: uhrazené nebo vyřízené objednávky se znovu negenerují (viz filtr sf_can_regenerate)"
 
 #: includes/class-wc-sf-bulk.php
 msgid "skipped – cancelled, refunded or failed orders"
-msgstr "přeskočeno – zrušené, refundované nebo neúspěšné objednávky"
+msgstr "přeskočeno: zrušené, refundované nebo neúspěšné objednávky"
 
 #: includes/class-wc-sf-bulk.php
 msgid "failed"
@@ -3065,3 +3063,129 @@ msgstr "Číselníky, loga a bankovní účty se nepodařilo načíst ze SuperFa
 #, php-format
 msgid "%1$s (Countries, %2$s)"
 msgstr "%1$s (Země, %2$s)"
+
+#. Translators: %s Invoice number.
+#: includes/class-wc-sf-invoice.php
+#, php-format
+msgid "Invoice %s, which SuperFaktura issued from the paid proforma invoice, was attached to the order instead of creating a new one."
+msgstr "Plugin připojil k objednávce fakturu %s, kterou SuperFaktura vystavila z uhrazené zálohové faktury. Novou fakturu nevytvořil."
+
+#: includes/class-wc-sf-settings.php
+msgid "The Secret Key cannot be empty, so the current key was kept."
+msgstr "Secret Key nemůže být prázdný, proto zůstal původní klíč."
+
+#: includes/class-wc-sf-settings.php
+msgid "All request types"
+msgstr "Všechny typy požadavků"
+
+#: includes/class-wc-sf-settings.php
+msgid "Order ID"
+msgstr "ID objednávky"
+
+#: includes/class-wc-sf-settings.php
+msgid "Date"
+msgstr "Datum"
+
+#: includes/class-wc-sf-settings.php
+msgid "Request type"
+msgstr "Typ požadavku"
+
+#: includes/class-wc-sf-settings.php
+msgid "Only errors"
+msgstr "Jen chyby"
+
+#: includes/class-wc-sf-settings.php
+msgid "Filter"
+msgstr "Filtrovat"
+
+#: includes/class-wc-sf-settings.php
+msgid "No entries match the filter."
+msgstr "Filtru neodpovídá žádný záznam."
+
+#. Translators: 1: first entry, 2: last entry, 3: number of entries.
+#: includes/class-wc-sf-settings.php
+#, php-format
+msgid "Entries %1$d to %2$d of %3$d"
+msgstr "Záznamy %1$d až %2$d z %3$d"
+
+#: includes/class-wc-sf-settings.php
+msgid "Newer"
+msgstr "Novější"
+
+#: includes/class-wc-sf-settings.php
+msgid "Older"
+msgstr "Starší"
+
+#: includes/class-wc-sf-bulk.php
+msgid "SuperFaktúra: send invoices via Peppol (eFaktúra)"
+msgstr "SuperFaktura: odeslat faktury přes Peppol (eFaktura)"
+
+#: includes/class-wc-sf-bulk.php
+msgid "sent via Peppol"
+msgstr "odesláno přes Peppol"
+
+#: includes/class-wc-sf-bulk.php
+msgid "skipped: no invoice"
+msgstr "přeskočeno: bez faktury"
+
+#: includes/class-wc-sf-bulk.php
+msgid "skipped: already sent via Peppol"
+msgstr "přeskočeno: již odesláno přes Peppol"
+
+#: includes/class-wc-sf-invoice.php
+msgid "The invoice SuperFaktura issued from the paid proforma invoice could not be attached to the order. Try again later."
+msgstr "Fakturu, kterou SuperFaktura vystavila z uhrazené zálohové faktury, se nepodařilo připojit k objednávce. Zkuste to později."
+
+#: includes/class-wc-superfaktura.php
+msgid "Fill in only if your business is registered for VAT."
+msgstr "Vyplňte, jen pokud je vaše firma registrována k DPH."
+
+#. Translators: %s VAT # field label.
+#: includes/class-wc-sf-checkout-block.php
+#, php-format
+msgid "%s (if the business is registered for VAT)"
+msgstr "%s (pokud je firma registrována k DPH)"
+
+#. Translators: %s Setting name.
+#: includes/class-wc-sf-settings.php
+#, php-format
+msgid "VAT # validation in VIES is off. When a business from another EU country enters a VAT # at checkout, the plugin marks reverse charge on its invoice even if the number is not valid, for example the tax ID of a business that is not registered for VAT. Turn on %s below."
+msgstr "Ověřování DIČ ve VIES je vypnuté. Když firma z jiné země EU zadá v pokladně DIČ, plugin na její faktuře označí přenesení daňové povinnosti, i když číslo není platné. Může to být například DIČ firmy, která není plátcem DPH. Níže zapněte nastavení %s."
+
+#. Translators: %s Button label.
+#: includes/class-wc-sf-settings.php
+#, php-format
+msgid "The Secret Key for automatic pairing is empty, so the shop cannot check that a payment notification came from SuperFaktúra. Click %s below and save the settings. If you entered the Callback URL and Secret Key in the company settings in SuperFaktúra, enter the new key there too. Payments of orders created before the change are still paired for 60 days."
+msgstr "Secret Key pro automatické párování je prázdný, proto e-shop neumí ověřit, že oznámení o úhradě poslala SuperFaktura. Níže klikněte na %s a nastavení uložte. Pokud máte Callback URL a Secret Key zadané v nastavení firmy v SuperFaktuře, zadejte tam i nový klíč. Úhrady objednávek vytvořených před změnou se spárují ještě 60 dní."
+
+#: includes/class-wc-sf-settings.php
+msgid "The Secret Key must have 16 to 64 letters and digits, so the current key was kept."
+msgstr "Secret Key musí mít 16 až 64 písmen a číslic, proto zůstal původní klíč."
+
+#: includes/class-wc-sf-settings.php
+msgid "Clear filter"
+msgstr "Zrušit filtr"
+
+#: includes/class-wc-sf-settings.php
+msgid "The API log is empty."
+msgstr "API log je prázdný."
+
+#: includes/class-wc-sf-settings.php
+msgid "Document type"
+msgstr "Typ dokladu"
+
+#: includes/class-wc-sf-settings.php
+msgid "Response status"
+msgstr "Stav odpovědi"
+
+#: includes/class-wc-sf-settings.php
+msgid "Response message"
+msgstr "Zpráva odpovědi"
+
+#: includes/class-wc-sf-settings.php
+msgid "Time"
+msgstr "Čas"
+
+#: includes/class-wc-sf-bulk.php
+msgid "skipped: the customer is not a company from Slovakia with a tax ID"
+msgstr "přeskočeno: zákazník není slovenská firma s DIČ"

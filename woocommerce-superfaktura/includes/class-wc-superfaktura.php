@@ -29,14 +29,14 @@ class WC_SuperFaktura {
 	 *
 	 * @var string
 	 */
-	public $version = '1.62.0';
+	public $version = '1.63.0';
 
 	/**
 	 * Database version.
 	 *
 	 * @var string
 	 */
-	public $db_version = '1.1';
+	public $db_version = '1.2';
 
 	/**
 	 * Unique identifier for your plugin.
@@ -391,7 +391,9 @@ class WC_SuperFaktura {
             response_status int(11) NULL,
             response_message varchar(1024) NULL,
             time datetime DEFAULT '0000-00-00 00:00:00' NOT NULL,
-            PRIMARY KEY  (id)
+            PRIMARY KEY  (id),
+            KEY time (time),
+            KEY order_id (order_id)
         ) $charset_collate;";
 
 		require_once ABSPATH . 'wp-admin/includes/upgrade.php';
@@ -465,6 +467,7 @@ class WC_SuperFaktura {
 		add_action( 'sf_fetch_related_invoice', array( $this, 'fetch_related_invoice'), 10, 1 );
 		add_action( 'sf_retry_generate_invoice', array( $this, 'retry_generate_invoice'), 10, 3 );
 		add_action( 'wp_ajax_wc_sf_generate_secret_key', array( $this, 'generate_secret_key' ) );
+		add_action( 'update_option_woocommerce_sf_sync_secret_key', array( $this, 'remember_previous_secret_key' ), 10, 2 );
 
         if ( is_admin() ) {
 			$this->admin->init();
@@ -564,43 +567,65 @@ class WC_SuperFaktura {
 		}
 
 		if ( ! isset( $_GET['invoice_id'] ) || ! isset( $_GET['secret_key'] ) ) {
-			$this->wc_sf_log(
-				array(
-					'request_type'     => 'callback_paid',
-					'response_status'  => 908,
-					'response_message' => 'Missing parameters',
-				)
-			);
+			$this->log_rejected_callback( 908, 'Missing parameters' );
 			exit();
 		}
 	
 		$invoice_id      = sanitize_text_field( wp_unslash( $_GET['invoice_id'] ) );
 		$secret_key      = sanitize_text_field( wp_unslash( $_GET['secret_key'] ) );
-		$user_secret_key = get_option( 'woocommerce_sf_sync_secret_key', false );
+		// A missing option is an empty key: SuperFaktura sends the key the plugin gave it, which was empty then.
+		$user_secret_key = (string) get_option( 'woocommerce_sf_sync_secret_key', '' );
 
-		if ( ! is_numeric( $invoice_id ) || ( false !== $user_secret_key && $secret_key !== $user_secret_key ) ) {
-			$this->wc_sf_log(
-				array(
-					'request_type'     => 'callback_paid',
-					'response_status'  => 901,
-					'response_message' => 'Incorrect parameters',
-				)
-			);
+		if ( ! is_numeric( $invoice_id ) ) {
+			$this->log_rejected_callback( 901, 'Incorrect parameters' );
+			exit();
+		}
+
+		// The current key, or a previous one for an order created before the key changed. Orders are looked up for
+		// a previous key only, so a wrong key costs no database query.
+		$key_valid = hash_equals( $user_secret_key, $secret_key );
+		$orders    = null;
+		if ( ! $key_valid && $this->get_previous_secret_keys() ) {
+			$orders    = $this->get_orders_by_meta( array( 'wc_sf_internal_regular_id', 'wc_sf_internal_proforma_id', 'wc_sf_internal_cancel_id' ), $invoice_id );
+			$key_valid = 1 === count( $orders ) && $this->is_previous_secret_key( $secret_key, $orders[0] );
+		}
+		if ( ! $key_valid ) {
+			$this->log_rejected_callback( 901, 'Incorrect parameters' );
 			exit();
 		}
 
 		// Query order by custom field.
-		$orders = $this->get_orders_by_meta( array( 'wc_sf_internal_regular_id', 'wc_sf_internal_proforma_id', 'wc_sf_internal_cancel_id' ), $invoice_id );
+		if ( null === $orders ) {
+			$orders = $this->get_orders_by_meta( array( 'wc_sf_internal_regular_id', 'wc_sf_internal_proforma_id', 'wc_sf_internal_cancel_id' ), $invoice_id );
+		}
+
 		if ( count( $orders ) !== 1 ) {
+			$this->log_rejected_callback( 904, sprintf( 'Order with invoice ID %d not found', $invoice_id ) );
+			exit();
+		}
+
+		// An order that does not wait for the payment costs no API request.
+		$order_status  = $orders[0]->get_status();
+		$sync_statuses = $this->get_sync_order_statuses();
+		if ( ! in_array( $order_status, $sync_statuses, true ) ) {
 			$this->wc_sf_log(
 				array(
+					'order_id'         => $orders[0]->get_id(),
 					'request_type'     => 'callback_paid',
-					'response_status'  => 904,
-					'response_message' => sprintf( 'Order with invoice ID %d not found', $invoice_id ),
+					'response_status'  => 905,
+					'response_message' => sprintf( 'Order status "%s" is not set for automatic pairing', $order_status ),
 				)
 			);
 			exit();
 		}
+
+		// One check in SuperFaktura per invoice and minute, so repeated requests do not use up the API limit.
+		$throttle = 'wc_sf_callback_' . md5( $invoice_id );
+		if ( get_transient( $throttle ) ) {
+			status_header( 429 );
+			exit();
+		}
+		set_transient( $throttle, 1, MINUTE_IN_SECONDS );
 
 		$order    = $orders[0];
 		$api      = $this->sf_api();
@@ -615,6 +640,8 @@ class WC_SuperFaktura {
 					'response_message' => sprintf( 'Invoice ID %d not found', $invoice_id ),
 				)
 			);
+			// SuperFaktura may notify again soon, for example after a failed connection.
+			delete_transient( $throttle );
 			exit();
 		}
 
@@ -643,6 +670,8 @@ class WC_SuperFaktura {
 					'response_message' => sprintf( 'Invoice ID %d not paid', $invoice_id ),
 				)
 			);
+			// The next payment of a partly paid invoice may come within a minute.
+			delete_transient( $throttle );
 			exit();
 		}
 
@@ -655,22 +684,6 @@ class WC_SuperFaktura {
 					'request_type'     => 'callback_paid',
 					'response_status'  => 907,
 					'response_message' => sprintf( 'Invoice ID %d was paid by accreditation', $invoice_id ),
-				)
-			);
-			exit();
-		}
-
-		// Get order status (see https://docs.woocommerce.com/document/managing-orders/).
-		$order_status  = $order->get_status();
-		$sync_statuses = $this->get_sync_order_statuses();
-		if ( ! in_array( $order_status, $sync_statuses, true ) ) {
-			$this->wc_sf_log(
-				array(
-					'order_id'         => $order->get_id(),
-					'document_type'    => $response->{$invoice_id}->Invoice->type,
-					'request_type'     => 'callback_paid',
-					'response_status'  => 905,
-					'response_message' => sprintf( 'Order status "%s" is not set for automatic pairing', $order_status ),
 				)
 			);
 			exit();
@@ -720,6 +733,103 @@ class WC_SuperFaktura {
 		}
 
 		exit();
+	}
+
+
+
+	/**
+	 * How long the previous Secret Key stays valid after it is changed, in seconds.
+	 *
+	 * Documents issued before the change keep the payment notification address with the previous key, so their
+	 * payments are still paired.
+	 */
+	const PREVIOUS_SECRET_KEY_TTL = 60 * DAY_IN_SECONDS;
+
+	/**
+	 * Keep the previous Secret Key valid for a while after it is changed.
+	 *
+	 * @param mixed $old_value Previous key.
+	 * @param mixed $value     New key.
+	 */
+	public function remember_previous_secret_key( $old_value, $value ) {
+		if ( (string) $old_value === (string) $value ) {
+			return;
+		}
+
+		// Every key used in the last 60 days stays valid for orders created before it changed: SuperFaktura may still
+		// notify their payments with it.
+		$keys   = array_filter( $this->get_previous_secret_keys(), function( $previous ) use ( $old_value ) {
+			return $previous['key'] !== (string) $old_value;
+		} );
+		$keys[] = array(
+			'key'     => (string) $old_value,
+			'changed' => time(),
+			'until'   => time() + self::PREVIOUS_SECRET_KEY_TTL,
+		);
+
+		update_option( 'wc_sf_previous_secret_key', array_values( $keys ), false );
+	}
+
+	/**
+	 * Previous Secret Keys that are still valid.
+	 *
+	 * @return array List of arrays with 'key' and 'until'.
+	 */
+	private function get_previous_secret_keys() {
+		$keys = get_option( 'wc_sf_previous_secret_key', array() );
+		$keys = is_array( $keys ) && isset( $keys['key'] ) ? array( $keys ) : ( is_array( $keys ) ? $keys : array() );
+
+		return array_values(
+			array_filter(
+				$keys,
+				function( $previous ) {
+					return is_array( $previous ) && isset( $previous['key'], $previous['until'] ) && time() < (int) $previous['until'];
+				}
+			)
+		);
+	}
+
+	/**
+	 * Whether the secret key of a payment notification is a previous Secret Key, valid for an order created before
+	 * the key changed.
+	 *
+	 * @param string   $secret_key Key from the request.
+	 * @param WC_Order $order      Order of the notified invoice.
+	 * @return bool
+	 */
+	private function is_previous_secret_key( $secret_key, $order ) {
+		$created = $order->get_date_created();
+		$created = $created ? $created->getTimestamp() : 0;
+
+		foreach ( $this->get_previous_secret_keys() as $previous ) {
+			$changed = isset( $previous['changed'] ) ? (int) $previous['changed'] : (int) $previous['until'] - self::PREVIOUS_SECRET_KEY_TTL;
+			if ( $created && $created < $changed && hash_equals( (string) $previous['key'], $secret_key ) ) {
+				return true;
+			}
+		}
+
+		return false;
+	}
+
+	/**
+	 * Log a rejected payment notification, at most once a minute, so repeated requests do not flood the API log.
+	 *
+	 * @param int    $status  Status.
+	 * @param string $message Message.
+	 */
+	private function log_rejected_callback( $status, $message ) {
+		if ( get_transient( 'wc_sf_rejected_callback_logged' ) ) {
+			return;
+		}
+		set_transient( 'wc_sf_rejected_callback_logged', 1, MINUTE_IN_SECONDS );
+
+		$this->wc_sf_log(
+			array(
+				'request_type'     => 'callback_paid',
+				'response_status'  => $status,
+				'response_message' => $message,
+			)
+		);
 	}
 
 
@@ -777,6 +887,20 @@ class WC_SuperFaktura {
 			return false;
 		}
 
+		return $this->attach_regular_invoice( $order, $regular_id, $api );
+	}
+
+
+
+	/**
+	 * Attach an invoice that SuperFaktura issued from the proforma invoice of the order.
+	 *
+	 * @param WC_Order  $order      Order.
+	 * @param int       $regular_id SuperFaktura ID of the invoice.
+	 * @param WC_SF_Api $api        API client for the order.
+	 * @return bool Whether the invoice was attached.
+	 */
+	public function attach_regular_invoice( $order, $regular_id, $api ) {
 		$regular = $api->getInvoiceDetails( $regular_id );
 		if ( ! $regular || ! isset( $regular->{$regular_id} ) ) {
 			return false;
@@ -1396,6 +1520,21 @@ class WC_SuperFaktura {
 
 
 	/**
+	 * Whether the checkout should say that the VAT # field is only for businesses registered for VAT.
+	 *
+	 * Without validation in VIES, any number in the field is taken as a VAT number, for example the tax ID of a
+	 * Czech business that is not registered for VAT (both are called DIČ there), and the invoice of a customer from
+	 * another country gets the reverse charge flag.
+	 *
+	 * @return bool
+	 */
+	public function vat_number_hint_needed() {
+		return 'yes' !== get_option( 'woocommerce_sf_validate_eu_vat_number', 'no' );
+	}
+
+
+
+	/**
 	 * Check if a log message comes from the plugin's own concurrency check (setting Prevent document duplicity).
 	 *
 	 * @param string $message Log message, possibly translated and followed by the file and line.
@@ -1888,6 +2027,9 @@ class WC_SuperFaktura {
 						'required' => false,
 						'class'    => array( 'form-row-wide' ),
 					);
+					if ( $this->vat_number_hint_needed() && 'required' !== get_option( 'woocommerce_sf_add_company_billing_fields_vat', 'optional' ) ) {
+						$new_fields['billing_company_wi_vat']['description'] = __( 'Fill in only if your business is registered for VAT.', 'woocommerce-superfaktura' );
+					}
 				}
 
 				continue;

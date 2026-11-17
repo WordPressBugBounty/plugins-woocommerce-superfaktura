@@ -3135,3 +3135,129 @@ msgstr "Číselníky, logá a bankové účty sa nepodarilo načítať zo SuperF
 #, php-format
 msgid "%1$s (Countries, %2$s)"
 msgstr "%1$s (Krajiny, %2$s)"
+
+#. Translators: %s Invoice number.
+#: includes/class-wc-sf-invoice.php
+#, php-format
+msgid "Invoice %s, which SuperFaktura issued from the paid proforma invoice, was attached to the order instead of creating a new one."
+msgstr "Plugin pripojil k objednávke faktúru %s, ktorú SuperFaktúra vystavila z uhradenej zálohovej faktúry. Novú faktúru nevytvoril."
+
+#: includes/class-wc-sf-settings.php
+msgid "The Secret Key cannot be empty, so the current key was kept."
+msgstr "Secret Key nemôže byť prázdny, preto zostal pôvodný kľúč."
+
+#: includes/class-wc-sf-settings.php
+msgid "All request types"
+msgstr "Všetky typy požiadaviek"
+
+#: includes/class-wc-sf-settings.php
+msgid "Order ID"
+msgstr "ID objednávky"
+
+#: includes/class-wc-sf-settings.php
+msgid "Date"
+msgstr "Dátum"
+
+#: includes/class-wc-sf-settings.php
+msgid "Request type"
+msgstr "Typ požiadavky"
+
+#: includes/class-wc-sf-settings.php
+msgid "Only errors"
+msgstr "Len chyby"
+
+#: includes/class-wc-sf-settings.php
+msgid "Filter"
+msgstr "Filtrovať"
+
+#: includes/class-wc-sf-settings.php
+msgid "No entries match the filter."
+msgstr "Filtru nezodpovedá žiadny záznam."
+
+#. Translators: 1: first entry, 2: last entry, 3: number of entries.
+#: includes/class-wc-sf-settings.php
+#, php-format
+msgid "Entries %1$d to %2$d of %3$d"
+msgstr "Záznamy %1$d až %2$d z %3$d"
+
+#: includes/class-wc-sf-settings.php
+msgid "Newer"
+msgstr "Novšie"
+
+#: includes/class-wc-sf-settings.php
+msgid "Older"
+msgstr "Staršie"
+
+#: includes/class-wc-sf-bulk.php
+msgid "SuperFaktúra: send invoices via Peppol (eFaktúra)"
+msgstr "SuperFaktúra: odoslať faktúry cez Peppol (eFaktúra)"
+
+#: includes/class-wc-sf-bulk.php
+msgid "sent via Peppol"
+msgstr "odoslané cez Peppol"
+
+#: includes/class-wc-sf-bulk.php
+msgid "skipped: no invoice"
+msgstr "preskočené: bez faktúry"
+
+#: includes/class-wc-sf-bulk.php
+msgid "skipped: already sent via Peppol"
+msgstr "preskočené: už odoslané cez Peppol"
+
+#: includes/class-wc-sf-invoice.php
+msgid "The invoice SuperFaktura issued from the paid proforma invoice could not be attached to the order. Try again later."
+msgstr "Faktúru, ktorú SuperFaktúra vystavila z uhradenej zálohovej faktúry, sa nepodarilo pripojiť k objednávke. Skúste to neskôr."
+
+#: includes/class-wc-superfaktura.php
+msgid "Fill in only if your business is registered for VAT."
+msgstr "Vyplňte, len ak je vaša firma registrovaná pre DPH."
+
+#. Translators: %s VAT # field label.
+#: includes/class-wc-sf-checkout-block.php
+#, php-format
+msgid "%s (if the business is registered for VAT)"
+msgstr "%s (ak je firma registrovaná pre DPH)"
+
+#. Translators: %s Setting name.
+#: includes/class-wc-sf-settings.php
+#, php-format
+msgid "VAT # validation in VIES is off. When a business from another EU country enters a VAT # at checkout, the plugin marks reverse charge on its invoice even if the number is not valid, for example the tax ID of a business that is not registered for VAT. Turn on %s below."
+msgstr "Overovanie IČ DPH vo VIES je vypnuté. Keď firma z inej krajiny EÚ zadá v pokladni IČ DPH, plugin na jej faktúre označí prenesenie daňovej povinnosti, aj keď číslo nie je platné. Môže to byť napríklad DIČ českej firmy, ktorá nie je registrovaná pre DPH. Nižšie zapnite nastavenie %s."
+
+#. Translators: %s Button label.
+#: includes/class-wc-sf-settings.php
+#, php-format
+msgid "The Secret Key for automatic pairing is empty, so the shop cannot check that a payment notification came from SuperFaktúra. Click %s below and save the settings. If you entered the Callback URL and Secret Key in the company settings in SuperFaktúra, enter the new key there too. Payments of orders created before the change are still paired for 60 days."
+msgstr "Secret Key pre automatické párovanie je prázdny, preto e-shop nevie overiť, že oznámenie o úhrade poslala SuperFaktúra. Nižšie kliknite na %s a nastavenia uložte. Ak máte Callback URL a Secret Key zadané v nastaveniach firmy v SuperFaktúre, zadajte tam aj nový kľúč. Úhrady objednávok vytvorených pred zmenou sa spárujú ešte 60 dní."
+
+#: includes/class-wc-sf-settings.php
+msgid "The Secret Key must have 16 to 64 letters and digits, so the current key was kept."
+msgstr "Secret Key musí mať 16 až 64 písmen a číslic, preto zostal pôvodný kľúč."
+
+#: includes/class-wc-sf-settings.php
+msgid "Clear filter"
+msgstr "Zrušiť filter"
+
+#: includes/class-wc-sf-settings.php
+msgid "The API log is empty."
+msgstr "API log je prázdny."
+
+#: includes/class-wc-sf-settings.php
+msgid "Document type"
+msgstr "Typ dokladu"
+
+#: includes/class-wc-sf-settings.php
+msgid "Response status"
+msgstr "Stav odpovede"
+
+#: includes/class-wc-sf-settings.php
+msgid "Response message"
+msgstr "Správa odpovede"
+
+#: includes/class-wc-sf-settings.php
+msgid "Time"
+msgstr "Čas"
+
+#: includes/class-wc-sf-bulk.php
+msgid "skipped: the customer is not a company from Slovakia with a tax ID"
+msgstr "preskočené: zákazník nie je slovenská firma s DIČ"

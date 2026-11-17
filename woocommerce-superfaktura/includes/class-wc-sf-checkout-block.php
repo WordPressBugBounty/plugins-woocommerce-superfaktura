@@ -255,6 +255,9 @@ class WC_SF_Checkout_Block {
 			);
 			if ( $vat_required ) {
 				$vat_args['optionalLabel'] = $label_vat;
+			} elseif ( $this->wc_sf->vat_number_hint_needed() ) {
+				// Translators: %s VAT # field label.
+				$vat_args['optionalLabel'] = sprintf( __( '%s (if the business is registered for VAT)', 'woocommerce-superfaktura' ), $label_vat );
 			}
 			woocommerce_register_additional_checkout_field( $vat_args );
 		}

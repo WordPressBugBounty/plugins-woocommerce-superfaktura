@@ -20,6 +20,7 @@ class WC_SF_Bulk {
 	const ACTION_REGULAR  = 'wc_sf_bulk_regular';
 	const ACTION_PROFORMA = 'wc_sf_bulk_proforma';
 	const ACTION_REGEN    = 'wc_sf_bulk_regen';
+	const ACTION_PEPPOL   = 'wc_sf_bulk_peppol';
 
 	/**
 	 * Soft cap on orders per batch.
@@ -160,6 +161,9 @@ class WC_SF_Bulk {
 			$actions[ self::ACTION_PROFORMA ] = __( 'SuperFaktúra: create proforma invoices', 'woocommerce-superfaktura' );
 		}
 		$actions[ self::ACTION_REGEN ] = __( 'SuperFaktúra: regenerate existing documents', 'woocommerce-superfaktura' );
+		if ( $this->wc_sf->peppol->enabled() ) {
+			$actions[ self::ACTION_PEPPOL ] = __( 'SuperFaktúra: send invoices via Peppol (eFaktúra)', 'woocommerce-superfaktura' );
+		}
 
 		return $actions;
 	}
@@ -177,6 +181,7 @@ class WC_SF_Bulk {
 			self::ACTION_REGULAR  => 'regular',
 			self::ACTION_PROFORMA => 'proforma',
 			self::ACTION_REGEN    => 'regen',
+			self::ACTION_PEPPOL   => 'peppol',
 		);
 
 		if ( ! isset( $types[ $action ] ) ) {
@@ -218,6 +223,10 @@ class WC_SF_Bulk {
 				'skipped_no_document' => 0,
 				'skipped_not_allowed' => 0,
 				'skipped_status'      => 0,
+				'sent'                => 0,
+				'skipped_no_invoice'  => 0,
+				'skipped_not_peppol'  => 0,
+				'skipped_sent'        => 0,
 				'failed'              => 0,
 			),
 			'failed_orders'        => array(),
@@ -255,7 +264,7 @@ class WC_SF_Bulk {
 			array(
 				'ajax_url'   => admin_url( 'admin-ajax.php' ),
 				'nonce'      => wp_create_nonce( 'wc_sf_bulk' ),
-				'actions'    => array( self::ACTION_REGULAR, self::ACTION_PROFORMA, self::ACTION_REGEN ),
+				'actions'    => array( self::ACTION_REGULAR, self::ACTION_PROFORMA, self::ACTION_REGEN, self::ACTION_PEPPOL ),
 				'max_orders' => self::MAX_ORDERS,
 				'batch'      => $batch ? $this->batch_summary( $batch ) : null,
 				'i18n'       => array(
@@ -282,6 +291,10 @@ class WC_SF_Bulk {
 					'skipped_no_document' => __( 'skipped – no document to regenerate', 'woocommerce-superfaktura' ),
 					'skipped_not_allowed' => __( 'skipped – paid or completed orders are not regenerated (see the sf_can_regenerate filter)', 'woocommerce-superfaktura' ),
 					'skipped_status'      => __( 'skipped – cancelled, refunded or failed orders', 'woocommerce-superfaktura' ),
+					'sent'                => __( 'sent via Peppol', 'woocommerce-superfaktura' ),
+					'skipped_no_invoice'  => __( 'skipped: no invoice', 'woocommerce-superfaktura' ),
+					'skipped_not_peppol'  => __( 'skipped: the customer is not a company from Slovakia with a tax ID', 'woocommerce-superfaktura' ),
+					'skipped_sent'        => __( 'skipped: already sent via Peppol', 'woocommerce-superfaktura' ),
 					'failed'              => __( 'failed', 'woocommerce-superfaktura' ),
 					'failed_orders'       => __( 'Failed orders:', 'woocommerce-superfaktura' ),
 					// Translators: %s API log URL.
@@ -500,6 +513,10 @@ class WC_SF_Bulk {
 			return array( 'result' => 'skipped_status', 'order_number' => $order_number );
 		}
 
+		if ( 'peppol' === $type ) {
+			return array( 'result' => $this->send_via_peppol( $order ), 'order_number' => $order_number );
+		}
+
 		if ( '' !== (string) $order->get_meta( 'wc_sf_internal_' . $type . '_id', true ) ) {
 			return array( 'result' => 'skipped_exists', 'order_number' => $order_number );
 		}
@@ -511,6 +528,33 @@ class WC_SF_Bulk {
 		}
 
 		return array( 'result' => $result ? 'created' : 'failed', 'order_number' => $order_number );
+	}
+
+	/**
+	 * Send the invoice of an order via Peppol, mirroring the meta box "Send via Peppol" link. Credit notes of the
+	 * invoice follow it.
+	 *
+	 * @param WC_Order $order Order.
+	 * @return string Counter key.
+	 */
+	private function send_via_peppol( $order ) {
+		$peppol     = $this->wc_sf->peppol;
+		$invoice_id = (int) $order->get_meta( 'wc_sf_internal_regular_id', true );
+
+		if ( ! $invoice_id ) {
+			return 'skipped_no_invoice';
+		}
+
+		if ( ! $peppol->enabled() || ! $peppol->should_send( $order, 'regular' ) ) {
+			return 'skipped_not_peppol';
+		}
+
+		$state = $peppol->get_state( $order, $invoice_id );
+		if ( $peppol->is_locked( $order, $invoice_id ) && 'retry' !== ( $state['status'] ?? '' ) ) {
+			return 'skipped_sent';
+		}
+
+		return true === $peppol->send_document( $order, $invoice_id ) ? 'sent' : 'failed';
 	}
 
 	/**
@@ -642,6 +686,18 @@ class WC_SF_Bulk {
 			}
 
 			$has_proforma = ( '' !== (string) $order->get_meta( 'wc_sf_internal_proforma_id', true ) );
+
+			if ( 'peppol' === $type ) {
+				// Orders the step skips without calling the API cost nothing. A sent invoice costs its credit notes
+				// and a status check when SuperFaktura reports it was sent already.
+				$invoice_id = (int) $order->get_meta( 'wc_sf_internal_regular_id', true );
+				$peppol     = $this->wc_sf->peppol;
+				$state      = $invoice_id ? $peppol->get_state( $order, $invoice_id ) : null;
+				if ( $invoice_id && ! in_array( $order->get_status(), $this->skipped_statuses, true ) && $peppol->should_send( $order, 'regular' ) && ( ! $peppol->is_locked( $order, $invoice_id ) || 'retry' === ( $state['status'] ?? '' ) ) ) {
+					$requests += 2 + count( WC_SF_Invoice::get_refund_credit_notes( $order ) ) + ( '' !== (string) $order->get_meta( 'wc_sf_internal_cancel_id', true ) ? 1 : 0 );
+				}
+				continue;
+			}
 
 			if ( 'regen' !== $type ) {
 				if ( in_array( $order->get_status(), $this->skipped_statuses, true ) || '' !== (string) $order->get_meta( 'wc_sf_internal_' . $type . '_id', true ) ) {

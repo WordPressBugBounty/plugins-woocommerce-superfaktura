@@ -561,9 +561,17 @@ class WC_SF_Api {
      *
      * @link https://github.com/superfaktura/docs/blob/master/invoice.md#send-invoice-via-peppol
      */
-    public function sendPeppol($invoice_id)
+    public function sendPeppol($invoice_id, $webhook_url = '', $webhook_secret = '')
     {
-        return $this->post('/invoices/sendPeppol', array('invoice_id' => (int) $invoice_id), false);
+        $data = array('invoice_id' => (int) $invoice_id);
+
+        // SuperFaktura notifies this URL when the outcome of the sending is known.
+        if ('' !== $webhook_url && '' !== $webhook_secret) {
+            $data['webhook_url']    = $webhook_url;
+            $data['webhook_secret'] = $webhook_secret;
+        }
+
+        return $this->post('/invoices/sendPeppol', $data, false);
     }
 
     /**
