@@ -705,6 +705,7 @@ class WC_SF_Bulk {
 				}
 
 				$requests += self::REQUESTS_PER_CREATE + $tag_requests + ( ( 'regular' === $type && $has_proforma ) ? 1 : 0 );
+				$requests += 'regular' === $type ? $this->estimate_peppol_send( $order ) : 0;
 				continue;
 			}
 
@@ -715,6 +716,7 @@ class WC_SF_Bulk {
 			foreach ( $this->wc_sf->regenerated_document_types( $order ) as $doc_type ) {
 				if ( '' !== (string) $order->get_meta( 'wc_sf_internal_' . $doc_type . '_id', true ) ) {
 					$requests += $this->estimate_regen_document( $order, $doc_type );
+					$requests += 'regular' === $doc_type ? $this->estimate_peppol_send( $order ) : 0;
 				}
 			}
 		}
@@ -725,6 +727,23 @@ class WC_SF_Bulk {
 		}
 
 		return $requests;
+	}
+
+	/**
+	 * The request that sends a new or regenerated invoice via Peppol (eFaktúra), when it goes at once.
+	 *
+	 * @param WC_Order $order Order.
+	 * @return int 1 or 0.
+	 */
+	private function estimate_peppol_send( $order ) {
+		$peppol     = $this->wc_sf->peppol;
+		$invoice_id = (int) $order->get_meta( 'wc_sf_internal_regular_id', true );
+
+		if ( ! $peppol->enabled() || ! $peppol->sends_new_invoice( $order ) || ! $peppol->should_send( $order, 'regular' ) ) {
+			return 0;
+		}
+
+		return $invoice_id && null !== $peppol->get_state( $order, $invoice_id ) ? 0 : 1;
 	}
 
 	/**

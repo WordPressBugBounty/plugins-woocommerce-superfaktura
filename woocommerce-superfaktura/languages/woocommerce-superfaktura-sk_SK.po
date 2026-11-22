@@ -2860,16 +2860,8 @@ msgid "Send invoices and credit notes to companies from Slovakia via Peppol"
 msgstr "Posielať faktúry a dobropisy firmám zo Slovenska cez Peppol"
 
 #: includes/class-wc-sf-settings.php
-msgid "Order status"
-msgstr "Stav objednávky"
-
-#: includes/class-wc-sf-settings.php
-msgid "The invoice is sent when the order reaches this status, so it must exist by then. A sent invoice is never changed, not even by regeneration. It is corrected by a credit note. Credit notes are sent when they are created, an invoice not sent yet goes first."
-msgstr ""
-"Faktúra odíde, keď objednávka prejde do tohto stavu, preto vtedy už musí "
-"existovať. Odoslanú faktúru plugin už nezmení ani pri pregenerovaní. "
-"Opravíte ju dobropisom. Dobropis odíde hneď po vytvorení. Ak faktúra ešte "
-"neodišla, odíde pred ním."
+msgid "With \"When the invoice is created\", the invoice is sent as soon as the plugin creates it, you create it manually or you regenerate it. An invoice created in a cancelled, refunded or failed order is not sent at once. With this choice, an invoice not sent yet is also sent when the order is completed. With an order status, the invoice is sent when the order reaches that status, so it must be created by then. A sent invoice is never changed, not even by regeneration. It is corrected by a credit note. Credit notes are sent when they are created, an invoice not sent yet goes first."
+msgstr "Pri voľbe „Po vytvorení faktúry“ odíde faktúra hneď, keď ju plugin vytvorí, vytvoríte ju ručne alebo ju pregenerujete. Faktúra vytvorená v zrušenej, refundovanej alebo neúspešnej objednávke hneď neodíde. Pri tejto voľbe odíde aj faktúra, ktorá ešte neodišla, keď objednávka prejde do stavu Vybavená. Pri voľbe stavu odíde faktúra, keď objednávka prejde do tohto stavu, preto musí vzniknúť najneskôr pri ňom. Odoslanú faktúru plugin už nezmení ani pri pregenerovaní. Opravíte ju dobropisom. Dobropis odíde hneď po vytvorení. Ak faktúra ešte neodišla, odíde pred ním."
 
 #: includes/class-wc-sf-settings.php
 msgid "PDF in e-mails"
@@ -3058,17 +3050,14 @@ msgstr "Zapnite, ak ste platiteľ DPH, predávate firmám na Slovensku a eFaktú
 msgid "Works only with company details at checkout."
 msgstr "Funguje len s údajmi firmy v pokladni."
 
+#: includes/class-wc-sf-settings.php
 #: includes/class-wc-sf-setup-wizard.php
-msgid "eFaktúra at order status"
-msgstr "eFaktúra pri stave objednávky"
+msgid "When to send eFaktúra"
+msgstr "Kedy odoslať eFaktúru"
 
 #: includes/class-wc-sf-setup-wizard.php
-msgid "Send the invoice at order status"
-msgstr "Odoslať faktúru pri stave objednávky"
-
-#: includes/class-wc-sf-setup-wizard.php
-msgid "The invoice must exist at this status. A sent invoice is corrected by a credit note only."
-msgstr "Faktúra musí v tomto stave už existovať. Odoslaná faktúra sa opravuje len dobropisom."
+msgid "If you choose an order status, the invoice must be created by then. A sent invoice is corrected by a credit note only."
+msgstr "Ak vyberiete stav objednávky, faktúra musí vzniknúť najneskôr pri ňom. Odoslaná faktúra sa opravuje len dobropisom."
 
 #: includes/class-wc-sf-setup-wizard.php
 msgid "PDF also with eFaktúra"
@@ -3261,3 +3250,13 @@ msgstr "Čas"
 #: includes/class-wc-sf-bulk.php
 msgid "skipped: the customer is not a company from Slovakia with a tax ID"
 msgstr "preskočené: zákazník nie je slovenská firma s DIČ"
+
+#: includes/class-wc-sf-peppol.php
+msgid "When the invoice is created"
+msgstr "Po vytvorení faktúry"
+
+#. translators: %s: order status name, e.g. Completed
+#: includes/class-wc-sf-peppol.php
+#, php-format
+msgid "At order status %s"
+msgstr "Pri stave objednávky %s"

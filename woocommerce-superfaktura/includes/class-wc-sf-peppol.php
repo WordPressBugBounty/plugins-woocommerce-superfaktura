@@ -12,8 +12,9 @@ if ( ! defined( 'ABSPATH' ) ) {
 /**
  * WC_SF_Peppol class.
  *
- * Sends the invoice of an order for a Slovak company with DIČ via Peppol when the order reaches the chosen status,
- * then its credit notes, and follows the sending status. A document sent via Peppol is never edited again.
+ * Sends the invoice of an order for a Slovak company with DIČ via Peppol when the order reaches the chosen status, or
+ * as soon as the invoice is created, then its credit notes, and follows the sending status. A document sent via
+ * Peppol is never edited again.
  */
 class WC_SF_Peppol {
 
@@ -49,6 +50,25 @@ class WC_SF_Peppol {
 	const LOG_STATUS_FAILED = 920;
 
 	/**
+	 * Value of the "When to send eFaktúra" setting that sends the invoice as soon as it is created, instead of at an order
+	 * status.
+	 * Stored in the same option as the order status, so a custom order status with this slug could not be chosen.
+	 */
+	const SEND_ON_CREATE = 'invoice_created';
+
+	/**
+	 * Order statuses the invoice is never sent at automatically: they are not offered in the settings, and an invoice
+	 * created in such an order does not go when it is sent on creation.
+	 */
+	const SKIPPED_STATUSES = array( 'cancelled', 'refunded', 'failed' );
+
+	/**
+	 * Order status at which an invoice not sent yet still goes when it is sent on creation, e.g. an invoice that waited
+	 * for the order status before the setting changed.
+	 */
+	const ON_CREATE_FALLBACK_STATUS = 'completed';
+
+	/**
 	 * Instance of WC_SuperFaktura.
 	 *
 	 * @var WC_SuperFaktura
@@ -78,7 +98,8 @@ class WC_SF_Peppol {
 		}
 
 		// Priority 6: after the invoice created at the same status (priority 5), before the order e-mail (priority 10).
-		add_action( 'woocommerce_order_status_' . $this->get_send_status(), array( $this, 'order_status_reached' ), 6 );
+		$status = $this->sends_on_create() ? self::ON_CREATE_FALLBACK_STATUS : $this->get_send_status();
+		add_action( 'woocommerce_order_status_' . $status, array( $this, 'order_status_reached' ), 6 );
 		add_action( 'sf_after_invoice_create', array( $this, 'document_created' ), 10, 3 );
 	}
 
@@ -92,14 +113,66 @@ class WC_SF_Peppol {
 	}
 
 	/**
-	 * Order status at which the invoice is sent via Peppol.
+	 * When the invoice is sent via Peppol: the order status, or SEND_ON_CREATE.
 	 *
-	 * @return string Status without the wc- prefix.
+	 * @return string Status without the wc- prefix, or SEND_ON_CREATE.
 	 */
 	public function get_send_status() {
 		$status = (string) get_option( 'woocommerce_sf_peppol_status', 'completed' );
 
 		return '' !== $status ? $status : 'completed';
+	}
+
+	/**
+	 * Whether the invoice is sent as soon as it is created instead of at an order status.
+	 *
+	 * @return bool
+	 */
+	public function sends_on_create() {
+		return self::SEND_ON_CREATE === $this->get_send_status();
+	}
+
+	/**
+	 * Choices of the "When to send eFaktúra" setting: as soon as the invoice is created, or at an order status.
+	 *
+	 * A saved value the list does not offer, e.g. the status of a plugin that was turned off, stays among the choices,
+	 * so saving never changes it.
+	 *
+	 * @param array  $statuses Order statuses (slug without the wc- prefix => name) the invoice can be sent at.
+	 * @param string $current  Saved value.
+	 * @return array Value => label.
+	 */
+	public static function send_options( $statuses, $current = '' ) {
+		$current  = (string) $current;
+		$names    = $statuses;
+		$statuses = array_diff_key( $statuses, array_flip( self::SKIPPED_STATUSES ) );
+		if ( '' !== $current && self::SEND_ON_CREATE !== $current && ! isset( $statuses[ $current ] ) ) {
+			$statuses[ $current ] = isset( $names[ $current ] ) ? $names[ $current ] : $current;
+		}
+
+		$options = array( self::SEND_ON_CREATE => __( 'When the invoice is created', 'woocommerce-superfaktura' ) );
+		foreach ( $statuses as $status => $name ) {
+			/* translators: %s: order status name, e.g. Completed */
+			$options[ $status ] = sprintf( __( 'At order status %s', 'woocommerce-superfaktura' ), $name );
+		}
+
+		return $options;
+	}
+
+	/**
+	 * Whether a new invoice of the order goes via Peppol now: when sending on creation, unless the order is cancelled,
+	 * refunded or failed, otherwise when the order already has the chosen status. Whether the customer gets
+	 * eFaktúra at all is decided by should_send().
+	 *
+	 * @param WC_Order $order Order.
+	 * @return bool
+	 */
+	public function sends_new_invoice( $order ) {
+		if ( $this->sends_on_create() ) {
+			return ! in_array( $order->get_status(), self::SKIPPED_STATUSES, true );
+		}
+
+		return $order->get_status() === $this->get_send_status();
 	}
 
 	/**
@@ -421,7 +494,8 @@ class WC_SF_Peppol {
 	}
 
 	/**
-	 * Send the order's invoice and its credit notes when the order reaches the chosen status.
+	 * Send the order's invoice and its credit notes when the order reaches the chosen status. When the invoice is sent
+	 * on creation, an invoice not sent yet goes when the order is completed.
 	 *
 	 * @param int $order_id Order ID.
 	 */
@@ -435,8 +509,8 @@ class WC_SF_Peppol {
 	}
 
 	/**
-	 * Send a document created via the API: the invoice when the order already has the chosen status, a credit note
-	 * when its invoice was sent via Peppol.
+	 * Send a document created via the API: the invoice when it is sent on creation or the order already has the chosen
+	 * status, a credit note when its invoice was sent via Peppol.
 	 *
 	 * @param object   $response API response.
 	 * @param WC_Order $order    Order.
@@ -444,7 +518,7 @@ class WC_SF_Peppol {
 	 */
 	public function document_created( $response, $order, $type ) {
 		if ( 'regular' === $type ) {
-			if ( $order->get_status() === $this->get_send_status() ) {
+			if ( $this->sends_new_invoice( $order ) ) {
 				$this->send_order_documents( $order );
 			}
 			return;
@@ -467,7 +541,7 @@ class WC_SF_Peppol {
 			return;
 		}
 
-		if ( 'regular' === $type && $order->get_status() === $this->get_send_status() ) {
+		if ( 'regular' === $type && $this->sends_new_invoice( $order ) ) {
 			$this->send_order_documents( $order );
 		} elseif ( 'cancel' === $type ) {
 			$this->send_credit_note( $order, (int) $order->get_meta( 'wc_sf_internal_cancel_id', true ) );

@@ -233,6 +233,15 @@ class WC_SF_Setup_Wizard {
 	}
 
 	/**
+	 * Choices for when the invoice goes via Peppol: as soon as it is created, or at an order status.
+	 *
+	 * @return array Value => label.
+	 */
+	private function get_peppol_send_options() {
+		return WC_SF_Peppol::send_options( $this->get_order_statuses(), get_option( 'woocommerce_sf_peppol_status', 'completed' ) );
+	}
+
+	/**
 	 * Name of an order status.
 	 *
 	 * @param string $status Status without the "wc-" prefix.
@@ -1362,10 +1371,10 @@ class WC_SF_Setup_Wizard {
 					<?php
 					$this->render_check( 'peppol', $peppol[0], $peppol[1], __( 'Send invoices and credit notes to companies from Slovakia via Peppol', 'woocommerce-superfaktura' ), __( 'Enable if you are a VAT payer, sell to companies in Slovakia and have eFaktúra activated in SuperFaktúra. Other customers get documents as before.', 'woocommerce-superfaktura' ), 'applies', 'company_fields', __( 'Works only with company details at checkout.', 'woocommerce-superfaktura' ) );
 					?>
-					<div class="wc-sf-field" data-sum="<?php esc_attr_e( 'eFaktúra at order status', 'woocommerce-superfaktura' ); ?>" data-peppol-only>
-						<label for="wc-sf-peppol-status"><?php esc_html_e( 'Send the invoice at order status', 'woocommerce-superfaktura' ); ?></label>
-						<select id="wc-sf-peppol-status" name="peppol_status" data-initial="<?php echo esc_attr( $peppol_status ); ?>"><?php echo $this->options( $this->get_document_statuses(), $peppol_status ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></select>
-						<span class="wc-sf-hint"><?php esc_html_e( 'The invoice must exist at this status. A sent invoice is corrected by a credit note only.', 'woocommerce-superfaktura' ); ?></span>
+					<div class="wc-sf-field" data-sum="<?php esc_attr_e( 'When to send eFaktúra', 'woocommerce-superfaktura' ); ?>" data-peppol-only>
+						<label for="wc-sf-peppol-status"><?php esc_html_e( 'When to send eFaktúra', 'woocommerce-superfaktura' ); ?></label>
+						<select id="wc-sf-peppol-status" name="peppol_status" data-initial="<?php echo esc_attr( $peppol_status ); ?>"><?php echo $this->options( $this->get_peppol_send_options(), $peppol_status ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></select>
+						<span class="wc-sf-hint"><?php esc_html_e( 'If you choose an order status, the invoice must be created by then. A sent invoice is corrected by a credit note only.', 'woocommerce-superfaktura' ); ?></span>
 					</div>
 					<div data-peppol-only>
 						<?php $this->render_check( 'peppol_email_pdf', $peppol_pdf[0], $peppol_pdf[1], __( 'PDF also with eFaktúra', 'woocommerce-superfaktura' ), __( 'The PDF of documents sent via Peppol stays in the order e-mails. The customer might book the document twice.', 'woocommerce-superfaktura' ), '' ); ?>
@@ -1781,7 +1790,7 @@ class WC_SF_Setup_Wizard {
 		$options['woocommerce_sf_peppol'] = 'sk' === $credentials['woocommerce_sf_lang'] && 'yes' === $this->posted( 'peppol' ) ? 'yes' : 'no';
 		if ( 'yes' === $options['woocommerce_sf_peppol'] ) {
 			$peppol_status = $this->posted( 'peppol_status' );
-			if ( isset( $this->get_document_statuses()[ $peppol_status ] ) ) {
+			if ( isset( $this->get_peppol_send_options()[ $peppol_status ] ) ) {
 				$options['woocommerce_sf_peppol_status'] = $peppol_status;
 			}
 			$options['woocommerce_sf_peppol_email_pdf'] = 'yes' === $this->posted( 'peppol_email_pdf' ) ? 'yes' : 'no';

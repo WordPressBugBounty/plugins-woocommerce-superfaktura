@@ -2746,11 +2746,7 @@ msgid "Send invoices and credit notes to companies from Slovakia via Peppol"
 msgstr ""
 
 #: includes/class-wc-sf-settings.php
-msgid "Order status"
-msgstr ""
-
-#: includes/class-wc-sf-settings.php
-msgid "The invoice is sent when the order reaches this status, so it must exist by then. A sent invoice is never changed, not even by regeneration. It is corrected by a credit note. Credit notes are sent when they are created, an invoice not sent yet goes first."
+msgid "With \"When the invoice is created\", the invoice is sent as soon as the plugin creates it, you create it manually or you regenerate it. An invoice created in a cancelled, refunded or failed order is not sent at once. With this choice, an invoice not sent yet is also sent when the order is completed. With an order status, the invoice is sent when the order reaches that status, so it must be created by then. A sent invoice is never changed, not even by regeneration. It is corrected by a credit note. Credit notes are sent when they are created, an invoice not sent yet goes first."
 msgstr ""
 
 #: includes/class-wc-sf-settings.php
@@ -2932,16 +2928,13 @@ msgstr ""
 msgid "Works only with company details at checkout."
 msgstr ""
 
+#: includes/class-wc-sf-settings.php
 #: includes/class-wc-sf-setup-wizard.php
-msgid "eFaktúra at order status"
+msgid "When to send eFaktúra"
 msgstr ""
 
 #: includes/class-wc-sf-setup-wizard.php
-msgid "Send the invoice at order status"
-msgstr ""
-
-#: includes/class-wc-sf-setup-wizard.php
-msgid "The invoice must exist at this status. A sent invoice is corrected by a credit note only."
+msgid "If you choose an order status, the invoice must be created by then. A sent invoice is corrected by a credit note only."
 msgstr ""
 
 #: includes/class-wc-sf-setup-wizard.php
@@ -3132,4 +3125,14 @@ msgstr ""
 
 #: includes/class-wc-sf-bulk.php
 msgid "skipped: the customer is not a company from Slovakia with a tax ID"
+msgstr ""
+
+#: includes/class-wc-sf-peppol.php
+msgid "When the invoice is created"
+msgstr ""
+
+#. translators: %s: order status name, e.g. Completed
+#: includes/class-wc-sf-peppol.php
+#, php-format
+msgid "At order status %s"
 msgstr ""
