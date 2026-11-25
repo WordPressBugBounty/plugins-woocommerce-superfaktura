@@ -4,7 +4,7 @@ Tags: superfaktura, invoice, faktura, proforma, woocommerce
 Requires at least: 4.4
 Tested up to: 7.1
 Requires PHP: 7.4
-Stable tag: 1.64.0
+Stable tag: 1.64.1
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -108,8 +108,13 @@ You can read more about SuperFaktura API integration at [superfaktura.sk/api](ht
 
 == Changelog ==
 
+= 1.64.1 (2026-11-25) =
+* Oprava: Pregenerovaný dobropis odíde cez Peppol s aktuálnymi údajmi z objednávky.
+* Oprava: Hromadné pregenerovanie počíta pri kontrole denného limitu API aj s odoslaním dobropisov cez Peppol.
+* Zmena: Plugin je overený s WooCommerce 11.3.
+
 = 1.64.0 (2026-11-22) =
-* Nové: eFaktúra môže odísť hneď po vytvorení faktúry. V časti eFaktúra v poli Kedy odoslať eFaktúru vyberte Po vytvorení faktúry. Faktúra potom odíde hneď, keď ju plugin vytvorí automaticky alebo ju vytvoríte ručne v objednávke. Faktúra vytvorená v zrušenej, refundovanej alebo neúspešnej objednávke hneď neodíde. Pri tejto voľbe odíde aj faktúra, ktorá ešte neodišla, keď objednávka prejde do stavu Vybavená.
+* Nové: eFaktúra môže odísť hneď po vytvorení faktúry. V časti eFaktúra v poli Kedy odoslať eFaktúru vyberte Po vytvorení faktúry. Faktúra potom odíde hneď, keď ju plugin vytvorí automaticky alebo ju vytvoríte ručne v objednávke. Faktúra vytvorená v zrušenej, refundovanej alebo neúspešnej objednávke hneď neodíde. Faktúry, ktoré vznikli pred prepnutím na túto voľbu a ešte neodišli, odídu, keď objednávka prejde do stavu Vybavená.
 * Zmena: Pole Stav objednávky v časti eFaktúra sa volá Kedy odoslať eFaktúru.
 
 = 1.63.0 (2026-11-17) =

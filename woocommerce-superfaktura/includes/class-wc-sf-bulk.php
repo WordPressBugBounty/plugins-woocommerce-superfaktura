@@ -582,25 +582,36 @@ class WC_SF_Bulk {
 		$tag_requests = ( '' !== (string) get_option( 'woocommerce_sf_invoice_tag' ) ) ? 2 : 0;
 		$has_proforma = ( '' !== (string) $order->get_meta( 'wc_sf_internal_proforma_id', true ) );
 
-		foreach ( $types as $type ) {
-			// An earlier document of this order may have cost more than estimated (more items on
-			// SuperFaktúra than on the order), so re-check the current quota before every document.
-			if ( ! $this->has_api_quota_for( $this->estimate_regen_document( $order, $type ) + ( $tag_requests ? 1 : 0 ) ) ) {
-				return 'quota';
-			}
+		// Sending via Peppol waits until all documents are regenerated, so every check keeps room for it.
+		$peppol_requests = $this->estimate_regen_peppol( $order, $types );
 
-			// What check_quota_before_item_deletion() must budget beyond the deletions and the edit.
-			$this->regen_extra_requests = $tag_requests + ( ( 'regular' === $type && $has_proforma ) ? 1 : 0 );
-			$this->quota_short          = false;
+		$complete = false;
+		$this->wc_sf->peppol->hold( $order );
+		try {
+			foreach ( $types as $type ) {
+				// An earlier document of this order may have cost more than estimated (more items on
+				// SuperFaktúra than on the order), so re-check the current quota before every document.
+				if ( ! $this->has_api_quota_for( $this->estimate_regen_document( $order, $type ) + ( $tag_requests ? 1 : 0 ) + $peppol_requests ) ) {
+					return 'quota';
+				}
 
-			$result = $this->wc_sf->invoice_generator->generate_invoice( $order, $type );
+				// What check_quota_before_item_deletion() must budget beyond the deletions and the edit.
+				$this->regen_extra_requests = $tag_requests + ( ( 'regular' === $type && $has_proforma ) ? 1 : 0 ) + $peppol_requests;
+				$this->quota_short          = false;
 
-			if ( is_wp_error( $result ) && 'regeneration_refused' === $result->get_error_code() && $this->quota_short ) {
-				return 'quota';
+				$result = $this->wc_sf->invoice_generator->generate_invoice( $order, $type );
+
+				if ( is_wp_error( $result ) && 'regeneration_refused' === $result->get_error_code() && $this->quota_short ) {
+					return 'quota';
+				}
+				if ( ! $result || is_wp_error( $result ) ) {
+					return 'failed';
+				}
 			}
-			if ( ! $result || is_wp_error( $result ) ) {
-				return 'failed';
-			}
+			$complete = true;
+		} finally {
+			// When the regeneration stopped, nothing is sent. After a quota pause the batch tries the order again.
+			$this->wc_sf->peppol->release( $order, $complete );
 		}
 
 		return 'regenerated';
@@ -713,12 +724,14 @@ class WC_SF_Bulk {
 				continue;
 			}
 
+			$doc_types = array();
 			foreach ( $this->wc_sf->regenerated_document_types( $order ) as $doc_type ) {
 				if ( '' !== (string) $order->get_meta( 'wc_sf_internal_' . $doc_type . '_id', true ) ) {
-					$requests += $this->estimate_regen_document( $order, $doc_type );
-					$requests += 'regular' === $doc_type ? $this->estimate_peppol_send( $order ) : 0;
+					$requests   += $this->estimate_regen_document( $order, $doc_type );
+					$doc_types[] = $doc_type;
 				}
 			}
+			$requests += $this->estimate_regen_peppol( $order, $doc_types );
 		}
 
 		// A configured tag that does not exist yet is created by the first document.
@@ -730,10 +743,11 @@ class WC_SF_Bulk {
 	}
 
 	/**
-	 * The request that sends a new or regenerated invoice via Peppol (eFaktúra), when it goes at once.
+	 * The requests that send a new or regenerated invoice via Peppol (eFaktúra) when it goes at once: the invoice and
+	 * the credit notes not sent yet, which follow it.
 	 *
 	 * @param WC_Order $order Order.
-	 * @return int 1 or 0.
+	 * @return int
 	 */
 	private function estimate_peppol_send( $order ) {
 		$peppol     = $this->wc_sf->peppol;
@@ -743,7 +757,50 @@ class WC_SF_Bulk {
 			return 0;
 		}
 
-		return $invoice_id && null !== $peppol->get_state( $order, $invoice_id ) ? 0 : 1;
+		if ( $invoice_id && null !== $peppol->get_state( $order, $invoice_id ) ) {
+			return 0;
+		}
+
+		$requests = 1;
+		if ( $peppol->should_send( $order, 'cancel' ) ) {
+			foreach ( $peppol->get_documents( $order ) as $document_id => $document ) {
+				if ( 'cancel' === $document['type'] && null === $peppol->get_state( $order, $document_id ) ) {
+					$requests++;
+				}
+			}
+		}
+
+		return $requests;
+	}
+
+	/**
+	 * The requests that send documents via Peppol (eFaktúra) after the documents of an order are regenerated: the
+	 * invoice and its credit notes when the invoice goes at once, or a regenerated credit note not sent yet, which
+	 * takes an invoice not sent yet along.
+	 *
+	 * @param WC_Order $order Order.
+	 * @param string[] $types Document types that are regenerated.
+	 * @return int
+	 */
+	private function estimate_regen_peppol( $order, $types ) {
+		$requests = in_array( 'regular', $types, true ) ? $this->estimate_peppol_send( $order ) : 0;
+		if ( $requests || ! in_array( 'cancel', $types, true ) ) {
+			return $requests;
+		}
+
+		$peppol    = $this->wc_sf->peppol;
+		$cancel_id = (int) $order->get_meta( 'wc_sf_internal_cancel_id', true );
+		if ( ! $cancel_id || ! $peppol->enabled() || ! $peppol->should_send( $order, 'cancel' ) || null !== $peppol->get_state( $order, $cancel_id ) ) {
+			return 0;
+		}
+
+		// The credit note takes an unsent invoice along, follows a sent one, and waits after a failed one.
+		$invoice_id = (int) $order->get_meta( 'wc_sf_internal_regular_id', true );
+		if ( $invoice_id && null === $peppol->get_state( $order, $invoice_id ) ) {
+			return $peppol->should_send( $order, 'regular' ) ? 2 : 1;
+		}
+
+		return $peppol->can_follow_invoice( $order ) ? 1 : 0;
 	}
 
 	/**

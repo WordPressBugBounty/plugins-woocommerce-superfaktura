@@ -29,7 +29,7 @@ class WC_SuperFaktura {
 	 *
 	 * @var string
 	 */
-	public $version = '1.64.0';
+	public $version = '1.64.1';
 
 	/**
 	 * Database version.
@@ -1230,19 +1230,33 @@ class WC_SuperFaktura {
 	 */
 	public function sf_regen_invoice( $order_id ) {
 		$order = wc_get_order( $order_id );
+		if ( ! $order ) {
+			return false;
+		}
 
 		$result = true;
 
-		foreach ( $this->regenerated_document_types( $order ) as $type ) {
-			$sf_id = $order->get_meta( 'wc_sf_internal_' . $type . '_id', true );
-			if ( ! empty( $sf_id ) ) {
-				$generated = $this->invoice_generator->generate_invoice( $order, $type );
-				if ( is_wp_error( $generated ) && 'peppol_sent' === $generated->get_error_code() ) {
-					// A document sent via Peppol is not regenerated, say so.
-					return $generated;
+		// Documents go via Peppol only after all of them are regenerated.
+		$complete = false;
+		$failed   = false;
+		$this->peppol->hold( $order );
+		try {
+			foreach ( $this->regenerated_document_types( $order ) as $type ) {
+				$sf_id = $order->get_meta( 'wc_sf_internal_' . $type . '_id', true );
+				if ( ! empty( $sf_id ) ) {
+					$generated = $this->invoice_generator->generate_invoice( $order, $type );
+					if ( is_wp_error( $generated ) && 'peppol_sent' === $generated->get_error_code() ) {
+						// A document sent via Peppol is not regenerated, say so.
+						return $generated;
+					}
+					$result = $result && $generated;
+					// Only the documents that go via Peppol decide whether the held sending may go.
+					$failed = $failed || ( 'proforma' !== $type && ( ! $generated || is_wp_error( $generated ) ) );
 				}
-				$result = $result && $generated;
 			}
+			$complete = ! $failed;
+		} finally {
+			$this->peppol->release( $order, $complete );
 		}
 
 		return $result;

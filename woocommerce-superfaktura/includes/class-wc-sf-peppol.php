@@ -76,6 +76,14 @@ class WC_SF_Peppol {
 	private $wc_sf;
 
 	/**
+	 * Orders whose documents are being regenerated, with the documents to send once they are all done:
+	 * order ID => array( 'depth' => nested holds, 'regular' => bool, 'cancel' => SuperFaktura IDs of credit notes ).
+	 *
+	 * @var array
+	 */
+	private $held = array();
+
+	/**
 	 * Constructor.
 	 *
 	 * @param WC_SuperFaktura $wc_sf Instance of WC_SuperFaktura.
@@ -517,6 +525,17 @@ class WC_SF_Peppol {
 	 * @param string   $type     Document type.
 	 */
 	public function document_created( $response, $order, $type ) {
+		// While the documents of the order are regenerated, sending waits until all of them are done, so a credit note
+		// does not go with its old content after its invoice.
+		if ( isset( $this->held[ $order->get_id() ] ) ) {
+			if ( 'regular' === $type ) {
+				$this->held[ $order->get_id() ]['regular'] = true;
+			} elseif ( 'cancel' === $type && ! empty( $response->data->Invoice->id ) ) {
+				$this->held[ $order->get_id() ]['cancel'][] = (int) $response->data->Invoice->id;
+			}
+			return;
+		}
+
 		if ( 'regular' === $type ) {
 			if ( $this->sends_new_invoice( $order ) ) {
 				$this->send_order_documents( $order );
@@ -530,6 +549,68 @@ class WC_SF_Peppol {
 	}
 
 	/**
+	 * Hold sending via Peppol for the order while its documents are regenerated one by one.
+	 *
+	 * @param WC_Order $order Order.
+	 */
+	public function hold( $order ) {
+		if ( isset( $this->held[ $order->get_id() ] ) ) {
+			$this->held[ $order->get_id() ]['depth']++;
+			return;
+		}
+
+		$this->held[ $order->get_id() ] = array(
+			'depth'   => 1,
+			'regular' => false,
+			'cancel'  => array(),
+		);
+	}
+
+	/**
+	 * Send what was held for the order, now that all its documents are regenerated: the invoice first, then the
+	 * credit notes, under the same rules as without holding.
+	 *
+	 * When the regeneration stopped before all documents were done, nothing is sent: a credit note would otherwise go
+	 * with its old content, or without items when its edit failed. The invoice then goes at the next regeneration, at
+	 * the order status, or with the "Send via Peppol" link.
+	 *
+	 * @param WC_Order $order    Order.
+	 * @param bool     $complete Whether all documents were regenerated.
+	 */
+	public function release( $order, $complete = true ) {
+		$order_id = $order->get_id();
+		if ( ! isset( $this->held[ $order_id ] ) ) {
+			return;
+		}
+
+		if ( ! $complete ) {
+			$this->held[ $order_id ]['incomplete'] = true;
+		}
+		if ( --$this->held[ $order_id ]['depth'] > 0 ) {
+			return;
+		}
+
+		$held = $this->held[ $order_id ];
+		unset( $this->held[ $order_id ] );
+
+		if ( ! empty( $held['incomplete'] ) || ( ! $held['regular'] && ! $held['cancel'] ) ) {
+			return;
+		}
+
+		$order = wc_get_order( $order_id );
+		if ( ! $order ) {
+			return;
+		}
+
+		if ( $held['regular'] && $this->sends_new_invoice( $order ) ) {
+			$this->send_order_documents( $order );
+		}
+		foreach ( array_unique( $held['cancel'] ) as $document_id ) {
+			$this->send_credit_note( $order, $document_id );
+		}
+	}
+
+	/**
 	 * Send a document that was attached to the order without being created by the plugin, e.g. the invoice
 	 * SuperFaktura created from a paid proforma invoice.
 	 *
@@ -538,6 +619,12 @@ class WC_SF_Peppol {
 	 */
 	public function document_attached( $order, $type ) {
 		if ( ! $this->enabled() ) {
+			return;
+		}
+
+		// An invoice attached while the order's documents are regenerated waits like a regenerated one.
+		if ( 'regular' === $type && isset( $this->held[ $order->get_id() ] ) ) {
+			$this->held[ $order->get_id() ]['regular'] = true;
 			return;
 		}
 

@@ -959,7 +959,7 @@ class WC_SF_Settings extends WC_Settings_Page {
 						'type'     => 'select',
 						'class'    => 'wc-enhanced-select wc-sf-peppol-item',
 						'options'  => WC_SF_Peppol::send_options( $this->get_order_statuses(), get_option( 'woocommerce_sf_peppol_status', 'completed' ) ),
-						'desc_tip' => __( 'With "When the invoice is created", the invoice is sent as soon as the plugin creates it, you create it manually or you regenerate it. An invoice created in a cancelled, refunded or failed order is not sent at once. With this choice, an invoice not sent yet is also sent when the order is completed. With an order status, the invoice is sent when the order reaches that status, so it must be created by then. A sent invoice is never changed, not even by regeneration. It is corrected by a credit note. Credit notes are sent when they are created, an invoice not sent yet goes first.', 'woocommerce-superfaktura' ),
+						'desc_tip' => __( 'With "When the invoice is created", the invoice is sent as soon as the plugin creates it, you create it manually or you regenerate it. An invoice created in a cancelled, refunded or failed order is not sent at once. Invoices created before switching to this choice that were not sent yet are sent when the order is completed. With an order status, the invoice is sent when the order reaches that status, so it must be created by then. A sent invoice is never changed, not even by regeneration. It is corrected by a credit note. Credit notes are sent when they are created, an invoice not sent yet goes first.', 'woocommerce-superfaktura' ),
 					),
 					array(
 						'title'    => __( 'PDF in e-mails', 'woocommerce-superfaktura' ),

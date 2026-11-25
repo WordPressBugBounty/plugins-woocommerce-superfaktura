@@ -2746,7 +2746,7 @@ msgid "Send invoices and credit notes to companies from Slovakia via Peppol"
 msgstr ""
 
 #: includes/class-wc-sf-settings.php
-msgid "With \"When the invoice is created\", the invoice is sent as soon as the plugin creates it, you create it manually or you regenerate it. An invoice created in a cancelled, refunded or failed order is not sent at once. With this choice, an invoice not sent yet is also sent when the order is completed. With an order status, the invoice is sent when the order reaches that status, so it must be created by then. A sent invoice is never changed, not even by regeneration. It is corrected by a credit note. Credit notes are sent when they are created, an invoice not sent yet goes first."
+msgid "With \"When the invoice is created\", the invoice is sent as soon as the plugin creates it, you create it manually or you regenerate it. An invoice created in a cancelled, refunded or failed order is not sent at once. Invoices created before switching to this choice that were not sent yet are sent when the order is completed. With an order status, the invoice is sent when the order reaches that status, so it must be created by then. A sent invoice is never changed, not even by regeneration. It is corrected by a credit note. Credit notes are sent when they are created, an invoice not sent yet goes first."
 msgstr ""
 
 #: includes/class-wc-sf-settings.php
