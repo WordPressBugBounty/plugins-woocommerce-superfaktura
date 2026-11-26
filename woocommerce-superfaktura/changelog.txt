@@ -1,5 +1,8 @@
 === SuperFaktura WooCommerce – Changelog ===
 
+= 1.64.2 (2026-11-26) =
+* Zmena: Plugin je overený s WordPress 7.2.
+
 = 1.64.1 (2026-11-25) =
 * Oprava: Pregenerovaný dobropis odíde cez Peppol s aktuálnymi údajmi z objednávky.
 * Oprava: Hromadné pregenerovanie počíta pri kontrole denného limitu API aj s odoslaním dobropisov cez Peppol.

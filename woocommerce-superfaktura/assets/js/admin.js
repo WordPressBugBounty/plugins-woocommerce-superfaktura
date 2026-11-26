@@ -239,7 +239,7 @@ jQuery(document).ready(function($) {
 		jQuery.post(ajaxurl, data, function(response) {
 			$('span.wc-sf-api-test-loading').hide();
 
-			if ('OK' == $.trim(response)) {
+			if ('OK' == (null == response ? '' : String(response)).trim()) {
 				$('span.wc-sf-api-test-ok').show();
 			}
 			else {

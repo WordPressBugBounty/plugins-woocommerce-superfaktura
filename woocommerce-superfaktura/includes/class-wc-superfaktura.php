@@ -29,7 +29,7 @@ class WC_SuperFaktura {
 	 *
 	 * @var string
 	 */
-	public $version = '1.64.1';
+	public $version = '1.64.2';
 
 	/**
 	 * Database version.

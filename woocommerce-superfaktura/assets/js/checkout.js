@@ -22,7 +22,7 @@ jQuery(document).ready(function() {
         jQuery(document.body).trigger('update_checkout');
     };
 
-    jQuery('#wi_as_company').change(function() {
+    jQuery('#wi_as_company').on('change', function() {
        toggle_fields(jQuery(this).is(':checked'));
        refresh_totals();
     });

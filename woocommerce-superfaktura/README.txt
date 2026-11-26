@@ -2,9 +2,9 @@
 Contributors: superfaktura, webikon, johnnypea, savione, kravco, martinkrcho
 Tags: superfaktura, invoice, faktura, proforma, woocommerce
 Requires at least: 4.4
-Tested up to: 7.1
+Tested up to: 7.2
 Requires PHP: 7.4
-Stable tag: 1.64.1
+Stable tag: 1.64.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
@@ -107,6 +107,9 @@ Check the API e-mail, API key and Company ID in *Authorization* and use *Test AP
 You can read more about SuperFaktura API integration at [superfaktura.sk/api](https://www.superfaktura.sk/api/).
 
 == Changelog ==
+
+= 1.64.2 (2026-11-26) =
+* Zmena: Plugin je overený s WordPress 7.2.
 
 = 1.64.1 (2026-11-25) =
 * Oprava: Pregenerovaný dobropis odíde cez Peppol s aktuálnymi údajmi z objednávky.
